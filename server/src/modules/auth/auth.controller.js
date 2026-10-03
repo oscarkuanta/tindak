@@ -1,7 +1,8 @@
 import passport from 'passport';
-import { GOOGLE_LOGIN_ERRORS } from '@tindak/shared';
+import { AUTH_PATHS, ERROR_CODES, GOOGLE_LOGIN_ERRORS } from '@tindak/shared';
 import { env } from '../../config/env.js';
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from '../../config/session.js';
+import { AppError } from '../../utils/AppError.js';
 import { sendData } from '../../utils/response.js';
 import { safeRedirectPath } from '../../utils/safeRedirect.js';
 import { authenticateUser, registerUser, toPublicUser } from './auth.service.js';
@@ -31,7 +32,7 @@ function clientUrl(path) {
 }
 
 function loginErrorUrl(code) {
-  return clientUrl(`/login?error=${code}`);
+  return clientUrl(`${AUTH_PATHS.LOGIN}?error=${code}`);
 }
 
 export async function register(req, res) {
@@ -50,18 +51,21 @@ export async function logout(req, res) {
   await logOut(req);
   await destroySession(req);
   res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions);
-  sendData(res, { loggedOut: true });
+  res.status(204).end();
 }
 
 export function me(req, res) {
-  sendData(res, req.user ? toPublicUser(req.user) : null);
+  if (!req.user) {
+    throw new AppError(401, ERROR_CODES.UNAUTHENTICATED, 'Kamu belum masuk');
+  }
+  sendData(res, toPublicUser(req.user));
 }
 
 export function googleStart(req, res, next) {
   if (!env.GOOGLE_ENABLED) {
     return res.redirect(loginErrorUrl(GOOGLE_LOGIN_ERRORS.UNAVAILABLE));
   }
-  req.session.oauthRedirect = safeRedirectPath(req.query.redirect);
+  req.session.returnTo = safeRedirectPath(req.query.returnTo);
   passport.authenticate('google', { scope: GOOGLE_SCOPE, prompt: 'select_account' })(
     req,
     res,
@@ -74,7 +78,7 @@ export function googleCallback(req, res, next) {
     return res.redirect(loginErrorUrl(GOOGLE_LOGIN_ERRORS.UNAVAILABLE));
   }
 
-  const redirectPath = safeRedirectPath(req.session?.oauthRedirect);
+  const returnTo = safeRedirectPath(req.session?.returnTo);
 
   passport.authenticate('google', (error, user) => {
     if (error || !user) {
@@ -82,7 +86,7 @@ export function googleCallback(req, res, next) {
       return res.redirect(loginErrorUrl(GOOGLE_LOGIN_ERRORS.FAILED));
     }
     logIn(req, user).then(
-      () => res.redirect(clientUrl(redirectPath)),
+      () => res.redirect(clientUrl(returnTo)),
       (loginError) => next(loginError),
     );
   })(req, res, next);

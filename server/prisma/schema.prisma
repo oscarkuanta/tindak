@@ -1,8 +1,8 @@
 generator client {
-  provider             = "prisma-client"
-  output               = "../src/generated/prisma"
-  moduleFormat         = "esm"
-  importFileExtension  = "ts"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "ts"
 }
 
 datasource db {
@@ -26,6 +26,7 @@ model User {
   lastLoginAt  DateTime? @map("last_login_at")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
+  sessions     Session[]
 
   @@map("users")
 }
@@ -34,7 +35,10 @@ model Session {
   id        String   @id @db.VarChar(128)
   data      String   @db.Text
   expiresAt DateTime @map("expires_at")
+  userId    Int?     @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
+  @@index([userId])
   @@map("sessions")
 }
