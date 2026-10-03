@@ -176,3 +176,31 @@ describe('parseEnv', () => {
     expect(() => parseEnv({})).toThrow(/SESSION_SECRET/);
   });
 });
+
+describe('parseEnv untuk login Google', () => {
+  const baseEnv = {
+    DATABASE_URL: 'mysql://root@localhost:3306/tindak',
+    SESSION_SECRET: 'x'.repeat(32),
+    IP_HASH_SECRET: 'y'.repeat(16),
+  };
+
+  it('menerima isi .env.example yang hanya punya callback URL', () => {
+    const env = parseEnv({
+      ...baseEnv,
+      GOOGLE_CLIENT_ID: '',
+      GOOGLE_CLIENT_SECRET: '',
+      GOOGLE_CALLBACK_URL: 'http://localhost:5173/api/auth/google/callback',
+    });
+    expect(env.GOOGLE_ENABLED).toBe(false);
+  });
+
+  it('gagal jika hanya client ID yang diisi', () => {
+    expect(() => parseEnv({ ...baseEnv, GOOGLE_CLIENT_ID: 'id' })).toThrow(/GOOGLE_CLIENT_SECRET/);
+  });
+
+  it('mengaktifkan Google dan mengisi callback URL bawaan dari CLIENT_URL', () => {
+    const env = parseEnv({ ...baseEnv, GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'secret' });
+    expect(env.GOOGLE_ENABLED).toBe(true);
+    expect(env.GOOGLE_CALLBACK_URL).toBe('http://localhost:5173/api/auth/google/callback');
+  });
+});
