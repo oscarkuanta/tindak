@@ -8,3 +8,33 @@ generator client {
 datasource db {
   provider = "mysql"
 }
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(50)
+  email        String    @unique @db.VarChar(191)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  googleId     String?   @unique @map("google_id") @db.VarChar(64)
+  avatarUrl    String?   @map("avatar_url") @db.VarChar(500)
+  role         UserRole  @default(USER)
+  onboardedAt  DateTime? @map("onboarded_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @db.VarChar(128)
+  data      String   @db.Text
+  expiresAt DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("sessions")
+}

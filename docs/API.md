@@ -105,10 +105,16 @@ Error: `503 SERVICE_UNAVAILABLE` jika database tidak dapat dihubungi.
 - `needsOnboarding`: `true` sampai user melewati Halaman Sambutan (endpoint penyelesaiannya dibuat di fase berikutnya).
 - Password dan hash tidak pernah dikirim.
 
+### Catatan Ban
+
+Pengecekan ban akun (`403 ACCOUNT_BANNED` saat login dan redirect `/login?error=account_banned` dari callback Google) ditunda ke Fase 7 Moderasi, bersama tabel ban akun, perangkat, dan IP. Sampai Fase 7, login tidak pernah membalas `ACCOUNT_BANNED`.
+
 ### Aturan Session
 
 - Nama cookie `tindak.sid`, httpOnly, `sameSite=lax`, `secure` di production, umur 30 hari.
 - Session ID diganti (regenerate) setiap login dan register untuk mencegah session fixation.
+- Session disimpan di tabel `sessions`. Session kedaluwarsa dibersihkan otomatis setiap 15 menit.
+- Cookie hanya dibuat saat login atau saat memulai login Google. Tamu yang hanya membuka halaman tidak mendapat cookie.
 
 ### POST /api/auth/register
 
@@ -138,7 +144,7 @@ Error:
 
 ### POST /api/auth/login
 
-Auth: Publik. Rate limit: 10 per 15 menit per IP dan email.
+Auth: Publik. Rate limit: 10 percobaan **gagal** per 15 menit per kombinasi IP dan email. Login yang berhasil tidak dihitung.
 
 Body:
 
@@ -150,12 +156,11 @@ Sukses `200`: `{ "data": <User> }` dan cookie session dipasang.
 
 Error:
 
-| Status | Code                  | Kapan                                                                                                    |
-| ------ | --------------------- | -------------------------------------------------------------------------------------------------------- |
-| 400    | `VALIDATION_ERROR`    | Input tidak valid                                                                                        |
-| 401    | `INVALID_CREDENTIALS` | Email tidak ada, password salah, atau akun hanya punya Google. Pesan sama untuk semua kasus              |
-| 403    | `ACCOUNT_BANNED`      | Akun sedang di-ban. `details` berisi `{ "field": "bannedUntil", "message": "<ISO date atau permanen>" }` |
-| 429    | `RATE_LIMITED`        | Terlalu banyak percobaan                                                                                 |
+| Status | Code                  | Kapan                                                                                       |
+| ------ | --------------------- | ------------------------------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`    | Input tidak valid                                                                           |
+| 401    | `INVALID_CREDENTIALS` | Email tidak ada, password salah, atau akun hanya punya Google. Pesan sama untuk semua kasus |
+| 429    | `RATE_LIMITED`        | Terlalu banyak percobaan                                                                    |
 
 ### POST /api/auth/logout
 
@@ -192,13 +197,15 @@ Query:
 
 Endpoint ini dibuka lewat navigasi browser (`window.location.href`), bukan fetch.
 
+Jika login Google belum dikonfigurasi di server, endpoint ini langsung `302` ke `CLIENT_URL/login?error=google_unavailable`. Frontend sebaiknya menampilkan pesan "Login Google belum tersedia".
+
 ### GET /api/auth/google/callback
 
 Auth: Publik. Dipanggil oleh Google, bukan oleh frontend.
 
 - Berhasil: buat atau tautkan akun (email Google yang sama dengan akun email+password otomatis ditautkan), pasang session, lalu `302` ke `CLIENT_URL + redirect`.
 - Gagal atau dibatalkan: `302` ke `CLIENT_URL/login?error=google_failed`.
-- Akun di-ban: `302` ke `CLIENT_URL/login?error=account_banned`.
+- Login Google belum dikonfigurasi di server (env `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET` kosong): `302` ke `CLIENT_URL/login?error=google_unavailable`.
 
 ---
 
