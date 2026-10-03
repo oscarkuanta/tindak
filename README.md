@@ -103,28 +103,40 @@ npm run lint
 npm test
 ```
 
-Setiap kali ada migrasi baru dari `git pull`, jalankan `npm run db:test:deploy -w server` sebelum `npm test` agar tabel di database tes ikut diperbarui.
+`npm test` otomatis menjalankan migrasi ke database `tindak_test` sebelum tes dimulai, dan menolak berjalan jika `DATABASE_URL` di `.env.test` bukan database tes. Setelah `git pull` yang membawa migrasi baru, jalankan juga `npm run db:migrate` agar database development ikut diperbarui.
 
 ## Variabel Environment
 
 File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saat `npm test`.
 
-| Variabel               | Wajib  | Penjelasan                                                                                                |
-| ---------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`             | Tidak  | `development`, `test`, atau `production`. Default `development`                                           |
-| `PORT`                 | Tidak  | Port server Express. Default `3000`                                                                       |
-| `CLIENT_URL`           | Tidak  | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`    |
-| `DATABASE_URL`         | Ya     | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`  |
-| `SESSION_SECRET`       | Ya     | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                               |
-| `IP_HASH_SECRET`       | Ya     | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter    |
-| `GOOGLE_CLIENT_ID`     | Fase 1 | Client ID OAuth dari Google Cloud Console                                                                 |
-| `GOOGLE_CLIENT_SECRET` | Fase 1 | Client secret OAuth dari Google Cloud Console                                                             |
-| `GOOGLE_CALLBACK_URL`  | Fase 1 | URL callback yang didaftarkan di Google. Di development: `http://localhost:5173/api/auth/google/callback` |
-| `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                       |
-| `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                |
-| `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                              |
+| Variabel               | Wajib  | Penjelasan                                                                                                       |
+| ---------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`             | Tidak  | `development`, `test`, atau `production`. Default `development`                                                  |
+| `PORT`                 | Tidak  | Port server Express. Default `3000`                                                                              |
+| `CLIENT_URL`           | Tidak  | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`           |
+| `DATABASE_URL`         | Ya     | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`         |
+| `SESSION_SECRET`       | Ya     | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                                      |
+| `IP_HASH_SECRET`       | Ya     | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter           |
+| `GOOGLE_CLIENT_ID`     | Tidak  | Client ID OAuth dari Google Cloud Console. Kosongkan bersama `GOOGLE_CLIENT_SECRET` untuk mematikan login Google |
+| `GOOGLE_CLIENT_SECRET` | Tidak  | Client secret OAuth dari Google Cloud Console. Wajib diisi jika `GOOGLE_CLIENT_ID` diisi                         |
+| `GOOGLE_CALLBACK_URL`  | Tidak  | URL callback yang didaftarkan di Google. Default `CLIENT_URL` + `/api/auth/google/callback`                      |
+| `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                              |
+| `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                       |
+| `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                     |
 
 Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
+
+## Mengaktifkan Login Google
+
+Tanpa langkah ini aplikasi tetap jalan, hanya tombol login Google yang mengarah ke pesan "belum tersedia".
+
+1. Buka [Google Cloud Console](https://console.cloud.google.com), buat project baru.
+2. Menu **APIs & Services → OAuth consent screen**: pilih **External**, isi nama aplikasi dan email, lalu tambahkan email anggota tim sebagai **Test users**.
+3. Menu **APIs & Services → Credentials → Create Credentials → OAuth client ID**: pilih **Web application**.
+4. Di **Authorized redirect URIs** isi `http://localhost:5173/api/auth/google/callback`.
+5. Salin **Client ID** dan **Client secret** ke `.env` di `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET`, lalu restart `npm run dev`.
+
+Callback sengaja lewat port 5173 (proxy Vite) agar cookie login tetap satu situs dengan frontend.
 
 ## Daftar Script
 
