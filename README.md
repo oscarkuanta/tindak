@@ -1,0 +1,150 @@
+# T!indak
+
+Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan melaporkan jalan rusak, sampah, toilet rusak, atau lampu mati ke sebuah **Board** (mirip subreddit). Komunitas memberi dukungan dan reaksi, lalu **Penindak** board menindaklanjuti sampai pelapor mengonfirmasi selesai.
+
+Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Status pengerjaan ada di [docs/PROGRESS.md](docs/PROGRESS.md).
+
+## Stack
+
+| Bagian  | Teknologi                                                                                             |
+| ------- | ----------------------------------------------------------------------------------------------------- |
+| Server  | Node.js 22.18+ (ESM), Express 5, Prisma 7 + MySQL 8, Zod, helmet, cors, express-rate-limit, pino-http |
+| Client  | React 19, Vite, React Router, TanStack Query, Tailwind CSS 4                                          |
+| Shared  | Skema Zod, enum, dan konstanta yang dipakai server dan client                                         |
+| Testing | Vitest + Supertest                                                                                    |
+| Tooling | npm workspaces, ESLint (flat config), Prettier, GitHub Actions                                        |
+
+## Struktur Folder
+
+```
+tindak/
+  client/   React + Vite (port 5173)
+  server/   Express + Prisma (port 3000)
+  shared/   Zod, enum, konstanta
+  docs/     produk, kontrak API, progres, laporan fase
+```
+
+## Setup Lokal Langkah demi Langkah
+
+### 1. Siapkan alat
+
+- [Node.js](https://nodejs.org) versi 22.18 atau lebih baru. Cek dengan `node -v`.
+- Git.
+- Salah satu database MySQL: XAMPP, MySQL lokal, atau Docker.
+
+### 2. Clone dan install
+
+```bash
+git clone https://github.com/oscarkuanta/tindak.git
+cd tindak
+npm install
+```
+
+`npm install` juga otomatis menjalankan `prisma generate`.
+
+### 3. Siapkan database
+
+Kita butuh dua database: `tindak` (untuk development) dan `tindak_test` (khusus tes, isinya boleh dihapus kapan saja).
+
+**Pilihan A: XAMPP**
+
+1. Buka XAMPP Control Panel, klik **Start** pada MySQL.
+2. Buka `http://localhost/phpmyadmin`, tab **SQL**, jalankan:
+
+   ```sql
+   CREATE DATABASE IF NOT EXISTS tindak CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   CREATE DATABASE IF NOT EXISTS tindak_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+
+3. User bawaan XAMPP adalah `root` tanpa password, jadi URL-nya `mysql://root@localhost:3306/tindak`.
+
+**Pilihan B: MySQL lokal**
+
+Jalankan SQL yang sama seperti di atas lewat MySQL Workbench atau `mysql -u root -p`. Sesuaikan user dan password di URL, contoh `mysql://root:passwordku@localhost:3306/tindak`.
+
+**Pilihan C: Docker**
+
+```bash
+docker compose up -d
+```
+
+Ini menjalankan MySQL 8 di port 3306 dengan password root `root`, dan otomatis membuat database `tindak` dan `tindak_test`. Matikan MySQL XAMPP dulu jika sedang jalan, karena portnya sama.
+
+### 4. Buat file env
+
+```bash
+cp .env.example .env
+cp .env.test.example .env.test
+```
+
+Lalu buka kedua file dan sesuaikan `DATABASE_URL` dengan database kamu. Isi `SESSION_SECRET` dan `IP_HASH_SECRET` di `.env` dengan string acak. Cara membuatnya:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+File `.env` dan `.env.test` tidak pernah di-commit.
+
+### 5. Jalankan migrasi dan aplikasi
+
+```bash
+npm run db:migrate
+npm run dev
+```
+
+- Client: http://localhost:5173
+- Server: http://localhost:3000
+- Cek kesehatan lewat proxy: http://localhost:5173/api/health harus menampilkan `{"data":{"status":"ok","db":"ok"}}`
+
+### 6. Jalankan lint dan tes
+
+```bash
+npm run lint
+npm test
+```
+
+Setiap kali ada migrasi baru dari `git pull`, jalankan `npm run db:test:deploy -w server` sebelum `npm test` agar tabel di database tes ikut diperbarui.
+
+## Variabel Environment
+
+File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saat `npm test`.
+
+| Variabel               | Wajib  | Penjelasan                                                                                                |
+| ---------------------- | ------ | --------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`             | Tidak  | `development`, `test`, atau `production`. Default `development`                                           |
+| `PORT`                 | Tidak  | Port server Express. Default `3000`                                                                       |
+| `CLIENT_URL`           | Tidak  | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`    |
+| `DATABASE_URL`         | Ya     | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`  |
+| `SESSION_SECRET`       | Ya     | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                               |
+| `IP_HASH_SECRET`       | Ya     | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter    |
+| `GOOGLE_CLIENT_ID`     | Fase 1 | Client ID OAuth dari Google Cloud Console                                                                 |
+| `GOOGLE_CLIENT_SECRET` | Fase 1 | Client secret OAuth dari Google Cloud Console                                                             |
+| `GOOGLE_CALLBACK_URL`  | Fase 1 | URL callback yang didaftarkan di Google. Di development: `http://localhost:5173/api/auth/google/callback` |
+| `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                       |
+| `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                |
+| `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                              |
+
+Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
+
+## Daftar Script
+
+Semua dijalankan dari folder root.
+
+| Script                             | Fungsi                                                                       |
+| ---------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run dev`                      | Menjalankan server (3000) dan client (5173) bersamaan                        |
+| `npm run build`                    | Build client untuk production ke `client/dist`                               |
+| `npm run lint`                     | ESLint dan cek format Prettier                                               |
+| `npm run format`                   | Merapikan semua file dengan Prettier                                         |
+| `npm test`                         | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`        |
+| `npm run db:generate`              | Membuat ulang Prisma Client setelah `schema.prisma` berubah                  |
+| `npm run db:migrate`               | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev        |
+| `npm run db:deploy`                | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production) |
+| `npm run db:seed`                  | Mengisi data awal dari `server/prisma/seed.js`                               |
+| `npm run db:studio`                | Membuka Prisma Studio untuk melihat isi database                             |
+| `npm run db:reset`                 | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                |
+| `npm run db:test:deploy -w server` | Menjalankan migrasi ke database `tindak_test`                                |
+
+## Kontribusi
+
+Baca [CONTRIBUTING.md](CONTRIBUTING.md) untuk alur Git, cara review PR, dan aturan kerja tim.
