@@ -68,10 +68,11 @@ export class PrismaSessionStore extends session.Store {
   async #set(sid, sess) {
     const data = JSON.stringify(sess);
     const expiresAt = resolveExpiry(sess);
+    const userId = Number(sess?.passport?.user) || null;
     await this.prisma.session.upsert({
       where: { id: sid },
-      create: { id: sid, data, expiresAt },
-      update: { data, expiresAt },
+      create: { id: sid, data, expiresAt, userId },
+      update: { data, expiresAt, userId },
     });
   }
 

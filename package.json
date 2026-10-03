@@ -24,6 +24,7 @@
     "db:seed": "npm run db:seed -w server",
     "db:studio": "npm run db:studio -w server",
     "db:reset": "npm run db:reset -w server",
+    "make-admin": "npm run make-admin -w server --",
     "postinstall": "npm run db:generate"
   },
   "devDependencies": {
