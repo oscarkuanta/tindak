@@ -16,6 +16,7 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "postdb:reset": "prisma generate",
+    "make-admin": "node --env-file-if-exists=../.env scripts/make-admin.js",
     "db:test:deploy": "cross-env ENV_FILE=../.env.test prisma migrate deploy"
   },
   "dependencies": {

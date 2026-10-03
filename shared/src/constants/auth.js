@@ -10,6 +10,11 @@ export const NAME_MAX_LENGTH = 50;
 export const EMAIL_MAX_LENGTH = 191;
 
 export const GOOGLE_LOGIN_ERRORS = Object.freeze({
-  FAILED: 'google_failed',
+  FAILED: 'google',
   UNAVAILABLE: 'google_unavailable',
+});
+
+export const AUTH_PATHS = Object.freeze({
+  LOGIN: '/masuk',
+  REGISTER: '/daftar',
 });

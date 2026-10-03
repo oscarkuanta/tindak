@@ -44,18 +44,19 @@ Parameter pagination standar: `page` (default 1, min 1) dan `pageSize` (default 
 
 ### Kode Error Umum
 
-| Status | Code                  | Arti                                           |
-| ------ | --------------------- | ---------------------------------------------- |
-| 400    | `VALIDATION_ERROR`    | Input tidak lolos skema Zod                    |
-| 400    | `INVALID_JSON`        | Body bukan JSON yang valid                     |
-| 401    | `UNAUTHENTICATED`     | Wajib login                                    |
-| 403    | `FORBIDDEN`           | Sudah login tapi tidak punya hak akses         |
-| 404    | `NOT_FOUND`           | Endpoint atau data tidak ditemukan             |
-| 409    | `CONFLICT`            | Data bentrok (misalnya nilai unik sudah ada)   |
-| 413    | `PAYLOAD_TOO_LARGE`   | Body melebihi 1 MB                             |
-| 429    | `RATE_LIMITED`        | Terlalu banyak permintaan                      |
-| 503    | `SERVICE_UNAVAILABLE` | Database atau layanan pendukung tidak tersedia |
-| 500    | `INTERNAL_ERROR`      | Error tak terduga, detail tidak dibocorkan     |
+| Status | Code                  | Arti                                                       |
+| ------ | --------------------- | ---------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`    | Input tidak lolos skema Zod                                |
+| 400    | `INVALID_JSON`        | Body bukan JSON yang valid                                 |
+| 401    | `UNAUTHENTICATED`     | Wajib login                                                |
+| 403    | `FORBIDDEN`           | Sudah login tapi tidak punya hak akses                     |
+| 403    | `CSRF_REJECTED`       | Request dari situs lain (header Origin bukan `CLIENT_URL`) |
+| 404    | `NOT_FOUND`           | Endpoint atau data tidak ditemukan                         |
+| 409    | `CONFLICT`            | Data bentrok (misalnya nilai unik sudah ada)               |
+| 413    | `PAYLOAD_TOO_LARGE`   | Body melebihi 1 MB                                         |
+| 429    | `RATE_LIMITED`        | Terlalu banyak permintaan                                  |
+| 503    | `SERVICE_UNAVAILABLE` | Database atau layanan pendukung tidak tersedia             |
+| 500    | `INTERNAL_ERROR`      | Error tak terduga, detail tidak dibocorkan                 |
 
 Kode error khusus fitur tercantum di setiap endpoint. Semua endpoint di bawah `/api` juga terkena rate limit umum 300 permintaan per menit per IP.
 
@@ -85,7 +86,7 @@ Error: `503 SERVICE_UNAVAILABLE` jika database tidak dapat dihubungi.
 
 ## Fase 1: Auth
 
-### Objek User
+### Objek User (publik)
 
 ```json
 {
@@ -95,30 +96,32 @@ Error: `503 SERVICE_UNAVAILABLE` jika database tidak dapat dihubungi.
   "avatarUrl": null,
   "role": "USER",
   "hasPassword": true,
-  "hasGoogle": false,
   "needsOnboarding": true,
   "createdAt": "2026-10-03T08:14:00.000Z"
 }
 ```
 
-- `role`: role tingkat website. `USER`, `ADMIN` (moderator), atau `BOARD_ADMIN` (pemberi status Official). `ADMIN` ditentukan dari env `ADMIN_EMAILS` (sudah aktif sejak Fase 1A). `BOARD_ADMIN` ditentukan dari env `BOARD_ADMIN_EMAILS` dan baru aktif di Fase 8. Jika satu email ada di kedua daftar, `ADMIN` yang dipakai.
+- `role`: role tingkat website. `USER`, `ADMIN` (moderator), atau `BOARD_ADMIN` (pemberi status Official, baru aktif di Fase 8).
+- `ADMIN` diberikan otomatis jika email ada di env `ADMIN_EMAILS` (saat daftar atau login), atau lewat `npm run make-admin -- email@contoh.com`. Role `ADMIN` tidak pernah diturunkan otomatis.
+- `hasPassword`: `false` untuk akun yang hanya bisa masuk lewat Google.
 - `needsOnboarding`: `true` sampai user melewati Halaman Sambutan (endpoint penyelesaiannya dibuat di fase berikutnya).
-- Password dan hash tidak pernah dikirim.
+- `passwordHash` dan `googleId` tidak pernah dikirim.
 
 ### Catatan Ban
 
-Pengecekan ban akun (`403 ACCOUNT_BANNED` saat login dan redirect `/login?error=account_banned` dari callback Google) ditunda ke Fase 7 Moderasi, bersama tabel ban akun, perangkat, dan IP. Sampai Fase 7, login tidak pernah membalas `ACCOUNT_BANNED`.
+Pengecekan ban akun (`403 ACCOUNT_BANNED`) ditunda ke Fase 7 Moderasi, bersama tabel ban akun, perangkat, dan IP.
 
-### Aturan Session
+### Aturan Session dan Keamanan
 
 - Nama cookie `tindak.sid`, httpOnly, `sameSite=lax`, `secure` di production, umur 30 hari.
+- Session disimpan di tabel `sessions` (MySQL). Session kedaluwarsa dibersihkan otomatis setiap 15 menit.
 - Session ID diganti (regenerate) setiap login dan register untuk mencegah session fixation.
-- Session disimpan di tabel `sessions`. Session kedaluwarsa dibersihkan otomatis setiap 15 menit.
-- Cookie hanya dibuat saat login atau saat memulai login Google. Tamu yang hanya membuka halaman tidak mendapat cookie.
+- Cookie hanya dibuat saat login, daftar, atau memulai login Google.
+- **Cek Origin (CSRF)**: request `POST`, `PUT`, `PATCH`, `DELETE` yang membawa header `Origin` berbeda dari `CLIENT_URL` ditolak `403 CSRF_REJECTED`. Request tanpa header `Origin` (curl, Thunder Client) tetap diterima, karena browser selalu mengirim `Origin` untuk request seperti ini.
 
 ### POST /api/auth/register
 
-Auth: Publik. Rate limit: 10 per 15 menit per IP. Mendaftar dengan email dan password, lalu langsung login.
+Auth: Publik. Rate limit: 5 per jam per IP. Mendaftar dengan email dan password, lalu langsung login. Tidak ada verifikasi email (keputusan produk).
 
 Body:
 
@@ -126,21 +129,22 @@ Body:
 { "name": "Budi Santoso", "email": "budi@example.com", "password": "rahasia123" }
 ```
 
-| Field      | Aturan                                                       |
-| ---------- | ------------------------------------------------------------ |
-| `name`     | wajib, string 2 sampai 50 karakter, di-trim                  |
-| `email`    | wajib, format email, maks 191 karakter, disimpan huruf kecil |
-| `password` | wajib, 8 sampai 72 karakter, minimal 1 huruf dan 1 angka     |
+| Field      | Aturan                                                        |
+| ---------- | ------------------------------------------------------------- |
+| `name`     | wajib, string 2 sampai 50 karakter, di-trim                   |
+| `email`    | wajib, format email, maks 191 karakter, disimpan huruf kecil  |
+| `password` | wajib, 8 karakter sampai 72 byte, minimal 1 huruf dan 1 angka |
 
 Sukses `201`: `{ "data": <User> }` dan cookie session dipasang.
 
 Error:
 
-| Status | Code               | Kapan                                        |
-| ------ | ------------------ | -------------------------------------------- |
-| 400    | `VALIDATION_ERROR` | Input tidak valid                            |
-| 409    | `EMAIL_TAKEN`      | Email sudah terdaftar (termasuk akun Google) |
-| 429    | `RATE_LIMITED`     | Terlalu banyak percobaan                     |
+| Status | Code               | Kapan                                                       |
+| ------ | ------------------ | ----------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR` | Input tidak valid, `details` per field                      |
+| 403    | `CSRF_REJECTED`    | Origin bukan `CLIENT_URL`                                   |
+| 409    | `EMAIL_TAKEN`      | Email sudah terdaftar (tanpa memedulikan huruf besar kecil) |
+| 429    | `RATE_LIMITED`     | Terlalu banyak percobaan                                    |
 
 ### POST /api/auth/login
 
@@ -156,34 +160,28 @@ Sukses `200`: `{ "data": <User> }` dan cookie session dipasang.
 
 Error:
 
-| Status | Code                  | Kapan                                                                                       |
-| ------ | --------------------- | ------------------------------------------------------------------------------------------- |
-| 400    | `VALIDATION_ERROR`    | Input tidak valid                                                                           |
-| 401    | `INVALID_CREDENTIALS` | Email tidak ada, password salah, atau akun hanya punya Google. Pesan sama untuk semua kasus |
-| 429    | `RATE_LIMITED`        | Terlalu banyak percobaan                                                                    |
+| Status | Code                  | Kapan                                                                                                      |
+| ------ | --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`    | Input tidak valid                                                                                          |
+| 401    | `INVALID_CREDENTIALS` | Email tidak terdaftar atau password salah. Pesan sama untuk kedua kasus: "Email atau password salah"       |
+| 401    | `USE_GOOGLE_LOGIN`    | Akun hanya bisa masuk lewat Google. Pesan: "Akun ini terdaftar lewat Google. Silakan masuk dengan Google." |
+| 403    | `CSRF_REJECTED`       | Origin bukan `CLIENT_URL`                                                                                  |
+| 429    | `RATE_LIMITED`        | Terlalu banyak percobaan gagal                                                                             |
 
 ### POST /api/auth/logout
 
-Auth: Login. Menghapus session dan cookie.
+Auth: Login. Menghancurkan session dan menghapus cookie.
 
-Sukses `200`:
-
-```json
-{ "data": { "loggedOut": true } }
-```
+Sukses `204` tanpa body.
 
 Error: `401 UNAUTHENTICATED`.
 
 ### GET /api/auth/me
 
-Auth: Publik. Dipakai frontend saat aplikasi dibuka.
+Auth: Publik (dengan `optionalAuth`). Dipakai frontend saat aplikasi dibuka.
 
-Sukses `200`:
-
-- Sudah login: `{ "data": <User> }`
-- Tamu: `{ "data": null }`
-
-Tamu sengaja tidak dibalas 401 agar frontend tidak menganggapnya error.
+- Sudah login: `200` `{ "data": <User> }`
+- Belum login: `401 UNAUTHENTICATED`. Frontend menganggap 401 dari endpoint ini sebagai tamu, bukan error.
 
 ### GET /api/auth/google
 
@@ -191,21 +189,28 @@ Auth: Publik. Mengarahkan browser ke halaman login Google (`302`).
 
 Query:
 
-| Field      | Aturan                                                                                                                                                 |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `redirect` | opsional, path relatif tujuan setelah login, contoh `/b/jalan-rungkut-madya-surabaya`. Harus diawali `/` dan bukan `//`. Nilai tidak valid diganti `/` |
+| Field      | Aturan                                                                                                                                                                |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `returnTo` | opsional, path relatif tujuan setelah login, contoh `/b/jalan-rungkut-madya-surabaya`. Harus diawali `/` dan tidak diawali `//`. Nilai lain diabaikan dan diganti `/` |
 
-Endpoint ini dibuka lewat navigasi browser (`window.location.href`), bukan fetch.
+Endpoint ini dibuka lewat link atau navigasi browser, bukan fetch.
 
-Jika login Google belum dikonfigurasi di server, endpoint ini langsung `302` ke `CLIENT_URL/login?error=google_unavailable`. Frontend sebaiknya menampilkan pesan "Login Google belum tersedia".
+Jika login Google belum dikonfigurasi di server, langsung `302` ke `CLIENT_URL/masuk?error=google_unavailable`.
 
 ### GET /api/auth/google/callback
 
 Auth: Publik. Dipanggil oleh Google, bukan oleh frontend.
 
-- Berhasil: buat atau tautkan akun (email Google yang sama dengan akun email+password otomatis ditautkan), pasang session, lalu `302` ke `CLIENT_URL + redirect`.
-- Gagal atau dibatalkan: `302` ke `CLIENT_URL/login?error=google_failed`.
-- Login Google belum dikonfigurasi di server (env `GOOGLE_CLIENT_ID` dan `GOOGLE_CLIENT_SECRET` kosong): `302` ke `CLIENT_URL/login?error=google_unavailable`.
+- Berhasil: pasang session, lalu `302` ke `CLIENT_URL + returnTo` (default `/`).
+- Gagal atau dibatalkan: `302` ke `CLIENT_URL/masuk?error=google`.
+- Login Google belum dikonfigurasi: `302` ke `CLIENT_URL/masuk?error=google_unavailable`.
+
+Aturan akun:
+
+1. `googleId` sudah terdaftar: masuk sebagai user itu.
+2. `googleId` belum ada tetapi email sudah dipakai akun email + password: `googleId` ditautkan ke akun itu, **password dicabut** (`hasPassword` menjadi `false`), dan **semua session lama akun itu dihapus**. Alasannya, tidak ada verifikasi email saat daftar, jadi orang lain bisa mendaftar lebih dulu memakai email korban. Google membuktikan siapa pemilik email yang asli, sehingga password buatan penyerang harus dicabut.
+3. Keduanya belum ada: buat user baru dengan nama, email, dan foto dari Google.
+4. Email Google yang tidak terverifikasi ditolak (masuk ke alur gagal).
 
 ---
 

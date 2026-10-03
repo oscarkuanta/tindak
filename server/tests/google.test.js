@@ -45,7 +45,7 @@ function profile(overrides = {}) {
 describe('GET /api/auth/google dengan konfigurasi', () => {
   it('mengarahkan ke Google dengan state dan menyimpan redirect yang aman', async () => {
     const agent = request.agent(app);
-    const res = await agent.get('/api/auth/google?redirect=/b/jalan-rungkut');
+    const res = await agent.get('/api/auth/google?returnTo=/b/jalan-rungkut');
 
     expect(res.status).toBe(302);
     const location = new URL(res.headers.location);
@@ -55,29 +55,29 @@ describe('GET /api/auth/google dengan konfigurasi', () => {
     expect(location.searchParams.get('state')).toBeTruthy();
 
     const [row] = await prisma.session.findMany();
-    expect(JSON.parse(row.data).oauthRedirect).toBe('/b/jalan-rungkut');
+    expect(JSON.parse(row.data).returnTo).toBe('/b/jalan-rungkut');
   });
 
   it('mengganti redirect berbahaya menjadi /', async () => {
     const agent = request.agent(app);
-    await agent.get('/api/auth/google?redirect=//evil.com');
+    await agent.get('/api/auth/google?returnTo=//evil.com');
 
     const [row] = await prisma.session.findMany();
-    expect(JSON.parse(row.data).oauthRedirect).toBe('/');
+    expect(JSON.parse(row.data).returnTo).toBe('/');
   });
 
-  it('callback tanpa state yang cocok diarahkan ke google_failed', async () => {
+  it('callback tanpa state yang cocok diarahkan ke /masuk?error=google', async () => {
     const res = await request(app).get('/api/auth/google/callback?code=abc&state=palsu');
 
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('http://localhost:5173/login?error=google_failed');
+    expect(res.headers.location).toBe('http://localhost:5173/masuk?error=google');
   });
 
-  it('callback yang dibatalkan user diarahkan ke google_failed', async () => {
+  it('callback yang dibatalkan user diarahkan ke /masuk?error=google', async () => {
     const res = await request(app).get('/api/auth/google/callback?error=access_denied');
 
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('http://localhost:5173/login?error=google_failed');
+    expect(res.headers.location).toBe('http://localhost:5173/masuk?error=google');
   });
 });
 
@@ -93,19 +93,46 @@ describe('findOrCreateGoogleUser', () => {
       avatarUrl: 'https://lh3.googleusercontent.com/a/foto',
       role: 'USER',
     });
-    expect(service.toPublicUser(user)).toMatchObject({ hasPassword: false, hasGoogle: true });
+    expect(service.toPublicUser(user)).toMatchObject({ hasPassword: false });
+    expect(service.toPublicUser(user)).not.toHaveProperty('googleId');
   });
 
-  it('menautkan akun email yang sudah ada tanpa menghapus password', async () => {
+  it('menautkan akun email, mencabut password, dan menghapus semua session lamanya', async () => {
     const existing = await helpers.createUser({ email: 'siti@gmail.com', name: 'Siti' });
+    const other = await helpers.createUser({ email: 'lain@gmail.com' });
+    const expiresAt = new Date(Date.now() + 60_000);
+    await prisma.session.createMany({
+      data: [
+        { id: 's-penyerang-1', data: '{}', expiresAt, userId: existing.id },
+        { id: 's-penyerang-2', data: '{}', expiresAt, userId: existing.id },
+        { id: 's-orang-lain', data: '{}', expiresAt, userId: other.id },
+      ],
+    });
 
     const user = await service.findOrCreateGoogleUser(profile());
 
     expect(user.id).toBe(existing.id);
     expect(user.name).toBe('Siti');
     expect(user.googleId).toBe('google-001');
-    expect(user.passwordHash).toBe(existing.passwordHash);
+    expect(user.passwordHash).toBeNull();
+    expect(await prisma.user.count()).toBe(2);
+    const sessions = await prisma.session.findMany({ select: { id: true } });
+    expect(sessions).toEqual([{ id: 's-orang-lain' }]);
+  });
+
+  it('login ulang dengan Google mengembalikan user yang sama', async () => {
+    const first = await service.findOrCreateGoogleUser(profile());
+    const second = await service.findOrCreateGoogleUser(profile());
+
+    expect(second.id).toBe(first.id);
+    expect(second.lastLoginAt).not.toBeNull();
     expect(await prisma.user.count()).toBe(1);
+  });
+
+  it('menolak profil Google tanpa status verifikasi email', async () => {
+    await expect(
+      service.findOrCreateGoogleUser(profile({ emails: [{ value: 'siti@gmail.com' }] })),
+    ).rejects.toMatchObject({ status: 401 });
   });
 
   it('memakai googleId walaupun email Google berubah', async () => {
