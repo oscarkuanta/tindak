@@ -101,7 +101,7 @@ Error: `503 SERVICE_UNAVAILABLE` jika database tidak dapat dihubungi.
 }
 ```
 
-- `role`: `USER` atau `ADMIN`. Admin ditentukan dari env `ADMIN_EMAILS`.
+- `role`: role tingkat website. `USER`, `ADMIN` (moderator), atau `BOARD_ADMIN` (pemberi status Official). `ADMIN` ditentukan dari env `ADMIN_EMAILS` (sudah aktif sejak Fase 1A). `BOARD_ADMIN` ditentukan dari env `BOARD_ADMIN_EMAILS` dan baru aktif di Fase 8. Jika satu email ada di kedua daftar, `ADMIN` yang dipakai.
 - `needsOnboarding`: `true` sampai user melewati Halaman Sambutan (endpoint penyelesaiannya dibuat di fase berikutnya).
 - Password dan hash tidak pernah dikirim.
 
@@ -213,12 +213,12 @@ Auth: Publik. Dipanggil oleh Google, bukan oleh frontend.
 
 ### Enum Board
 
-| Enum            | Nilai                                                                                                                                                             |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BoardType`     | `SCHOOL` (Sekolah), `CAMPUS` (Kampus), `OFFICE` (Kantor), `ROAD` (Jalan), `AREA` (Wilayah RT/RW/Kelurahan), `PUBLIC_FACILITY` (Fasilitas Umum), `OTHER` (Lainnya) |
-| `ManagerStatus` | `OFFICIAL` (Pihak Resmi), `VOLUNTEER` (Relawan/Komunitas)                                                                                                         |
-| `BoardRole`     | `OWNER` (Penindak Utama), `HANDLER` (Penindak)                                                                                                                    |
-| `TrustLabel`    | `NEW` (🆕 Baru), `TRUSTED` (✅ Terpercaya), `NONE` (tanpa label), `CAUTION` (⚠️ Perlu Waspada), `INACTIVE` (💤 Tidak Aktif)                                       |
+| Enum                | Nilai                                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BoardType`         | `SCHOOL` (Sekolah), `CAMPUS` (Kampus), `OFFICE` (Kantor), `ROAD` (Jalan), `AREA` (Wilayah RT/RW/Kelurahan), `PUBLIC_FACILITY` (Fasilitas Umum), `OTHER` (Lainnya) |
+| `BoardVerification` | `COMMUNITY` (Komunitas, status awal semua board), `OFFICIAL` (Official ✔️, diberikan Admin Board)                                                                 |
+| `BoardRole`         | `OWNER` (Penindak Utama), `HANDLER` (Penindak)                                                                                                                    |
+| `TrustLabel`        | `NEW` (🆕 Baru), `TRUSTED` (✅ Terpercaya), `NONE` (tanpa label), `CAUTION` (⚠️ Perlu Waspada), `INACTIVE` (💤 Tidak Aktif)                                       |
 
 Kategori bawaan per jenis (disimpan di `shared`, otomatis dibuat saat board dibuat):
 
@@ -237,7 +237,7 @@ Dipakai di hasil pencarian dan daftar.
   "name": "Jalan Rungkut Madya",
   "city": "Surabaya",
   "type": "ROAD",
-  "managerStatus": "VOLUNTEER",
+  "verification": "COMMUNITY",
   "coverImageUrl": null,
   "trustScore": 3.6,
   "trustLabel": "NEW",
@@ -255,6 +255,7 @@ Semua field BoardCard ditambah:
   "managerTitle": "Ketua RT 05",
   "description": "Melayani laporan kerusakan sepanjang Jalan Rungkut Madya.",
   "dangerousTargetHours": 48,
+  "verifiedAt": null,
   "ratingCount": 0,
   "responseRate": 0,
   "rejectedPercentage": 0,
@@ -273,6 +274,8 @@ Semua field BoardCard ditambah:
 - `trustScore` dan `trustLabel` dihitung dengan rumus di PRODUCT.md. Di Fase 2 nilainya dari board tanpa rating (`trustLabel` `NEW`). Field rating dan pengikut terisi penuh di Fase 3 dan 8.
 - `viewer` bernilai `null` untuk tamu. `viewer.role` bernilai `OWNER`, `HANDLER`, atau `null`.
 - `coverImageUrl` selalu `null` sampai infrastruktur upload dibuat di Fase 4.
+- `verification` selalu `COMMUNITY` saat board dibuat. Pembuat board tidak bisa memilih `OFFICIAL`. `verifiedAt` berisi waktu board dijadikan Official, atau `null`.
+- `managerTitle` adalah jabatan pengelola yang ditulis sendiri oleh Penindak Utama. Field ini hanya informasi, bukan bukti resmi.
 
 ### POST /api/boards
 
@@ -285,7 +288,6 @@ Body:
   "name": "Jalan Rungkut Madya",
   "city": "Surabaya",
   "type": "ROAD",
-  "managerStatus": "VOLUNTEER",
   "managerTitle": "Ketua RT 05",
   "description": "Melayani laporan kerusakan sepanjang Jalan Rungkut Madya.",
   "extraCategories": ["Parkir Liar"],
@@ -298,7 +300,6 @@ Body:
 | `name`                 | wajib, 3 sampai 80 karakter, di-trim                                                                                                                  |
 | `city`                 | wajib, harus ada di daftar `GET /api/meta/cities`                                                                                                     |
 | `type`                 | wajib, `BoardType`                                                                                                                                    |
-| `managerStatus`        | wajib, `ManagerStatus`                                                                                                                                |
 | `managerTitle`         | opsional, maks 80 karakter                                                                                                                            |
 | `description`          | wajib, 20 sampai 1000 karakter                                                                                                                        |
 | `extraCategories`      | opsional, array maks 10, tiap item 2 sampai 40 karakter, tidak boleh sama dengan kategori bawaan atau sesamanya (tanpa memedulikan huruf besar kecil) |
@@ -326,10 +327,10 @@ Query:
 | `q`                | opsional, 2 sampai 80 karakter. Kosong berarti semua board |
 | `city`             | opsional, nama kota dari daftar kota                       |
 | `type`             | opsional, `BoardType`                                      |
-| `managerStatus`    | opsional, `ManagerStatus`                                  |
+| `verification`     | opsional, `BoardVerification`                              |
 | `page`, `pageSize` | pagination standar                                         |
 
-Urutan: nama paling cocok (sama persis, lalu diawali `q`, lalu mengandung `q`), lalu `trustScore` tertinggi, lalu `activeReportCount` terbanyak.
+Urutan: nama paling cocok (sama persis, lalu diawali `q`, lalu mengandung `q`), lalu board `OFFICIAL`, lalu `trustScore` tertinggi, lalu `activeReportCount` terbanyak.
 
 Sukses `200`:
 
@@ -378,14 +379,13 @@ Body:
 ```json
 {
   "name": "Jalan Rungkut Madya Raya",
-  "managerStatus": "OFFICIAL",
   "managerTitle": "Lurah Rungkut",
   "description": "Deskripsi dan cakupan baru board ini.",
   "dangerousTargetHours": 24
 }
 ```
 
-Aturan field sama seperti `POST /api/boards`. `city` dan `type` tidak bisa diubah. Slug tidak berubah.
+Aturan field sama seperti `POST /api/boards`. `city` dan `type` tidak bisa diubah. Slug tidak berubah. `verification` tidak bisa diubah lewat endpoint ini, karena hanya Admin Board yang boleh mengubahnya (endpoint verifikasi dibuat di Fase 8).
 
 Sukses `200`: `{ "data": <Board> }`
 
