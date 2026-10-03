@@ -1,7 +1,15 @@
 import { useId } from 'react';
 import { cn } from '../../lib/cn.js';
 
-export function Input({ label, error, hint, id, className, ...props }) {
+export function Input({
+  label,
+  error,
+  hint,
+  id,
+  className,
+  'aria-describedby': describedBy,
+  ...props
+}) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
   const messageId = `${inputId}-message`;
@@ -17,7 +25,9 @@ export function Input({ label, error, hint, id, className, ...props }) {
       <input
         id={inputId}
         aria-invalid={Boolean(error)}
-        aria-describedby={message ? messageId : undefined}
+        aria-describedby={
+          [message && messageId, describedBy].filter(Boolean).join(' ') || undefined
+        }
         className={cn(
           'h-10 w-full rounded-base border bg-surface px-3 text-sm text-text placeholder:text-text-muted',
           'focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20',
