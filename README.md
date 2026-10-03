@@ -143,20 +143,21 @@ Callback sengaja lewat port 5173 (proxy Vite) agar cookie login tetap satu situs
 
 Semua dijalankan dari folder root.
 
-| Script                             | Fungsi                                                                       |
-| ---------------------------------- | ---------------------------------------------------------------------------- |
-| `npm run dev`                      | Menjalankan server (3000) dan client (5173) bersamaan                        |
-| `npm run build`                    | Build client untuk production ke `client/dist`                               |
-| `npm run lint`                     | ESLint dan cek format Prettier                                               |
-| `npm run format`                   | Merapikan semua file dengan Prettier                                         |
-| `npm test`                         | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`        |
-| `npm run db:generate`              | Membuat ulang Prisma Client setelah `schema.prisma` berubah                  |
-| `npm run db:migrate`               | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev        |
-| `npm run db:deploy`                | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production) |
-| `npm run db:seed`                  | Mengisi data awal dari `server/prisma/seed.js`                               |
-| `npm run db:studio`                | Membuka Prisma Studio untuk melihat isi database                             |
-| `npm run db:reset`                 | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                |
-| `npm run db:test:deploy -w server` | Menjalankan migrasi ke database `tindak_test`                                |
+| Script                                   | Fungsi                                                                       |
+| ---------------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run dev`                            | Menjalankan server (3000) dan client (5173) bersamaan                        |
+| `npm run build`                          | Build client untuk production ke `client/dist`                               |
+| `npm run lint`                           | ESLint dan cek format Prettier                                               |
+| `npm run format`                         | Merapikan semua file dengan Prettier                                         |
+| `npm test`                               | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`        |
+| `npm run db:generate`                    | Membuat ulang Prisma Client setelah `schema.prisma` berubah                  |
+| `npm run db:migrate`                     | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev        |
+| `npm run db:deploy`                      | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production) |
+| `npm run db:seed`                        | Mengisi data awal dari `server/prisma/seed.js`                               |
+| `npm run db:studio`                      | Membuka Prisma Studio untuk melihat isi database                             |
+| `npm run db:reset`                       | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                |
+| `npm run db:test:deploy -w server`       | Menjalankan migrasi ke database `tindak_test`                                |
+| `npm run make-admin -- email@contoh.com` | Menjadikan user dengan email itu sebagai Admin                               |
 
 ## Kontribusi
 

@@ -38,10 +38,10 @@ describe('POST /api/auth/register', () => {
       avatarUrl: null,
       role: 'USER',
       hasPassword: true,
-      hasGoogle: false,
       needsOnboarding: true,
     });
     expect(res.body.data).not.toHaveProperty('passwordHash');
+    expect(res.body.data).not.toHaveProperty('googleId');
 
     const cookie = sessionCookie(res);
     expect(cookie).toMatch(/HttpOnly/i);
@@ -96,8 +96,8 @@ describe('POST /api/auth/register', () => {
     expect(res.body.error.code).toBe('EMAIL_TAKEN');
   });
 
-  it('membatasi 10 percobaan daftar per 15 menit', async () => {
-    for (let i = 0; i < 10; i += 1) {
+  it('membatasi 5 percobaan daftar per jam', async () => {
+    for (let i = 0; i < 5; i += 1) {
       await request(app).post('/api/auth/register').send({ name: 'X' });
     }
     const res = await request(app).post('/api/auth/register').send(validRegister);
@@ -160,7 +160,7 @@ describe('POST /api/auth/login', () => {
     expect(wrongPassword.body.error.code).toBe('INVALID_CREDENTIALS');
   });
 
-  it('menolak login password untuk akun yang hanya terhubung Google', async () => {
+  it('meminta login Google untuk akun yang hanya terhubung Google', async () => {
     await createUser({ password: null, googleId: 'google-123' });
 
     const res = await request(app)
@@ -168,7 +168,11 @@ describe('POST /api/auth/login', () => {
       .send({ email: 'budi@example.com', password: 'rahasia123' });
 
     expect(res.status).toBe(401);
-    expect(res.body.error.code).toBe('INVALID_CREDENTIALS');
+    expect(res.body.error).toEqual({
+      code: 'USE_GOOGLE_LOGIN',
+      message: 'Akun ini terdaftar lewat Google. Silakan masuk dengan Google.',
+      details: [],
+    });
   });
 
   it('menolak input tidak valid', async () => {
@@ -206,6 +210,16 @@ describe('POST /api/auth/login', () => {
 
     expect(res.body.data.role).toBe('ADMIN');
   });
+
+  it('tidak menurunkan role ADMIN yang diberikan lewat make-admin', async () => {
+    await createUser({ role: 'ADMIN' });
+
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'budi@example.com', password: 'rahasia123' });
+
+    expect(res.body.data.role).toBe('ADMIN');
+  });
 });
 
 describe('POST /api/auth/logout', () => {
@@ -223,27 +237,27 @@ describe('POST /api/auth/logout', () => {
 
     const res = await agent.post('/api/auth/logout');
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ data: { loggedOut: true } });
+    expect(res.status).toBe(204);
+    expect(res.text).toBe('');
     expect(sessionCookie(res)).toMatch(/Expires=Thu, 01 Jan 1970/);
     expect(await prisma.session.count()).toBe(0);
 
     const me = await agent.get('/api/auth/me');
-    expect(me.body).toEqual({ data: null });
+    expect(me.status).toBe(401);
   });
 });
 
 describe('GET /api/auth/me', () => {
-  it('mengembalikan null untuk tamu tanpa membuat session', async () => {
+  it('membalas 401 untuk tamu tanpa membuat session', async () => {
     const res = await request(app).get('/api/auth/me');
 
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ data: null });
+    expect(res.status).toBe(401);
+    expect(res.body.error.code).toBe('UNAUTHENTICATED');
     expect(sessionCookie(res)).toBeUndefined();
     expect(await prisma.session.count()).toBe(0);
   });
 
-  it('mengembalikan null jika user di session sudah dihapus', async () => {
+  it('membalas 401 jika user di session sudah dihapus', async () => {
     const user = await createUser();
     const agent = request.agent(app);
     await agent.post('/api/auth/login').send({ email: 'budi@example.com', password: 'rahasia123' });
@@ -251,22 +265,50 @@ describe('GET /api/auth/me', () => {
 
     const res = await agent.get('/api/auth/me');
 
-    expect(res.body).toEqual({ data: null });
+    expect(res.status).toBe(401);
   });
 });
 
 describe('GET /api/auth/google tanpa konfigurasi', () => {
-  it('mengarahkan ke halaman login dengan error google_unavailable', async () => {
+  it('mengarahkan ke halaman masuk dengan error google_unavailable', async () => {
     const res = await request(app).get('/api/auth/google');
 
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('http://localhost:5173/login?error=google_unavailable');
+    expect(res.headers.location).toBe('http://localhost:5173/masuk?error=google_unavailable');
   });
 
   it('callback juga mengarahkan ke google_unavailable', async () => {
     const res = await request(app).get('/api/auth/google/callback?code=abc');
 
     expect(res.status).toBe(302);
-    expect(res.headers.location).toBe('http://localhost:5173/login?error=google_unavailable');
+    expect(res.headers.location).toBe('http://localhost:5173/masuk?error=google_unavailable');
+  });
+});
+
+describe('Perlindungan CSRF lewat header Origin', () => {
+  it('menolak POST dari origin lain', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .set('Origin', 'https://evil.com')
+      .send(validRegister);
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('CSRF_REJECTED');
+    expect(await prisma.user.count()).toBe(0);
+  });
+
+  it('menerima POST dari CLIENT_URL', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .set('Origin', 'http://localhost:5173')
+      .send(validRegister);
+
+    expect(res.status).toBe(201);
+  });
+
+  it('tidak memeriksa GET', async () => {
+    const res = await request(app).get('/api/health').set('Origin', 'https://evil.com');
+
+    expect(res.status).toBe(200);
   });
 });
