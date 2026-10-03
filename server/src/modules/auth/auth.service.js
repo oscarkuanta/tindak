@@ -23,8 +23,20 @@ function emailTaken() {
   ]);
 }
 
-export function resolveRole(email) {
-  return env.ADMIN_EMAILS.includes(email.toLowerCase()) ? USER_ROLES.ADMIN : USER_ROLES.USER;
+function useGoogleLogin() {
+  return new AppError(
+    401,
+    ERROR_CODES.USE_GOOGLE_LOGIN,
+    'Akun ini terdaftar lewat Google. Silakan masuk dengan Google.',
+  );
+}
+
+export function isAdminEmail(email) {
+  return env.ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+function roleForLogin(user) {
+  return isAdminEmail(user.email) ? USER_ROLES.ADMIN : user.role;
 }
 
 export function toPublicUser(user) {
@@ -35,7 +47,6 @@ export function toPublicUser(user) {
     avatarUrl: user.avatarUrl,
     role: user.role,
     hasPassword: Boolean(user.passwordHash),
-    hasGoogle: Boolean(user.googleId),
     needsOnboarding: user.onboardedAt === null,
     createdAt: user.createdAt,
   };
@@ -48,7 +59,7 @@ export async function findUserById(id) {
 async function recordLogin(user) {
   return prisma.user.update({
     where: { id: user.id },
-    data: { lastLoginAt: new Date(), role: resolveRole(user.email) },
+    data: { lastLoginAt: new Date(), role: roleForLogin(user) },
   });
 }
 
@@ -64,7 +75,7 @@ export async function registerUser({ name, email, password }) {
         name,
         email,
         passwordHash,
-        role: resolveRole(email),
+        role: isAdminEmail(email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
         lastLoginAt: new Date(),
       },
     });
@@ -77,10 +88,12 @@ export async function registerUser({ name, email, password }) {
 export async function authenticateUser({ email, password }) {
   const user = await prisma.user.findUnique({ where: { email } });
 
-  if (!user?.passwordHash) {
+  if (!user) {
     await bcrypt.compare(password, await getDummyHash());
     throw invalidCredentials();
   }
+
+  if (!user.passwordHash) throw useGoogleLogin();
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw invalidCredentials();
@@ -103,21 +116,26 @@ export async function findOrCreateGoogleUser(profile) {
   const byGoogleId = await prisma.user.findUnique({ where: { googleId } });
   if (byGoogleId) return recordLogin(byGoogleId);
 
-  if (!email || primaryEmail.verified === false) {
+  if (!email || primaryEmail.verified !== true) {
     throw new AppError(401, ERROR_CODES.UNAUTHENTICATED, 'Email Google belum terverifikasi');
   }
 
   const byEmail = await prisma.user.findUnique({ where: { email } });
   if (byEmail) {
-    return prisma.user.update({
-      where: { id: byEmail.id },
-      data: {
-        googleId,
-        avatarUrl: byEmail.avatarUrl ?? avatarUrl,
-        lastLoginAt: new Date(),
-        role: resolveRole(email),
-      },
-    });
+    const [, linked] = await prisma.$transaction([
+      prisma.session.deleteMany({ where: { userId: byEmail.id } }),
+      prisma.user.update({
+        where: { id: byEmail.id },
+        data: {
+          googleId,
+          passwordHash: null,
+          avatarUrl: byEmail.avatarUrl ?? avatarUrl,
+          lastLoginAt: new Date(),
+          role: roleForLogin(byEmail),
+        },
+      }),
+    ]);
+    return linked;
   }
 
   return prisma.user.create({
@@ -126,8 +144,21 @@ export async function findOrCreateGoogleUser(profile) {
       email,
       googleId,
       avatarUrl,
-      role: resolveRole(email),
+      role: isAdminEmail(email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
       lastLoginAt: new Date(),
     },
   });
+}
+
+export async function promoteToAdmin(email) {
+  const normalized = email.trim().toLowerCase();
+  const user = await prisma.user.findUnique({ where: { email: normalized } });
+  if (!user) {
+    throw new AppError(
+      404,
+      ERROR_CODES.NOT_FOUND,
+      `User dengan email ${normalized} tidak ditemukan`,
+    );
+  }
+  return prisma.user.update({ where: { id: user.id }, data: { role: USER_ROLES.ADMIN } });
 }

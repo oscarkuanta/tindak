@@ -3,8 +3,34 @@ import { loginSchema, registerSchema } from '@tindak/shared';
 import { safeRedirectPath } from '../src/utils/safeRedirect.js';
 import { PrismaSessionStore } from '../src/lib/PrismaSessionStore.js';
 import { prisma } from '../src/lib/prisma.js';
-import { resetDatabase } from './helpers/db.js';
+import { createUser, resetDatabase } from './helpers/db.js';
 import { assertTestDatabase } from './helpers/assertTestDatabase.js';
+import { requireAdmin, requireAuth } from '../src/middlewares/auth.js';
+import { promoteToAdmin } from '../src/modules/auth/auth.service.js';
+
+function runMiddleware(middleware, user) {
+  let result;
+  middleware({ user }, {}, (error) => {
+    result = error ?? 'next';
+  });
+  return result;
+}
+
+describe('middleware hak akses', () => {
+  it('requireAuth menolak tamu dan meneruskan user login', () => {
+    expect(runMiddleware(requireAuth, null)).toMatchObject({ status: 401 });
+    expect(runMiddleware(requireAuth, { id: 1, role: 'USER' })).toBe('next');
+  });
+
+  it('requireAdmin menolak user biasa dan tamu, meneruskan ADMIN', () => {
+    expect(runMiddleware(requireAdmin, { id: 1, role: 'USER' })).toMatchObject({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+    expect(runMiddleware(requireAdmin, null)).toMatchObject({ status: 401 });
+    expect(runMiddleware(requireAdmin, { id: 2, role: 'ADMIN' })).toBe('next');
+  });
+});
 
 describe('safeRedirectPath', () => {
   it.each([
@@ -65,6 +91,22 @@ describe('assertTestDatabase', () => {
   });
 });
 
+describe('promoteToAdmin', () => {
+  beforeEach(async () => {
+    await resetDatabase();
+  });
+
+  it('menjadikan user ADMIN berdasarkan email tanpa memedulikan huruf besar kecil', async () => {
+    await createUser();
+    const user = await promoteToAdmin('  BUDI@example.com ');
+    expect(user.role).toBe('ADMIN');
+  });
+
+  it('gagal jika email tidak terdaftar', async () => {
+    await expect(promoteToAdmin('tidakada@example.com')).rejects.toMatchObject({ status: 404 });
+  });
+});
+
 describe('PrismaSessionStore', () => {
   const store = new PrismaSessionStore(prisma, { pruneIntervalMs: 0 });
   const call = (method, ...args) =>
@@ -82,9 +124,11 @@ describe('PrismaSessionStore', () => {
 
   it('menyimpan, membaca, memperbarui, dan menghapus session', async () => {
     const future = new Date(Date.now() + 60_000).toISOString();
-    await call('set', 'sid-1', { cookie: { expires: future }, passport: { user: 1 } });
+    const user = await createUser();
+    await call('set', 'sid-1', { cookie: { expires: future }, passport: { user: user.id } });
 
-    expect(await call('get', 'sid-1')).toMatchObject({ passport: { user: 1 } });
+    expect(await call('get', 'sid-1')).toMatchObject({ passport: { user: user.id } });
+    expect((await prisma.session.findUnique({ where: { id: 'sid-1' } })).userId).toBe(user.id);
 
     const later = new Date(Date.now() + 120_000).toISOString();
     await call('touch', 'sid-1', { cookie: { expires: later } });

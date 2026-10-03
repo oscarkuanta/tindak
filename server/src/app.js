@@ -9,6 +9,8 @@ import { getSessionMiddleware } from './config/session.js';
 import { configurePassport } from './config/passport.js';
 import { createApiRouter } from './routes.js';
 import { createRateLimiter } from './middlewares/rateLimit.js';
+import { attachUser } from './middlewares/auth.js';
+import { createVerifyOrigin } from './middlewares/verifyOrigin.js';
 import { notFound } from './middlewares/notFound.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
@@ -30,12 +32,13 @@ export function createApp() {
       },
     }),
   );
+  app.use(createVerifyOrigin(env.CLIENT_URL));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
   app.use(getSessionMiddleware());
   app.use(passport.initialize());
-  app.use(passport.session());
+  app.use(attachUser);
 
   app.use('/api', createRateLimiter({ windowMs: 60_000, limit: 300 }), createApiRouter());
 
