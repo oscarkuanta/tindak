@@ -3,44 +3,44 @@ _Board pengaduan masalah fisik berbasis komunitas_
 
 *💡 KONSEP SINGKAT*
 - T!indak itu seperti Reddit, tapi khusus laporan masalah fisik: jalan rusak, sampah, toilet rusak, lampu mati, dll.
-- Pengganti subreddit namanya *Room*. Contoh: "Jalan Rungkut Madya", "SMKN 1 Surabaya".
-- Room *terbuka*. Cari saja namanya, tidak pakai kode.
+- Pengganti subreddit namanya *Board*. Contoh: "Jalan Rungkut Madya", "SMKN 1 Surabaya".
+- Board *terbuka*. Cari saja namanya, tidak pakai kode.
 - *Tidak ada komentar*. Interaksi cuma dukung (⬆️) dan reaksi (🚨 ⏳ 😤).
 - Fokus di *web desktop*. Tapi halaman lapor dan lacak tetap harus enak dipakai di HP.
 
 *🔑 LOGIN*
 - Bisa pakai *email + password* atau *Google*.
 - Lapor *tidak wajib login*.
-- Dukung, reaksi, ikuti room, rating, dan tandai pelanggaran *wajib login*.
+- Dukung, reaksi, ikuti board, rating, dan tandai pelanggaran *wajib login*.
 
 ━━━━━━━━━━━━━━━
 
 *👥 ROLE*
 
 *1. Tamu (belum login)*
-- Bisa lihat beranda, cari room, baca laporan.
+- Bisa lihat beranda, cari board, baca laporan.
 - Bisa bikin laporan. Wajib centang captcha. Maks 3 laporan per hari.
 - Laporannya otomatis anonim.
 - Dapat *Kode Lacak* untuk pantau laporan.
-- Tidak bisa dukung, reaksi, ikuti room, rating, atau tandai pelanggaran.
+- Tidak bisa dukung, reaksi, ikuti board, rating, atau tandai pelanggaran.
 
 *2. User (sudah login)*
 - Semua yang bisa dilakukan Tamu.
-- Plus: dukung, reaksi, ikuti room, kasih rating room, tandai pelanggaran.
+- Plus: dukung, reaksi, ikuti board, kasih rating board, tandai pelanggaran.
 - Bisa pilih lapor sebagai anonim.
 - Maks 5 laporan per hari.
-- Bisa bikin room (maks 3 room).
+- Bisa bikin board (maks 3 board).
 
 *3. Penindak Utama*
-- User yang bikin room otomatis jadi Penindak Utama.
-- Bisa atur room dan undang Penindak lain.
+- User yang bikin board otomatis jadi Penindak Utama.
+- Bisa atur board dan undang Penindak lain.
 - Bisa ubah status laporan.
-- Bisa alihkan kepemilikan room ke Penindak lain.
+- Bisa alihkan kepemilikan board ke Penindak lain.
 
 *4. Penindak*
 - User yang diundang Penindak Utama.
 - Tugasnya menangani laporan.
-- Tidak bisa ubah pengaturan room atau undang orang.
+- Tidak bisa ubah pengaturan board atau undang orang.
 
 *5. Admin*
 - Moderator seluruh website.
@@ -48,42 +48,42 @@ _Board pengaduan masalah fisik berbasis komunitas_
 - Admin *tidak* menangani laporan. Itu tugas Penindak.
 
 *⚠️ Catatan penting*
-- Role disimpan *per room*, bukan per akun. Jadi satu orang bisa jadi Penindak di room A, tapi jadi user biasa di room B.
-- Penindak tidak boleh kasih rating ke room-nya sendiri.
+- Role disimpan *per board*, bukan per akun. Jadi satu orang bisa jadi Penindak di board A, tapi jadi user biasa di board B.
+- Penindak tidak boleh kasih rating ke board-nya sendiri.
 
-*🏠 SISTEM ROOM*
+*🏠 SISTEM BOARD*
 
-*Cara bikin room*
-1. Login, klik "Buat Room".
+*Cara bikin board*
+1. Login, klik "Buat Board".
 2. Isi form:
-   • Nama room (wajib). Contoh: "Jalan Rungkut Madya"
+   • Nama board (wajib). Contoh: "Jalan Rungkut Madya"
    • Kota (wajib). Biar beda antara Jl. A. Yani Surabaya dan Jl. A. Yani Sidoarjo
    • Jenis: Sekolah, Kampus, Kantor, Jalan, Wilayah (RT/RW/Kelurahan), Fasilitas Umum, Lainnya
    • Status pengelola: *Pihak Resmi* (kepsek, HR, ketua RT, OSIS) atau *Relawan/Komunitas*
    • Jabatan (opsional). Contoh: "Wakasek Sarpras"
-   • Deskripsi dan cakupan room
+   • Deskripsi dan cakupan board
    • Foto sampul (opsional)
-   • Kategori laporan. Sudah terisi otomatis sesuai jenis room, bisa ditambah
+   • Kategori laporan. Sudah terisi otomatis sesuai jenis board, bisa ditambah
    • Target waktu penanganan laporan Berbahaya. Default 48 jam
-3. Saat ngetik nama, muncul daftar room yang mirip di kota yang sama. Ini cuma peringatan, bukan larangan.
-4. Room langsung aktif tanpa persetujuan Admin.
+3. Saat ngetik nama, muncul daftar board yang mirip di kota yang sama. Ini cuma peringatan, bukan larangan.
+4. Board langsung aktif tanpa persetujuan Admin.
 
-*Kategori otomatis per jenis room*
+*Kategori otomatis per jenis board*
 - Sekolah, Kampus, Kantor: Kebersihan, Kerusakan Fasilitas, Listrik, Air dan Sanitasi, Keamanan, Lainnya
 - Jalan: Jalan Berlubang, Lampu Jalan, Drainase dan Banjir, Rambu dan Marka, Pohon Tumbang, Lainnya
 - Wilayah, Fasilitas Umum: Sampah, Drainase, Penerangan, Fasilitas Rusak, Keamanan, Lainnya
 
-*Cara cari room*
+*Cara cari board*
 - Ada kolom pencarian di header setiap halaman.
-- Hasilnya berupa kartu room: nama, kota, jenis, Resmi/Relawan, skor kepercayaan, jumlah pengikut, jumlah laporan aktif.
+- Hasilnya berupa kartu board: nama, kota, jenis, Resmi/Relawan, skor kepercayaan, jumlah pengikut, jumlah laporan aktif.
 - Urutan: nama paling cocok, lalu skor kepercayaan, lalu yang paling aktif.
 - Bisa difilter per kota, jenis, dan status pengelola.
 
-*Kalau ada 2 room dengan nama sama?*
-Tidak apa-apa. User yang menilai lewat rating. Room yang tidak tanggap akan turun sendiri di hasil pencarian.
+*Kalau ada 2 board dengan nama sama?*
+Tidak apa-apa. User yang menilai lewat rating. Board yang tidak tanggap akan turun sendiri di hasil pencarian.
 
-*Room terbengkalai*
-- Kalau Penindak tidak aktif 30 hari, room dapat label 💤 Tidak Aktif.
+*Board terbengkalai*
+- Kalau Penindak tidak aktif 30 hari, board dapat label 💤 Tidak Aktif.
 - Orang tetap bisa lapor, tapi muncul peringatan di form.
 
 *Tambah Penindak*
@@ -94,14 +94,14 @@ Tidak apa-apa. User yang menilai lewat rating. Room yang tidak tanggap akan turu
 
 ━━━━━━━━━━━━━━━
 
-*⭐ SISTEM RATING ROOM*
-Tujuannya: user bisa tahu room ini bisa dipercaya atau tidak.
+*⭐ SISTEM RATING BOARD*
+Tujuannya: user bisa tahu board ini bisa dipercaya atau tidak.
 
 *Siapa yang boleh kasih rating?*
 - User yang sudah login.
-- Sudah ikuti room minimal 24 jam, ATAU pernah lapor di room itu saat login.
-- Bukan Penindak di room itu.
-- 1 user cuma bisa kasih 1 rating per room. Bisa diubah tiap 7 hari.
+- Sudah ikuti board minimal 24 jam, ATAU pernah lapor di board itu saat login.
+- Bukan Penindak di board itu.
+- 1 user cuma bisa kasih 1 rating per board. Bisa diubah tiap 7 hari.
 
 *Isi rating*
 - Bintang 1 sampai 5 (wajib)
@@ -111,29 +111,29 @@ Tujuannya: user bisa tahu room ini bisa dipercaya atau tidak.
 1. Rating bintang dari user (bobot 60%)
 2. Tingkat Tanggap = berapa persen laporan yang sudah disentuh Penindak dalam 7 hari (bobot 40%)
 
-Rumus rating dibuat supaya room dengan 1 atau 2 rating bintang 5 tidak langsung kelihatan sempurna. Room butuh banyak rating dulu.
+Rumus rating dibuat supaya board dengan 1 atau 2 rating bintang 5 tidak langsung kelihatan sempurna. Board butuh banyak rating dulu.
 
 _Untuk backend:_
 Rating Tertimbang = (15 + total bintang) ÷ (5 + jumlah rating)
 Skor = (0,6 × Rating Tertimbang) + (0,4 × Tingkat Tanggap × 5)
 
-*Label room*
+*Label board*
 - 🆕 Baru = kurang dari 5 rating
 - ✅ Terpercaya = skor 4,0 ke atas
 - Tanpa label = skor 2,5 sampai 3,9
 - ⚠️ Perlu Waspada = skor di bawah 2,5
 - 💤 Tidak Aktif = Penindak tidak aktif 30 hari
 
-*Pertahanan dari room palsu*
+*Pertahanan dari board palsu*
 - Penindak *tidak bisa hapus laporan*. Laporan yang ditolak tetap tampil beserta alasannya.
-- Persentase laporan ditolak tampil di halaman room.
-- User bisa tandai room sebagai "Room Palsu", nanti dicek Admin.
+- Persentase laporan ditolak tampil di halaman board.
+- User bisa tandai board sebagai "Board Palsu", nanti dicek Admin.
 
 
 *📝 ALUR LAPORAN*
 
 *Isi form laporan*
-- Room (otomatis terisi kalau dibuka dari halaman room)
+- Board (otomatis terisi kalau dibuka dari halaman board)
 - Judul, maks 100 karakter (wajib)
 - Kategori (wajib)
 - Tingkat bahaya: Rendah, Sedang, Berbahaya (wajib)
@@ -164,7 +164,7 @@ _Kenapa tidak dibatasi per IP saja? Karena wifi sekolah/kantor dipakai ratusan o
 6. Scan foto NSFW
 7. Simpan laporan, status *Baru*
 8. Pelapor otomatis dihitung 1 dukungan
-9. Kirim notifikasi ke Penindak room
+9. Kirim notifikasi ke Penindak board
 10. Tamu dapat Kode Lacak
 
 ━━━━━━━━━━━━━━━
@@ -199,7 +199,7 @@ Cabang:
 
 *Alasan penolakan (pilih salah satu)*
 - Bukan masalah fisik/fasilitas
-- Di luar cakupan room
+- Di luar cakupan board
 - Informasi tidak cukup
 - Laporan tidak benar
 - Lainnya (wajib tulis catatan)
@@ -286,11 +286,11 @@ Lubang besar tetap di atas.
 🔥 *Ramai* = paling banyak dukungan dan reaksi 48 jam terakhir (default untuk user)
 🎯 *Prioritas* = skor prioritas (default untuk Penindak)
 🆕 *Terbaru*
-✅ *Selesai* = bukti kinerja room
+✅ *Selesai* = bukti kinerja board
 
 *Beranda*
-- Tamu atau user baru: laporan paling ramai dari semua room + room populer.
-- User yang sudah ikuti room: ada tab "Diikuti" dan tab "Ramai".
+- Tamu atau user baru: laporan paling ramai dari semua board + board populer.
+- User yang sudah ikuti board: ada tab "Diikuti" dan tab "Ramai".
 
 ━━━━━━━━━━━━━━━
 
@@ -315,17 +315,17 @@ Alasan yang bisa dipilih:
 👤 Menyerang atau menyebut nama orang
 📢 Spam/iklan
 🚫 Bukan pengaduan masalah fisik
-🏚️ Room palsu (khusus room)
+🏚️ Board palsu (khusus board)
 Maks 20 tanda per akun per hari.
 
 *Lapis 4: Sembunyi otomatis*
 Laporan langsung disembunyikan kalau:
 - 2 akun tandai sebagai konten seksual/kekerasan, ATAU
 - 3 akun tandai dengan alasan lain, ATAU
-- 1 Penindak room itu menandai
+- 1 Penindak board itu menandai
 Tampilannya jadi kartu abu-abu "Sedang ditinjau moderator".
 
-_Kalau Penindak menyembunyikan laporan yang ternyata sah, lalu dipulihkan Admin, jumlahnya tampil di halaman room. Jadi Penindak tidak bisa sembarangan._
+_Kalau Penindak menyembunyikan laporan yang ternyata sah, lalu dipulihkan Admin, jumlahnya tampil di halaman board. Jadi Penindak tidak bisa sembarangan._
 
 *Lapis 5: Admin meninjau*
 Admin lihat: isi laporan, alasan tanda, skor NSFW, pelapor akun atau tamu, IP tersamar, riwayat pelaku.
@@ -358,7 +358,7 @@ Akun yang 5 tandanya ditolak Admin dalam 30 hari, tandanya tidak dihitung lagi u
 *Untuk pendukung*
 - Laporan yang didukung selesai
 
-*Untuk pengikut room*
+*Untuk pengikut board*
 - Laporan baru (bisa diatur: semua, hanya Berbahaya, atau mati)
 
 *Untuk Penindak*
@@ -380,13 +380,13 @@ Pakai Socket.IO. Jumlah dukungan, status, dan antrean Penindak berubah tanpa ref
 *👤 TAMU*
 _Melihat_
 1. Buka website, masuk Beranda.
-2. Ketik nama room, misal "Rungkut".
-3. Pilih room. Bandingkan skor dan status Resmi/Relawan.
-4. Lihat feed dan info room.
+2. Ketik nama board, misal "Rungkut".
+3. Pilih board. Bandingkan skor dan status Resmi/Relawan.
+4. Lihat feed dan info board.
 5. Klik laporan untuk lihat detail.
 
 _Melapor_
-1. Di halaman room, klik "Laporkan Masalah".
+1. Di halaman board, klik "Laporkan Masalah".
 2. Isi form, centang captcha, kirim.
 3. Simpan Kode Lacak.
 
@@ -401,27 +401,27 @@ _Memantau_
 *🙋 USER*
 _Masuk_
 1. Daftar atau login (email + password atau Google).
-2. Login pertama kali: muncul halaman sambutan + rekomendasi room.
+2. Login pertama kali: muncul halaman sambutan + rekomendasi board.
 
-_Ikuti room_
-1. Cari room, klik "Ikuti".
-2. Laporan room itu masuk ke tab Diikuti.
-3. Atur notifikasi per room.
+_Ikuti board_
+1. Cari board, klik "Ikuti".
+2. Laporan board itu masuk ke tab Diikuti.
+3. Atur notifikasi per board.
 
 _Lapor dan interaksi_
 1. Lapor seperti tamu, plus bisa pilih anonim.
 2. Dukung dan kasih reaksi.
 3. Tandai pelanggaran.
-4. Kasih rating room.
+4. Kasih rating board.
 5. Pantau di halaman "Laporan Saya" dan notifikasi.
 
 ━━━━━━━━━━━━━━━
 
 *🛠️ PENINDAK*
-_Bikin room_
-1. Login, klik "Buat Room", isi form.
-2. Room aktif, masuk Dashboard Room.
-3. Bagikan link room ke warga/siswa/karyawan.
+_Bikin board_
+1. Login, klik "Buat Board", isi form.
+2. Board aktif, masuk Dashboard Board.
+3. Bagikan link board ke warga/siswa/karyawan.
 
 _Siapkan tim_
 1. Undang Penindak lain.
@@ -445,7 +445,7 @@ Lihat statistik: jumlah per status, rata-rata waktu penanganan, tingkat tanggap,
 2. Lihat Dashboard Admin.
 3. Buka Antrean Moderasi (alasan paling berat di atas).
 4. Pulihkan, Hapus, atau Hapus + Ban.
-5. Tinjau laporan "Room Palsu": abaikan, beri peringatan, atau bekukan room.
+5. Tinjau laporan "Board Palsu": abaikan, beri peringatan, atau bekukan board.
 6. Kelola daftar ban dan lihat riwayat aksi.
 
 ━━━━━━━━━━━━━━━
@@ -454,8 +454,8 @@ Lihat statistik: jumlah per status, rata-rata waktu penanganan, tingkat tanggap,
 
 *Publik (tamu dan user)*
 1. Beranda
-2. Hasil Pencarian Room
-3. Halaman Room
+2. Hasil Pencarian Board
+3. Halaman Board
 4. Detail Laporan
 5. Buat Laporan
 6. Laporan Terkirim (Kode Lacak)
@@ -472,39 +472,39 @@ Lihat statistik: jumlah per status, rata-rata waktu penanganan, tingkat tanggap,
 15. Halaman Sambutan
 16. Beranda (tab Diikuti dan Ramai)
 17. Laporan Saya
-18. Room Diikuti
+18. Board Diikuti
 19. Notifikasi
 20. Profil
 
 *Penindak*
-21. Buat Room
-22. Dashboard Room
+21. Buat Board
+22. Dashboard Board
 23. Antrean Laporan (daftar dan kanban)
 24. Detail Laporan versi Penindak (ada panel aksi)
-25. Statistik Room
-26. Pengaturan Room
+25. Statistik Board
+26. Pengaturan Board
 27. Kelola Penindak
 
 *Admin*
 28. Dashboard Admin
 29. Antrean Moderasi
 30. Daftar Ban
-31. Kelola Room
+31. Kelola Board
 32. Kelola User
 33. Riwayat Aksi (Audit Log)
 
 *Komponen yang muncul di banyak halaman*
-- Header: logo, pencarian room, tombol "+ Lapor", Lacak Laporan, lonceng notifikasi, avatar atau tombol Masuk
+- Header: logo, pencarian board, tombol "+ Lapor", Lacak Laporan, lonceng notifikasi, avatar atau tombol Masuk
 - Pop-up Login
 - Pop-up Tandai Pelanggaran
-- Pop-up Rating Room
+- Pop-up Rating Board
 
 ━━━━━━━━━━━━━━━
 
 *🖥️ LAYOUT DESKTOP (3 kolom seperti Reddit)*
-- *Kiri*: menu (Beranda, Ramai, Laporan Saya) + daftar room yang diikuti
+- *Kiri*: menu (Beranda, Ramai, Laporan Saya) + daftar board yang diikuti
 - *Tengah*: tab urutan (Ramai, Prioritas, Terbaru, Selesai) + kartu laporan
-- *Kanan*: info room (nama, kota, Resmi/Relawan, skor, pengikut, tingkat tanggap, persentase ditolak, tombol Ikuti dan Rating, jumlah Penindak, aturan room)
+- *Kanan*: info board (nama, kota, Resmi/Relawan, skor, pengikut, tingkat tanggap, persentase ditolak, tombol Ikuti dan Rating, jumlah Penindak, aturan board)
 
 *Isi kartu laporan*
 Label bahaya, label status, judul, foto, lokasi, waktu, tombol ⬆️ Dukung, dan jumlah 🚨 ⏳ 😤
