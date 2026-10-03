@@ -121,6 +121,7 @@ File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saa
 | `GOOGLE_CLIENT_SECRET` | Tidak  | Client secret OAuth dari Google Cloud Console. Wajib diisi jika `GOOGLE_CLIENT_ID` diisi                         |
 | `GOOGLE_CALLBACK_URL`  | Tidak  | URL callback yang didaftarkan di Google. Default `CLIENT_URL` + `/api/auth/google/callback`                      |
 | `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                              |
+| `BOARD_ADMIN_EMAILS`   | Fase 8 | Daftar email Admin Board (pemberi status Official), dipisah koma                                                 |
 | `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                       |
 | `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                     |
 

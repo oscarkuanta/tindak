@@ -16,7 +16,9 @@ T!indak adalah board pengaduan masalah fisik (jalan rusak, sampah, fasilitas rus
 - Reaksi = Reaction (`DANGEROUS` 🚨, `LONG_STANDING` ⏳, `ANNOYING` 😤)
 - Tandai Pelanggaran = Flag
 - Tingkat bahaya = severity (`LOW`, `MEDIUM`, `DANGEROUS`)
-- Admin = platform admin (`User.role` `ADMIN`)
+- Admin = moderator platform (`User.role` `ADMIN`)
+- Admin Board = pemberi verifikasi board (`User.role` `BOARD_ADMIN`)
+- Komunitas / Official = status verifikasi board (`Board.verification` `COMMUNITY` / `OFFICIAL`). Official hanya diberikan Admin Board
 
 ## Stack
 
