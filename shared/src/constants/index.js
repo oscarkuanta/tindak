@@ -1,3 +1,5 @@
+export * from './auth.js';
+
 export const APP_NAME = 'T!indak';
 
 export const ERROR_CODES = Object.freeze({
@@ -11,4 +13,6 @@ export const ERROR_CODES = Object.freeze({
   INVALID_JSON: 'INVALID_JSON',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
+  EMAIL_TAKEN: 'EMAIL_TAKEN',
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
 });
