@@ -8,7 +8,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | ---- | -------------------------------------------- | ------ | ----------- | ------- | -------------------------------------------------- | ---------- |
 | 0    | Fondasi                                      | A+B    | Selesai     | Oscar   | [#1](https://github.com/oscarkuanta/tindak/pull/1) | 2026-10-03 |
 | 1A   | Auth backend                                 | A      | Review      | Oscar   | -                                                  | 2026-10-03 |
-| 1B   | Auth frontend                                | B      | Belum Mulai | -       | -                                                  | -          |
+| 1B   | Auth frontend                                | B      | Review      | Oscar   | -                                                  | 2026-10-03 |
 | 2A   | Board backend                                | A      | Belum Mulai | -       | -                                                  | -          |
 | 2B   | Board frontend                               | B      | Belum Mulai | -       | -                                                  | -          |
 | 3    | Ikuti Board dan Penindak                     | A+B    | Belum Mulai | -       | -                                                  | -          |
