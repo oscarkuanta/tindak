@@ -10,7 +10,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 1A   | Auth backend                                 | A      | Review      | Oscar   | -                                                  | 2026-10-03 |
 | 1B   | Auth frontend                                | B      | Review      | Oscar   | -                                                  | 2026-10-03 |
 | 2A   | Board backend                                | A      | Belum Mulai | -       | -                                                  | -          |
-| 2B   | Board frontend                               | B      | Belum Mulai | -       | -                                                  | -          |
+| 2B   | Board frontend                               | B      | Dikerjakan  | Akmal   | -                                                  | 2026-10-04 |
 | 3    | Ikuti Board dan Penindak                     | A+B    | Belum Mulai | -       | -                                                  | -          |
 | 4    | Laporan dan tamu                             | A+B    | Belum Mulai | -       | -                                                  | -          |
 | 5    | Penindakan dan status                        | A+B    | Belum Mulai | -       | -                                                  | -          |
