@@ -500,3 +500,154 @@ Sukses `200`:
 ```
 
 Urutan: provinsi A sampai Z, lalu nama kota A sampai Z.
+
+---
+
+## Fase 3: Ikuti Board dan Penindak
+
+### Enum Follow dan Anggota Board
+
+| Enum                | Nilai                                                                   |
+| ------------------- | ----------------------------------------------------------------------- |
+| `FollowNotifyLevel` | `ALL` (Semua laporan), `DANGEROUS_ONLY` (Hanya Berbahaya), `OFF` (Mati) |
+| `BoardMemberStatus` | `INVITED` (Diundang), `ACTIVE` (Aktif)                                  |
+
+Untuk user yang login, objek `BoardCard` dan `Board` mengisi `viewer`:
+
+```json
+{ "isFollowing": true, "notifyLevel": "ALL", "role": null }
+```
+
+Tamu mendapat `viewer: null`. `role` bernilai `OWNER`, `HANDLER`, atau `null` untuk user biasa. Penindak Utama dan Penindak tidak dapat mengikuti Board yang mereka kelola. Status verifikasi tidak dapat diubah lewat endpoint pengikut, anggota, atau alih kepemilikan.
+
+### POST /api/boards/:slug/follow
+
+Auth: Login. Mengikuti Board dengan notifikasi awal `ALL`. Idempoten; jika sudah mengikuti, status tidak berubah.
+
+Sukses `200`: `{ "data": { "notifyLevel": "ALL" } }`.
+
+Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN` jika pemanggil adalah Penindak Board, `404 BOARD_NOT_FOUND`.
+
+### DELETE /api/boards/:slug/follow
+
+Auth: Login. Berhenti mengikuti Board. Idempoten; jika belum mengikuti, tidak ada perubahan.
+
+Sukses `204` tanpa body.
+
+Error: `401 UNAUTHENTICATED`, `404 BOARD_NOT_FOUND`.
+
+### PATCH /api/boards/:slug/follow
+
+Auth: Login. Mengubah tingkat notifikasi Board yang sedang diikuti.
+
+Body: `{ "notifyLevel": "DANGEROUS_ONLY" }`. Nilai yang diterima: `ALL`, `DANGEROUS_ONLY`, atau `OFF`.
+
+Sukses `200`: `{ "data": { "notifyLevel": "DANGEROUS_ONLY" } }`.
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `404 BOARD_NOT_FOUND`, `404 FOLLOW_NOT_FOUND`.
+
+### GET /api/me/follows
+
+Auth: Login. Daftar Board yang diikuti user.
+
+Sukses `200`:
+
+```json
+{
+  "data": [
+    {
+      "board": <BoardCard>,
+      "notifyLevel": "ALL",
+      "createdAt": "2026-10-04T08:14:00.000Z"
+    }
+  ]
+}
+```
+
+Urutan: yang terbaru diikuti lebih dahulu.
+
+### Objek BoardMember
+
+```json
+{
+  "userId": 18,
+  "role": "HANDLER",
+  "status": "INVITED",
+  "createdAt": "2026-10-04T08:14:00.000Z",
+  "user": { "id": 18, "name": "Dewi Lestari", "email": "dewi@example.com", "avatarUrl": null }
+}
+```
+
+### POST /api/boards/:slug/handlers
+
+Auth: OWNER. Mengundang akun yang sudah terdaftar menjadi Penindak.
+
+Body: `{ "email": "dewi@example.com" }`.
+
+Sukses `201`: `{ "data": <BoardMember> }` dengan status `INVITED`. Maksimal 10 Penindak per Board, termasuk undangan yang belum dijawab.
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 USER_NOT_FOUND`, `409 HANDLER_ALREADY_MEMBER`, `409 HANDLER_LIMIT_REACHED`.
+
+### GET /api/boards/:slug/handlers
+
+Auth: OWNER atau HANDLER. Mengambil anggota Penindak di Board.
+
+Sukses `200`: `{ "data": [<BoardMember>] }`.
+
+Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`.
+
+### DELETE /api/boards/:slug/handlers/:userId
+
+Auth: OWNER. Mencabut keanggotaan HANDLER aktif atau membatalkan undangan. OWNER tidak dapat mencabut dirinya sendiri.
+
+Sukses `204` tanpa body.
+
+Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN` atau `403 CANNOT_REMOVE_OWNER`, `404 BOARD_NOT_FOUND`, `404 HANDLER_NOT_FOUND`.
+
+### GET /api/me/invitations
+
+Auth: Login. Mengambil undangan Penindak yang masih menunggu jawaban.
+
+Sukses `200`:
+
+```json
+{
+  "data": [
+    {
+      "id": 24,
+      "board": <BoardCard>,
+      "createdAt": "2026-10-04T08:14:00.000Z"
+    }
+  ]
+}
+```
+
+### POST /api/me/invitations/:id/accept
+
+Auth: Login sebagai penerima undangan. Mengaktifkan keanggotaan HANDLER.
+
+Sukses `200`: `{ "data": <BoardMember> }` dengan status `ACTIVE`.
+
+Error: `401 UNAUTHENTICATED`, `404 INVITATION_NOT_FOUND`, `409 INVITATION_NOT_PENDING`.
+
+### POST /api/me/invitations/:id/decline
+
+Auth: Login sebagai penerima undangan. Menolak dan menghapus undangan.
+
+Sukses `204` tanpa body.
+
+Error: `401 UNAUTHENTICATED`, `404 INVITATION_NOT_FOUND`, `409 INVITATION_NOT_PENDING`.
+
+### POST /api/boards/:slug/transfer
+
+Auth: OWNER. Mengalihkan kepemilikan kepada Penindak berstatus `ACTIVE`.
+
+Body: `{ "userId": 18 }`.
+
+Sukses `200`: `{ "data": <Board> }`. Perubahan OWNER dan HANDLER dilakukan dalam satu transaksi. Penerima harus tetap berada dalam batas tiga Board milik. Field `verification` dan `verifiedAt` tidak berubah saat kepemilikan dialihkan.
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 HANDLER_NOT_FOUND`, `409 BOARD_LIMIT_REACHED`.
+
+### Perubahan data Board
+
+`GET /api/boards/:slug` dan `GET /api/boards/search` mengisi `followerCount` dari jumlah pengikut sebenarnya. Untuk user login, respons juga mengisi `viewer.isFollowing`, `viewer.notifyLevel`, dan `viewer.role`; untuk tamu, `viewer` bernilai `null`.
