@@ -1,6 +1,7 @@
 export const USER_ROLES = Object.freeze({
   USER: 'USER',
   ADMIN: 'ADMIN',
+  BOARD_ADMIN: 'BOARD_ADMIN',
 });
 
 export const PASSWORD_MIN_LENGTH = 8;
