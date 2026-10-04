@@ -71,33 +71,39 @@ export function MyBoardsPage() {
       )}
       {!boardsQuery.isPending && memberships.length > 0 && (
         <div className="flex flex-col gap-3">
-          {memberships.map(({ board, role }) => (
-            <div key={board.id} className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-              <div className="min-w-0 flex-1">
-                <BoardCard board={board} />
-              </div>
-              <div className="flex shrink-0 flex-col justify-center gap-2 rounded-base border border-border bg-surface p-3 sm:w-48">
-                <span className="text-xs font-medium text-text-muted">Peran</span>
-                <span className="text-sm font-semibold">
-                  {BOARD_ROLE_LABELS[role] ?? 'Penindak'}
-                </span>
-                <Link
-                  className="text-sm font-medium text-brand hover:underline"
-                  to={`/b/${board.slug}`}
-                >
-                  Buka Board
-                </Link>
-                {role === 'OWNER' && (
+          {memberships.map(({ board, role }) => {
+            const boardWithRole = {
+              ...board,
+              viewer: { ...board.viewer, role },
+            };
+            return (
+              <div key={board.id} className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                <div className="min-w-0 flex-1">
+                  <BoardCard board={boardWithRole} showFollowButton={false} />
+                </div>
+                <div className="flex shrink-0 flex-col justify-center gap-2 rounded-base border border-border bg-surface p-3 sm:w-48">
+                  <span className="text-xs font-medium text-text-muted">Peran</span>
+                  <span className="text-sm font-semibold">
+                    {BOARD_ROLE_LABELS[role] ?? 'Penindak'}
+                  </span>
                   <Link
                     className="text-sm font-medium text-brand hover:underline"
-                    to={`/b/${board.slug}/pengaturan`}
+                    to={`/b/${board.slug}`}
                   >
-                    Pengaturan
+                    Buka Board
                   </Link>
-                )}
+                  {role === 'OWNER' && (
+                    <Link
+                      className="text-sm font-medium text-brand hover:underline"
+                      to={`/b/${board.slug}/pengaturan`}
+                    >
+                      Pengaturan
+                    </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </section>

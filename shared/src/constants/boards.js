@@ -40,6 +40,19 @@ export const BOARD_ROLE_LABELS = Object.freeze({
   HANDLER: 'Penindak',
 });
 
+export const FOLLOW_NOTIFY_LEVELS = Object.freeze(['ALL', 'DANGEROUS_ONLY', 'OFF']);
+export const FOLLOW_NOTIFY_LEVEL_LABELS = Object.freeze({
+  ALL: 'Semua laporan',
+  DANGEROUS_ONLY: 'Hanya Berbahaya',
+  OFF: 'Mati',
+});
+
+export const BOARD_MEMBER_STATUSES = Object.freeze(['INVITED', 'ACTIVE']);
+export const BOARD_MEMBER_STATUS_LABELS = Object.freeze({
+  INVITED: 'Diundang',
+  ACTIVE: 'Aktif',
+});
+
 export const TRUST_LABELS = Object.freeze(['NEW', 'TRUSTED', 'NONE', 'CAUTION', 'INACTIVE']);
 export const TRUST_LABEL_TEXT = Object.freeze({
   NEW: 'Baru',

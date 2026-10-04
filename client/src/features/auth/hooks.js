@@ -15,7 +15,12 @@ function useSetMe() {
   const queryClient = useQueryClient();
   return (user) => {
     queryClient.setQueryData(meQueryKey, user);
-    queryClient.invalidateQueries({ predicate: (query) => query.queryKey[0] !== meQueryKey[0] });
+    queryClient.removeQueries({
+      predicate: (query) => query.queryKey[0] === meQueryKey[0] && query.queryKey.length > 1,
+    });
+    queryClient.invalidateQueries({
+      predicate: (query) => query.queryKey[0] !== meQueryKey[0],
+    });
   };
 }
 
