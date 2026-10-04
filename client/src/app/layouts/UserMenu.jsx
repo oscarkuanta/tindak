@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Avatar } from '../../components/ui/index.js';
+import { USER_ROLES } from '@tindak/shared';
 import { useLogout } from '../../features/auth/hooks.js';
 
 const ITEM_CLASS =
@@ -79,6 +80,26 @@ export function UserMenu({ user }) {
             >
               Board Saya
             </Link>
+            {user.role === USER_ROLES.BOARD_ADMIN && (
+              <Link
+                role="menuitem"
+                to="/verifikasi-board"
+                className={`${ITEM_CLASS} text-text`}
+                onClick={() => setOpen(false)}
+              >
+                Verifikasi Board
+              </Link>
+            )}
+            {user.role === USER_ROLES.ADMIN && (
+              <Link
+                role="menuitem"
+                to="/panel-admin"
+                className={`${ITEM_CLASS} text-text`}
+                onClick={() => setOpen(false)}
+              >
+                Panel Admin
+              </Link>
+            )}
             <button
               role="menuitem"
               type="button"
