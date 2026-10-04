@@ -3,7 +3,7 @@
 - Branch: `feat/f3b-follow-handler` (berdasarkan `origin/dev` commit `7fee14e`)
 - Pemilik: Akmal
 - Tanggal: 2026-10-04
-- PR: menunggu dibuat
+- PR: [#15](https://github.com/oscarkuanta/tindak/pull/15)
 
 ## Ringkasan
 
