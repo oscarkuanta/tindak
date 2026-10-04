@@ -454,6 +454,20 @@ Sukses `200`:
 
 Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 CATEGORY_NOT_FOUND`, `409 CATEGORY_PROTECTED` (kategori "Lainnya" tidak bisa dihapus).
 
+### PUT /api/boards/:slug/categories/order
+
+Auth: OWNER. Mengubah urutan kategori pada board.
+
+Body berisi semua ID kategori di board tepat satu kali, dalam urutan yang diinginkan:
+
+```json
+{ "categoryIds": [10, 15, 21] }
+```
+
+Sukses `200`: `{ "data": [<Category>] }` dalam urutan baru. Urutan array dipakai sebagai urutan kategori.
+
+Error: `400 VALIDATION_ERROR` jika daftar kosong, ada ID duplikat, atau bentuk input tidak valid; `401 UNAUTHENTICATED`; `403 FORBIDDEN`; `404 BOARD_NOT_FOUND`; `404 CATEGORY_NOT_FOUND` jika ID kategori tidak cocok dengan kategori di board tersebut.
+
 ### GET /api/me/boards
 
 Auth: Login. Daftar board tempat user menjadi Penindak Utama atau Penindak.
