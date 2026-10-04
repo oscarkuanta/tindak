@@ -3,7 +3,7 @@
 - Branch: `feat/f2b-board-ui` (berdasarkan commit `origin/dev` yang tersedia saat fase dimulai)
 - Pemilik: Akmal
 - Tanggal: 2026-10-04
-- PR: menunggu dibuat
+- PR: [#14](https://github.com/oscarkuanta/tindak/pull/14) — CI lulus, menunggu review
 
 ## Ringkasan
 
