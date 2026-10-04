@@ -21,18 +21,18 @@ Frontend Board kini memiliki alur Buat Board, pencarian, detail publik, Board Sa
 
 ## File Penting
 
-| File | Keterangan |
-| ---- | ---------- |
-| `client/src/app/router.jsx` | Route publik, route RequireAuth, dan layout Board |
-| `client/src/features/boards/api.js` dan `hooks.js` | Pemanggilan API, query key, mutation, dan invalidasi cache |
-| `client/src/pages/create-board/CreateBoardPage.jsx` | Wizard pembuatan Board |
-| `client/src/pages/board-detail/BoardDetailPage.jsx` | Detail Board publik dan keadaan 404 |
-| `client/src/pages/search-boards/SearchBoardsPage.jsx` | Pencarian, filter URL, dan pagination |
-| `client/src/pages/my-boards/MyBoardsPage.jsx` | Daftar Board user dan batas pembuatan |
-| `client/src/pages/board-settings/BoardSettingsPage.jsx` | Informasi, verifikasi, dan kategori Board |
-| `client/src/components/boards/BoardBadges.jsx` | OfficialBadge, CommunityBadge, TrustBadge, dan ScopeBadge |
-| `shared/src/constants/boards.js` dan `shared/src/schemas/boards.js` | Enum/label/kategori dan skema Zod Board |
-| `docs/API.md` | Kontrak endpoint pengurutan kategori |
+| File                                                                | Keterangan                                                 |
+| ------------------------------------------------------------------- | ---------------------------------------------------------- |
+| `client/src/app/router.jsx`                                         | Route publik, route RequireAuth, dan layout Board          |
+| `client/src/features/boards/api.js` dan `hooks.js`                  | Pemanggilan API, query key, mutation, dan invalidasi cache |
+| `client/src/pages/create-board/CreateBoardPage.jsx`                 | Wizard pembuatan Board                                     |
+| `client/src/pages/board-detail/BoardDetailPage.jsx`                 | Detail Board publik dan keadaan 404                        |
+| `client/src/pages/search-boards/SearchBoardsPage.jsx`               | Pencarian, filter URL, dan pagination                      |
+| `client/src/pages/my-boards/MyBoardsPage.jsx`                       | Daftar Board user dan batas pembuatan                      |
+| `client/src/pages/board-settings/BoardSettingsPage.jsx`             | Informasi, verifikasi, dan kategori Board                  |
+| `client/src/components/boards/BoardBadges.jsx`                      | OfficialBadge, CommunityBadge, TrustBadge, dan ScopeBadge  |
+| `shared/src/constants/boards.js` dan `shared/src/schemas/boards.js` | Enum/label/kategori dan skema Zod Board                    |
+| `docs/API.md`                                                       | Kontrak endpoint pengurutan kategori                       |
 
 ## Perubahan Database
 
@@ -40,9 +40,9 @@ Tidak ada.
 
 ## Endpoint Baru
 
-| Method | Path | Auth | Keterangan |
-| ------ | ---- | ---- | ---------- |
-| PUT | `/api/boards/:slug/categories/order` | OWNER | Kontrak untuk menyimpan urutan kategori; frontend mengirim seluruh ID kategori sesuai urutan baru. Endpoint backend belum tersedia di Fase 2A. |
+| Method | Path                                 | Auth  | Keterangan                                                                                                                                     |
+| ------ | ------------------------------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| PUT    | `/api/boards/:slug/categories/order` | OWNER | Kontrak untuk menyimpan urutan kategori; frontend mengirim seluruh ID kategori sesuai urutan baru. Endpoint backend belum tersedia di Fase 2A. |
 
 `docs/API.md` diperbarui untuk mencatat kontrak tersebut. Parameter filter URL `scopeType` dipetakan frontend menjadi query API `type`, sesuai kontrak pencarian yang sudah ada.
 
