@@ -3,7 +3,7 @@
 - Branch: `feat/f4b-reports`
 - Pemilik: Akmal
 - Tanggal: 2026-10-05
-- PR: -
+- PR: [#16](https://github.com/oscarkuanta/tindak/pull/16)
 
 ## Ringkasan
 
