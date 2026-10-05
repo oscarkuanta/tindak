@@ -3,8 +3,7 @@ import { Link, useParams } from 'react-router';
 import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { ScopeBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
-import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
-import { useMe } from '../../features/auth/hooks.js';
+import { FollowButton } from '../../components/boards/FollowButton.jsx';
 import { useBoard } from '../../features/boards/hooks.js';
 import { useToast } from '../../features/boards/toastContext.js';
 
@@ -111,8 +110,6 @@ function BoardInformation({ board }) {
 export function BoardDetailPage() {
   const { slug } = useParams();
   const boardQuery = useBoard(slug);
-  const { data: user } = useMe();
-  const { openLoginPrompt } = useLoginPrompt();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('Ramai');
 
@@ -157,23 +154,19 @@ export function BoardDetailPage() {
   const board = boardQuery.data.data;
   const isOwner = board.viewer?.role === 'OWNER';
 
-  function followBoard() {
-    if (!user) {
-      openLoginPrompt({ title: 'Masuk untuk mengikuti Board ini' });
-      return;
-    }
-    showToast('Segera hadir');
-  }
-
   return (
     <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <main className="min-w-0">
-        <Card className="overflow-hidden p-0">
+        <Card className="overflow-visible p-0">
           {board.coverImageUrl ? (
-            <img src={board.coverImageUrl} alt="" className="h-32 w-full object-cover sm:h-44" />
+            <img
+              src={board.coverImageUrl}
+              alt=""
+              className="h-32 w-full rounded-t-base object-cover sm:h-44"
+            />
           ) : (
             <div
-              className="flex h-32 items-center justify-center bg-brand-soft text-4xl font-bold text-brand sm:h-44"
+              className="flex h-32 items-center justify-center rounded-t-base bg-brand-soft text-4xl font-bold text-brand sm:h-44"
               aria-hidden="true"
             >
               {getInitials(board.name)}
@@ -194,9 +187,7 @@ export function BoardDetailPage() {
             )}
             <div className="mt-5 flex flex-wrap gap-2">
               <Button onClick={() => showToast('Segera hadir')}>Laporkan Masalah</Button>
-              <Button variant="secondary" onClick={followBoard}>
-                Ikuti
-              </Button>
+              <FollowButton board={board} />
               {isOwner && (
                 <Link
                   className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"

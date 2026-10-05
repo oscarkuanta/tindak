@@ -4,6 +4,7 @@ import { BOARD_TYPE_LABELS, boardCategorySchema, updateBoardSchema } from '@tind
 import { Alert, Button, Card, Input, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { HandlerManagement } from '../../components/boards/HandlerManagement.jsx';
 import {
   useBoard,
   useCreateBoardCategory,
@@ -355,10 +356,7 @@ export function BoardSettingsPage() {
         </ol>
       </Card>
 
-      <Card as="section">
-        <h2 className="text-lg font-semibold">Penindak</h2>
-        <p className="mt-2 text-sm text-text-muted">Segera hadir di Fase 3.</p>
-      </Card>
+      <HandlerManagement slug={slug} boardName={board.name} />
     </section>
   );
 }
