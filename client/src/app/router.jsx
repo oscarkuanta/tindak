@@ -20,6 +20,9 @@ import { BoardSettingsPage } from '../pages/board-settings/BoardSettingsPage.jsx
 import { FollowedBoardsPage } from '../pages/followed-boards/FollowedBoardsPage.jsx';
 import { InvitationsPage } from '../pages/invitations/InvitationsPage.jsx';
 import { RolePlaceholderPage } from '../pages/placeholders/RolePlaceholderPage.jsx';
+import { BoardQueuePage } from '../pages/board-queue/BoardQueuePage.jsx';
+import { ReportDetailPage } from '../pages/report-detail/ReportDetailPage.jsx';
+import { TrackReportPage } from '../pages/track-report/TrackReportPage.jsx';
 
 export const routes = [
   {
@@ -45,6 +48,9 @@ export const routes = [
             children: [
               { index: true, element: <HomePage /> },
               { path: '/cari', element: <SearchBoardsPage /> },
+              { path: '/laporan/:id', element: <ReportDetailPage /> },
+              { path: '/lacak', element: <TrackReportPage /> },
+              { path: '/lacak/:code', element: <TrackReportPage /> },
               {
                 element: <RequireAuth />,
                 children: [
@@ -72,6 +78,14 @@ export const routes = [
             element: <BoardLayout />,
             children: [
               { path: '/b/:slug', element: <BoardDetailPage /> },
+              {
+                path: '/b/:slug/antrean',
+                element: (
+                  <RequireAuth>
+                    <BoardQueuePage />
+                  </RequireAuth>
+                ),
+              },
               { path: '/b/:slug/pengaturan', element: <BoardSettingsPage /> },
             ],
           },
