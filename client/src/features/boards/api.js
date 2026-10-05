@@ -56,3 +56,35 @@ export function deleteBoardCategory(slug, id) {
 export function reorderBoardCategories(slug, categoryIds) {
   return api.put(`/boards/${encodeURIComponent(slug)}/categories/order`, { categoryIds });
 }
+
+export function followBoard(slug) {
+  return api.post(`/boards/${encodeURIComponent(slug)}/follow`);
+}
+
+export function unfollowBoard(slug) {
+  return api.delete(`/boards/${encodeURIComponent(slug)}/follow`);
+}
+
+export function updateFollowNotifyLevel(slug, payload) {
+  return api.patch(`/boards/${encodeURIComponent(slug)}/follow`, payload);
+}
+
+export function getMyFollows() {
+  return api.get('/me/follows');
+}
+
+export function getBoardHandlers(slug) {
+  return api.get(`/boards/${encodeURIComponent(slug)}/handlers`);
+}
+
+export function inviteBoardHandler(slug, payload) {
+  return api.post(`/boards/${encodeURIComponent(slug)}/handlers`, payload);
+}
+
+export function removeBoardHandler(slug, userId) {
+  return api.delete(`/boards/${encodeURIComponent(slug)}/handlers/${encodeURIComponent(userId)}`);
+}
+
+export function transferBoardOwnership(slug, payload) {
+  return api.post(`/boards/${encodeURIComponent(slug)}/transfer`, payload);
+}

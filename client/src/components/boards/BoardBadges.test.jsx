@@ -1,39 +1,61 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BoardCard } from './BoardCard.jsx';
 import { CommunityBadge, OfficialBadge, ScopeBadge, TrustBadge } from './BoardBadges.jsx';
+import { LoginPromptProvider } from '../../features/auth/LoginPromptProvider.jsx';
+import { ToastProvider } from '../../features/boards/ToastProvider.jsx';
 
 describe('Badge Board', () => {
   it('membedakan status Official dari Komunitas dan trust label', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: { code: 'UNAUTHENTICATED' } }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+      ),
+    );
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    });
     render(
       <MemoryRouter>
-        <div>
-          <OfficialBadge />
-          <CommunityBadge />
-          <TrustBadge label="TRUSTED" />
-          <ScopeBadge type="ROAD" />
-          <BoardCard
-            board={{
-              id: 1,
-              slug: 'official',
-              name: 'Board Official',
-              city: 'Surabaya',
-              type: 'ROAD',
-              verification: 'OFFICIAL',
-            }}
-          />
-          <BoardCard
-            board={{
-              id: 2,
-              slug: 'community',
-              name: 'Board Komunitas',
-              city: 'Sidoarjo',
-              type: 'AREA',
-              verification: 'COMMUNITY',
-            }}
-          />
-        </div>
+        <QueryClientProvider client={queryClient}>
+          <LoginPromptProvider>
+            <ToastProvider>
+              <div>
+                <OfficialBadge />
+                <CommunityBadge />
+                <TrustBadge label="TRUSTED" />
+                <ScopeBadge type="ROAD" />
+                <BoardCard
+                  board={{
+                    id: 1,
+                    slug: 'official',
+                    name: 'Board Official',
+                    city: 'Surabaya',
+                    type: 'ROAD',
+                    verification: 'OFFICIAL',
+                  }}
+                />
+                <BoardCard
+                  board={{
+                    id: 2,
+                    slug: 'community',
+                    name: 'Board Komunitas',
+                    city: 'Sidoarjo',
+                    type: 'AREA',
+                    verification: 'COMMUNITY',
+                  }}
+                />
+              </div>
+            </ToastProvider>
+          </LoginPromptProvider>
+        </QueryClientProvider>
       </MemoryRouter>,
     );
 

@@ -17,7 +17,8 @@ import { CreateBoardPage } from '../pages/create-board/CreateBoardPage.jsx';
 import { SearchBoardsPage } from '../pages/search-boards/SearchBoardsPage.jsx';
 import { BoardDetailPage } from '../pages/board-detail/BoardDetailPage.jsx';
 import { BoardSettingsPage } from '../pages/board-settings/BoardSettingsPage.jsx';
-import { ComingSoonPage } from '../pages/placeholders/ComingSoonPage.jsx';
+import { FollowedBoardsPage } from '../pages/followed-boards/FollowedBoardsPage.jsx';
+import { InvitationsPage } from '../pages/invitations/InvitationsPage.jsx';
 import { RolePlaceholderPage } from '../pages/placeholders/RolePlaceholderPage.jsx';
 
 export const routes = [
@@ -44,12 +45,13 @@ export const routes = [
             children: [
               { index: true, element: <HomePage /> },
               { path: '/cari', element: <SearchBoardsPage /> },
-              { path: '/board-diikuti', element: <ComingSoonPage title="Board Diikuti" /> },
               {
                 element: <RequireAuth />,
                 children: [
                   { path: '/profil', element: <ProfilePage /> },
                   { path: '/board-saya', element: <MyBoardsPage /> },
+                  { path: '/board-diikuti', element: <FollowedBoardsPage /> },
+                  { path: '/undangan', element: <InvitationsPage /> },
                   { path: '/buat-board', element: <CreateBoardPage /> },
                   {
                     path: '/verifikasi-board',
