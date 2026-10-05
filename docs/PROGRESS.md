@@ -14,7 +14,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 3A   | Ikuti Board dan Penindak                     | A      | Belum Mulai | -       | -                                                    | -          |
 | 3B   | Ikuti Board dan Penindak                     | B      | Review      | Akmal   | [#15](https://github.com/oscarkuanta/tindak/pull/15) | 2026-10-04 |
 | 4    | Laporan dan tamu                             | A+B    | Belum Mulai | -       | -                                                    | -          |
-| 5    | Penindakan dan status                        | A+B    | Belum Mulai | -       | -                                                    | -          |
+| 5    | Penindakan dan status                        | B      | Dikerjakan  | Akmal   | -                                                    | 2026-10-05 |
 | 6    | Dukungan, reaksi, prioritas, beranda         | A+B    | Belum Mulai | -       | -                                                    | -          |
 | 7    | Moderasi dan Admin                           | A+B    | Belum Mulai | -       | -                                                    | -          |
 | 8    | Rating, kepercayaan, dan verifikasi Official | A+B    | Belum Mulai | -       | -                                                    | -          |

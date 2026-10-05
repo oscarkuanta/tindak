@@ -651,3 +651,130 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOAR
 ### Perubahan data Board
 
 `GET /api/boards/:slug` dan `GET /api/boards/search` mengisi `followerCount` dari jumlah pengikut sebenarnya. Untuk user login, respons juga mengisi `viewer.isFollowing`, `viewer.notifyLevel`, dan `viewer.role`; untuk tamu, `viewer` bernilai `null`.
+
+---
+
+## Fase 5: Penindakan dan Status
+
+Fase ini melengkapi data detail dan pelacakan laporan Fase 4. Frontend menggunakan timeline dan allowedActions dari server agar tidak menebak hak akses atau transisi status.
+
+### Status, aksi, dan objek laporan
+
+Status: NEW, NEED_INFO, IN_PROGRESS, AWAITING_CONFIRMATION, RESOLVED, REOPENED, REJECTED, DUPLICATE.
+
+Transisi sah:
+
+- NEW → IN_PROGRESS, NEED_INFO, REJECTED, DUPLICATE
+- NEED_INFO → NEW, REJECTED
+- IN_PROGRESS → AWAITING_CONFIRMATION, REJECTED, DUPLICATE
+- AWAITING_CONFIRMATION → RESOLVED, REOPENED
+- REOPENED → IN_PROGRESS, AWAITING_CONFIRMATION
+
+Transisi lain menghasilkan 409 INVALID_TRANSITION. Nilai allowedActions: PROCESS, REQUEST_INFO, ANSWER_INFO, REJECT, DUPLICATE, RESOLVE, CONFIRM. Server menghitungnya berdasarkan status, pelapor, peran anggota Board, dan batas buka ulang.
+
+Detail laporan menambahkan dueAt, isOverdue, reporterNotSatisfied, reopenCount, parent, infoRequest, timeline, dan allowedActions. dueAt hanya diisi untuk severity DANGEROUS. isOverdue benar jika dueAt sudah lewat dan laporan belum menunggu konfirmasi atau selesai. Foto memakai kind BEFORE, AFTER, atau EXTRA.
+
+Setiap timeline berisi id, fromStatus, toStatus, actorType (HANDLER, REPORTER, SYSTEM), actor atau null, reason atau null, note atau null, dan createdAt. infoRequest berisi id, question, answer atau null, askedBy, createdAt, dan answeredAt atau null.
+
+Alasan penolakan: NOT_PHYSICAL, OUT_OF_SCOPE, INSUFFICIENT_INFORMATION, FALSE_REPORT, OTHER. Note wajib jika reason OTHER.
+
+### Pembacaan laporan (dependensi Fase 4)
+
+Objek laporan memuat id, board, category, title, description, locationDetail, severity, status, isAnonymous, media, createdAt, dan updatedAt. Item media memuat id, url, kind (BEFORE, AFTER, EXTRA), isBlurred, dan createdAt.
+
+#### GET /api/boards/:slug/reports
+
+Auth: publik. Query: sort (new, hot, priority), status, categoryId, severity, page, pageSize, dan q opsional untuk mencari judul laporan di Board tersebut. Parameter q dipakai pemilih laporan induk duplikat Fase 5.
+
+Sukses 200: respons paginasi umum berisi daftar laporan Board. Laporan tersembunyi tidak tampil.
+
+#### GET /api/reports/:id
+
+Auth: optional. Detail memuat media, timeline, infoRequest, isOverdue, allowedActions, parent, dueAt, reopenCount, dan reporterNotSatisfied. Nama pelapor anonim ditampilkan sebagai Anonim.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 404 REPORT_NOT_FOUND.
+
+#### GET /api/track/:code?secret=...
+
+Auth: publik dengan secret. Mengembalikan detail laporan yang sama untuk tamu pemegang tautan lacak. Secret salah atau kode tidak dikenal menghasilkan respons yang sama.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 404 REPORT_NOT_FOUND.
+
+### GET /api/boards/:slug/queue
+
+Auth: login sebagai Penindak Utama atau Penindak aktif pada Board. Query opsional: status, categoryId, severity, assigneeId, overdue (true/false), page, pageSize.
+
+Sukses 200: respons paginasi umum, item berisi data laporan, kategori, media pertama, assignee, isOverdue, dan allowedActions.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 BOARD_NOT_FOUND.
+
+### POST /api/reports/:id/process
+
+Auth: Penindak Utama atau Penindak aktif Board laporan. Memindahkan NEW atau REOPENED ke IN_PROGRESS. Body opsional: { "assigneeId": 18 }; assigneeId harus Penindak aktif Board yang sama.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 REPORT_NOT_FOUND, 404 HANDLER_NOT_FOUND, 409 INVALID_TRANSITION.
+
+### POST /api/reports/:id/request-info
+
+Auth: Penindak Utama atau Penindak aktif Board laporan. Memindahkan NEW ke NEED_INFO. Body: { "question": "Bisa jelaskan patokan lokasi yang lebih dekat?" }. Pertanyaan 1-1000 karakter.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 REPORT_NOT_FOUND, 409 INVALID_TRANSITION.
+
+### POST /api/reports/:id/answer-info
+
+Auth: pelapor login atau tamu dengan Kode Lacak dan secret yang benar. Jawaban hanya dapat dikirim sekali dan mengembalikan status NEED_INFO ke NEW. Body: { "answer": "Di depan nomor 12." }. Tamu menyertakan trackingCode dan secret dalam body.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 404 REPORT_NOT_FOUND, 409 INFO_ALREADY_ANSWERED, 409 INVALID_TRANSITION.
+
+### POST /api/reports/:id/reject
+
+Auth: Penindak Utama atau Penindak aktif Board laporan. Body: { "reason": "OTHER", "note": "Lokasi berada di luar wilayah Board." }. Mengubah status menjadi REJECTED.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 REPORT_NOT_FOUND, 409 INVALID_TRANSITION.
+
+### POST /api/reports/:id/duplicate
+
+Auth: Penindak Utama atau Penindak aktif Board laporan. parentId harus laporan aktif lain di Board yang sama dan bukan duplikat lain.
+
+Body: { "parentId": 42 }.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 REPORT_NOT_FOUND, 409 INVALID_DUPLICATE, 409 INVALID_TRANSITION.
+
+### POST /api/reports/:id/resolve
+
+Auth: Penindak Utama atau Penindak aktif Board laporan. multipart/form-data dengan note wajib dan satu sampai empat file photos sebagai bukti AFTER. Tipe dan batas file mengikuti aturan upload laporan Fase 4.
+
+Sukses 200: { "data": <Report detail> } dengan status AWAITING_CONFIRMATION.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 REPORT_NOT_FOUND, 409 INVALID_TRANSITION, 422 IMAGE_REJECTED.
+
+### POST /api/reports/:id/confirm
+
+Auth: pelapor login atau tamu dengan Kode Lacak dan secret yang benar. result bernilai resolved atau not_resolved; note wajib jika belum selesai. Tamu menyertakan trackingCode dan secret dalam body.
+
+Body JSON: { "result": "not_resolved", "note": "Saluran masih tersumbat.", "trackingCode": "K7M2P9QX", "secret": "<rahasia>" }. Untuk foto opsional gunakan multipart/form-data dan file photos (kind EXTRA).
+
+- resolved mengubah status menjadi RESOLVED.
+- not_resolved mengubah status menjadi REOPENED maksimal dua kali. Setelah batas tercapai, status menjadi RESOLVED dan reporterNotSatisfied bernilai true.
+
+Sukses 200: { "data": <Report detail> }.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 404 REPORT_NOT_FOUND, 409 INVALID_TRANSITION, 409 REOPEN_LIMIT_REACHED, 422 IMAGE_REJECTED.
+
+### Aktivitas dan otomatisasi
+
+Setiap aksi Penindak memperbarui aktivitas terakhir Board. Laporan AWAITING_CONFIRMATION yang tidak dijawab lebih dari tiga hari berubah menjadi RESOLVED oleh SYSTEM dengan catatan Dikonfirmasi otomatis. Board tanpa aktivitas Penindak selama 30 hari menjadi INACTIVE dan kembali ACTIVE setelah ada aktivitas Penindak.
