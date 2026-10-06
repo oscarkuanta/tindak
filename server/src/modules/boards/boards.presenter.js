@@ -20,7 +20,10 @@ export function toViewer(user, { follow, membership } = {}) {
   };
 }
 
-export function toBoardCard(board, { followerCount = 0, viewer = null } = {}) {
+export function toBoardCard(
+  board,
+  { followerCount = 0, activeReportCount = 0, viewer = null } = {},
+) {
   return {
     id: board.id,
     slug: board.slug,
@@ -34,15 +37,15 @@ export function toBoardCard(board, { followerCount = 0, viewer = null } = {}) {
     trustScore: null,
     trustLabel: trustLabelFor(board),
     followerCount,
-    activeReportCount: 0,
+    activeReportCount,
     createdAt: board.createdAt,
     viewer,
   };
 }
 
-export function toBoardDetail(board, { handlerCount, followerCount, viewer }) {
+export function toBoardDetail(board, { handlerCount, followerCount, activeReportCount, viewer }) {
   return {
-    ...toBoardCard(board, { followerCount, viewer }),
+    ...toBoardCard(board, { followerCount, activeReportCount, viewer }),
     managerTitle: board.managerTitle,
     description: board.description,
     dangerousTargetHours: board.dangerousTargetHours,

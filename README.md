@@ -109,27 +109,36 @@ npm test
 
 File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saat `npm test`.
 
-| Variabel               | Wajib  | Penjelasan                                                                                                                  |
-| ---------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`             | Tidak  | `development`, `test`, atau `production`. Default `development`                                                             |
-| `PORT`                 | Tidak  | Port server Express. Default `3000`                                                                                         |
-| `CLIENT_URL`           | Tidak  | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`                      |
-| `DATABASE_URL`         | Ya     | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`                    |
-| `SESSION_SECRET`       | Ya     | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                                                 |
-| `IP_HASH_SECRET`       | Ya     | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter                      |
-| `GOOGLE_CLIENT_ID`     | Tidak  | Client ID OAuth dari Google Cloud Console. Kosongkan bersama `GOOGLE_CLIENT_SECRET` untuk mematikan login Google            |
-| `GOOGLE_CLIENT_SECRET` | Tidak  | Client secret OAuth dari Google Cloud Console. Wajib diisi jika `GOOGLE_CLIENT_ID` diisi                                    |
-| `GOOGLE_CALLBACK_URL`  | Tidak  | URL callback yang didaftarkan di Google. Default `CLIENT_URL` + `/api/auth/google/callback`                                 |
-| `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                                         |
-| `BOARD_ADMIN_EMAILS`   | Tidak  | Daftar email Admin Board (pemberi status Official), dipisah koma. Jika email juga ada di `ADMIN_EMAILS`, yang dipakai ADMIN |
-| `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                                  |
-| `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                                |
+| Variabel                  | Wajib      | Penjelasan                                                                                                                                                                                                           |
+| ------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                | Tidak      | `development`, `test`, atau `production`. Default `development`                                                                                                                                                      |
+| `PORT`                    | Tidak      | Port server Express. Default `3000`                                                                                                                                                                                  |
+| `CLIENT_URL`              | Tidak      | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`                                                                                                               |
+| `DATABASE_URL`            | Ya         | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`                                                                                                             |
+| `SESSION_SECRET`          | Ya         | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                                                                                                                                          |
+| `IP_HASH_SECRET`          | Ya         | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter                                                                                                               |
+| `GOOGLE_CLIENT_ID`        | Tidak      | Client ID OAuth dari Google Cloud Console. Kosongkan bersama `GOOGLE_CLIENT_SECRET` untuk mematikan login Google                                                                                                     |
+| `GOOGLE_CLIENT_SECRET`    | Tidak      | Client secret OAuth dari Google Cloud Console. Wajib diisi jika `GOOGLE_CLIENT_ID` diisi                                                                                                                             |
+| `GOOGLE_CALLBACK_URL`     | Tidak      | URL callback yang didaftarkan di Google. Default `CLIENT_URL` + `/api/auth/google/callback`                                                                                                                          |
+| `ADMIN_EMAILS`            | Tidak      | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                                                                                                                                  |
+| `BOARD_ADMIN_EMAILS`      | Tidak      | Daftar email Admin Board (pemberi status Official), dipisah koma. Jika email juga ada di `ADMIN_EMAILS`, yang dipakai ADMIN                                                                                          |
+| `TURNSTILE_SECRET_KEY`    | Production | Secret key Cloudflare Turnstile untuk captcha form laporan. Kosong di development berarti memakai kunci test `1x0000000000000000000000000000000AA` (selalu lolos, tanpa internet). Production wajib memakai key asli |
+| `VITE_TURNSTILE_SITE_KEY` | Ya         | Site key publik Turnstile untuk widget di frontend. Development: kunci test `1x00000000000000000000AA`                                                                                                               |
+| `NSFW_ENABLED`            | Tidak      | `true` untuk mengaktifkan scan foto tidak pantas (nsfwjs). Default `false`. Aktifkan di production                                                                                                                   |
+| `UPLOAD_DIR`              | Tidak      | Folder penyimpanan foto laporan. Default `server/uploads` (diabaikan git)                                                                                                                                            |
+| `LOG_LEVEL`               | Tidak      | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                                                                                                                         |
 
 Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
 
+## Foto Laporan dan Captcha
+
+- Foto laporan disimpan di `server/uploads` (atau `UPLOAD_DIR`) dan disajikan di `/api/uploads/...`. Folder ini tidak ikut git. Semua penyimpanan lewat `server/src/lib/storage.js`, jadi saat deploy cukup mengganti modul itu ke cloud storage.
+- Captcha memakai Cloudflare Turnstile. Kunci test di `.env.example` membuat widget selalu menampilkan "Success!" dan server selalu menerima. Untuk kunci asli, daftar di dashboard Cloudflare → Turnstile, lalu isi `VITE_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`.
+- Scan foto tidak pantas memakai nsfwjs dengan `@tensorflow/tfjs` (versi JavaScript murni, tanpa kompilasi). Model dimuat saat foto pertama diperiksa, sekitar 1 detik, lalu sekitar 1 detik per foto.
+
 ## Akun Demo
 
-Jalankan `npm run db:seed` untuk membuat akun dan Board contoh. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
+Jalankan `npm run db:seed` untuk membuat akun, Board, pengikut, dan 5 laporan contoh dengan foto. Laporan tamu contoh bisa dilacak di `http://localhost:5173/lacak/DEMAK234?secret=rahasia-demo-tindak`. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
 
 | Email                    | Role        | Keterangan                                                                             |
 | ------------------------ | ----------- | -------------------------------------------------------------------------------------- |
