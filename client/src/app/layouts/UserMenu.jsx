@@ -109,7 +109,7 @@ export function UserMenu({ user }) {
             {user.role === USER_ROLES.ADMIN && (
               <Link
                 role="menuitem"
-                to="/panel-admin"
+                to="/admin"
                 className={`${ITEM_CLASS} text-text`}
                 onClick={() => setOpen(false)}
               >

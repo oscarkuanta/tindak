@@ -1,7 +1,7 @@
 import { ERROR_CODES, REPORT_MAX_PHOTOS, USER_ROLES, priorityScore } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { env } from '../../config/env.js';
-import { isBanned } from '../../lib/bans.js';
+import { assertNotBanned } from '../../lib/bans.js';
 import { verifyTurnstile } from '../../lib/turnstile.js';
 import { detectImageType, normalizeImage } from '../../lib/images.js';
 import { nsfwVerdict, scoreImage } from '../../lib/nsfw.js';
@@ -16,6 +16,7 @@ import {
   REPORT_LIST_INCLUDE,
   toReport,
   toReportDetail,
+  toHiddenReport,
   withViewerEngagement,
 } from './reports.presenter.js';
 import { viewerEngagement } from '../engagement/engagement.service.js';
@@ -180,9 +181,7 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
 
   const ipHash = hashIp(ip);
   const identity = { userId: user?.id ?? null, guestTokenHash, ipHash };
-  if (await isBanned(identity)) {
-    throw new AppError(403, ERROR_CODES.FORBIDDEN, 'Kamu sedang tidak diizinkan mengirim laporan');
-  }
+  await assertNotBanned(identity);
   await assertReportQuota({ user, guestTokenHash, ipHash });
   await verifyTurnstile(input.turnstileToken, ip);
 
@@ -218,6 +217,18 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
   } catch (error) {
     await Promise.all(photos.map((photo) => removeFile(photo.key)));
     throw error;
+  }
+
+  if (report.needsModeration) {
+    await prisma.flag.create({
+      data: {
+        targetType: 'REPORT',
+        targetId: report.id,
+        reason: 'SYSTEM_NSFW',
+        weight: 0,
+        note: 'Foto diburamkan oleh pemindai otomatis',
+      },
+    });
   }
 
   return {
@@ -259,7 +270,7 @@ export async function listBoardReports(slug, user, query) {
 }
 
 export async function listMyReports(user, query) {
-  return paginate({ userId: user.id }, query, { user });
+  return paginate({ userId: user.id, removedAt: null }, query, { user });
 }
 
 export async function listHomeFeed(user, { tab, page, pageSize }) {
@@ -288,9 +299,11 @@ export async function getReportDetail(id, user) {
   const report = await findReportWithDetail(id);
   const context = await viewerContext(report, user);
   const { isStaff, isReporter: isAuthor } = context;
+  const isAdmin = user?.role === USER_ROLES.ADMIN;
   const boardHidden =
     report.board.status === 'FROZEN' && !isStaff && user?.role !== USER_ROLES.BOARD_ADMIN;
-  if ((report.isHidden && !isStaff && !isAuthor) || boardHidden) throw reportNotFound();
+  if ((report.removedAt && !isAdmin) || boardHidden) throw reportNotFound();
+  if (report.isHidden && !isStaff && !isAuthor) return toHiddenReport(report);
 
   return presentDetail(report, user, context);
 }

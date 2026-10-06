@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { Navigate, createBrowserRouter } from 'react-router';
 import { AUTH_PATHS } from '@tindak/shared';
 import { AppLayout } from './layouts/AppLayout.jsx';
 import { BoardLayout } from './layouts/BoardLayout.jsx';
@@ -28,6 +28,13 @@ import { ReportDetailPage } from '../pages/report-detail/ReportDetailPage.jsx';
 import { ReportSuccessPage } from '../pages/report-success/ReportSuccessPage.jsx';
 import { TrackReportPage } from '../pages/track-report/TrackReportPage.jsx';
 import { ReportFormPage } from '../pages/create-report/ReportFormPage.jsx';
+import { AdminLayout } from '../pages/admin/AdminLayout.jsx';
+import { AdminDashboardPage } from '../pages/admin/AdminDashboardPage.jsx';
+import { ModerationQueuePage } from '../pages/admin/ModerationQueuePage.jsx';
+import { BansPage } from '../pages/admin/BansPage.jsx';
+import { AdminBoardsPage } from '../pages/admin/AdminBoardsPage.jsx';
+import { AdminUsersPage } from '../pages/admin/AdminUsersPage.jsx';
+import { AuditLogPage } from '../pages/admin/AuditLogPage.jsx';
 
 export const routes = [
   {
@@ -74,9 +81,18 @@ export const routes = [
                       <RolePlaceholderPage title="Verifikasi Board" requiredRole="BOARD_ADMIN" />
                     ),
                   },
+                  { path: '/panel-admin', element: <Navigate to="/admin" replace /> },
                   {
-                    path: '/panel-admin',
-                    element: <RolePlaceholderPage title="Panel Admin" requiredRole="ADMIN" />,
+                    path: '/admin',
+                    element: <AdminLayout />,
+                    children: [
+                      { index: true, element: <AdminDashboardPage /> },
+                      { path: 'moderasi', element: <ModerationQueuePage /> },
+                      { path: 'ban', element: <BansPage /> },
+                      { path: 'board', element: <AdminBoardsPage /> },
+                      { path: 'user', element: <AdminUsersPage /> },
+                      { path: 'audit', element: <AuditLogPage /> },
+                    ],
                   },
                 ],
               },

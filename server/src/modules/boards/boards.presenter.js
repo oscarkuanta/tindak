@@ -54,6 +54,7 @@ export function toBoardDetail(board, { handlerCount, followerCount, activeReport
     rejectedPercentage: 0,
     handlerCount,
     isInactive: board.status === 'INACTIVE',
+    restoredByAdminCount: board.restoredByAdminCount ?? 0,
     owner: board.owner
       ? { id: board.owner.id, name: board.owner.name, avatarUrl: board.owner.avatarUrl }
       : null,
