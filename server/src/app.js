@@ -11,6 +11,7 @@ import { createApiRouter } from './routes.js';
 import { createRateLimiter } from './middlewares/rateLimit.js';
 import { attachUser } from './middlewares/auth.js';
 import { createVerifyOrigin } from './middlewares/verifyOrigin.js';
+import { UPLOAD_ROUTE, uploadDir } from './lib/storage.js';
 import { notFound } from './middlewares/notFound.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
@@ -39,6 +40,11 @@ export function createApp() {
   app.use(getSessionMiddleware());
   app.use(passport.initialize());
   app.use(attachUser);
+
+  app.use(
+    UPLOAD_ROUTE,
+    express.static(uploadDir, { immutable: true, maxAge: '30d', fallthrough: false, index: false }),
+  );
 
   app.use('/api', createRateLimiter({ windowMs: 60_000, limit: 300 }), createApiRouter());
 

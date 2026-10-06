@@ -11,9 +11,9 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 1B   | Auth frontend                                | B      | Selesai     | Oscar   | [#5](https://github.com/oscarkuanta/tindak/pull/5)                                                     | 2026-10-03 |
 | 2A   | Board backend                                | A      | Selesai     | Oscar   | [#18](https://github.com/oscarkuanta/tindak/pull/18)                                                   | 2026-10-06 |
 | 2B   | Board frontend                               | B      | Review      | Akmal   | [#14](https://github.com/oscarkuanta/tindak/pull/14)                                                   | 2026-10-04 |
-| 3A   | Ikuti Board dan Penindak                     | A      | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
+| 3A   | Ikuti Board dan Penindak                     | A      | Selesai     | Oscar   | [#20](https://github.com/oscarkuanta/tindak/pull/20)                                                   | 2026-10-06 |
 | 3B   | Ikuti Board dan Penindak                     | B      | Review      | Akmal   | [#15](https://github.com/oscarkuanta/tindak/pull/15)                                                   | 2026-10-04 |
-| 4A   | Laporan dan tamu                             | A      | Belum Mulai | -       | -                                                                                                      | -          |
+| 4A   | Laporan dan tamu                             | A      | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
 | 4B   | Laporan dan tamu                             | B      | Review      | Akmal   | [#16](https://github.com/oscarkuanta/tindak/pull/16)                                                   | 2026-10-05 |
 | 5A   | Penindakan dan status                        | A      | Belum Mulai | -       | -                                                                                                      | -          |
 | 5B   | Penindakan dan status                        | B      | Review      | Akmal   | -                                                                                                      | 2026-10-05 |
