@@ -7,6 +7,8 @@ import {
   reportIdParamSchema,
   trackReportParamSchema,
   trackReportQuerySchema,
+  homeFeedQuerySchema,
+  reactionRequestSchema,
   answerInfoRequestSchema,
   confirmReportRequestSchema,
   duplicateReportRequestSchema,
@@ -21,7 +23,8 @@ import { optionalAuth, requireAuth } from '../../middlewares/auth.js';
 import { guestToken } from '../../middlewares/guestToken.js';
 import { reportPhotosUpload } from '../../middlewares/upload.js';
 import { createRateLimiter } from '../../middlewares/rateLimit.js';
-import { create, detail, listForBoard, mine, track } from './reports.controller.js';
+import { create, detail, homeFeed, listForBoard, mine, track } from './reports.controller.js';
+import { react, support, unreact, unsupport } from '../engagement/engagement.controller.js';
 import { requireBoardRole } from '../../middlewares/boardAccess.js';
 import {
   answer,
@@ -77,7 +80,24 @@ export function createReportsRouter() {
     message: 'Terlalu banyak percobaan. Coba lagi nanti.',
   });
 
+  const engagementLimiter = createRateLimiter({
+    windowMs: 60_000,
+    limit: 60,
+    message: 'Terlalu banyak dukungan atau reaksi. Coba lagi sebentar.',
+  });
+
   router.get('/:id', optionalAuth, idParams, detail);
+  router.put('/:id/support', requireAuth, engagementLimiter, idParams, support);
+  router.delete('/:id/support', requireAuth, engagementLimiter, idParams, unsupport);
+  router.put(
+    '/:id/reaction',
+    requireAuth,
+    engagementLimiter,
+    idParams,
+    validate(reactionRequestSchema),
+    react,
+  );
+  router.delete('/:id/reaction', requireAuth, engagementLimiter, idParams, unreact);
   router.post(
     '/:id/process',
     requireAuth,
@@ -148,5 +168,11 @@ export function createTrackRouter() {
 export function createMeReportsRouter() {
   const router = Router();
   router.get('/reports', requireAuth, validate(myReportsQuerySchema, 'query'), mine);
+  return router;
+}
+
+export function createFeedRouter() {
+  const router = Router();
+  router.get('/home', optionalAuth, validate(homeFeedQuerySchema, 'query'), homeFeed);
   return router;
 }

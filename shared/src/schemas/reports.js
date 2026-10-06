@@ -9,6 +9,8 @@ import {
   REPORT_SORTS,
   REPORT_STATUSES,
   REPORT_TITLE_MAX,
+  REACTION_TYPES,
+  HOME_FEED_TABS,
   TRACKING_CODE_ALPHABET,
   TRACKING_CODE_LENGTH,
 } from '../constants/reports.js';
@@ -111,4 +113,13 @@ export const trackReportParamSchema = z.object({
 
 export const trackReportQuerySchema = z.object({
   secret: z.string().trim().min(1, 'Tautan rahasia wajib disertakan').max(200),
+});
+
+export const reactionRequestSchema = z.strictObject({
+  type: z.enum(REACTION_TYPES, { error: 'Pilih reaksi yang valid' }),
+});
+
+export const homeFeedQuerySchema = z.object({
+  tab: emptyToUndefined(z.enum(HOME_FEED_TABS, { error: 'Tab tidak dikenal' }).default('hot')),
+  ...reportPageSchema,
 });

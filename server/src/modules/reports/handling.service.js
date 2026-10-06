@@ -10,13 +10,16 @@ import { removeFile } from '../../lib/storage.js';
 import { AppError } from '../../utils/AppError.js';
 import { getBoardMembership, recordHandlerActivity } from '../boards/boards.service.js';
 import {
+  REPORT_SORT_ORDER,
   findReportWithDetail,
   matchesTrackingSecret,
   preparePhotos,
+  presentReports,
   reportNotFound,
   storePhotos,
   viewerContext,
 } from './reports.service.js';
+import { refreshReportScores } from '../engagement/scores.service.js';
 import {
   REPORT_LIST_INCLUDE,
   STATUSES_WITHOUT_DEADLINE,
@@ -66,6 +69,7 @@ async function applyTransition(tx, report, { to, actorType, actorId = null, reas
       note: note || null,
     },
   });
+  await refreshReportScores(tx, report.id);
 }
 
 async function findCoreReport(id) {
@@ -110,7 +114,8 @@ async function loadForReporter(id, user, { trackingCode, secret }) {
 async function detailFor(id, user, override) {
   const report = await findReportWithDetail(id);
   const context = override ?? (await viewerContext(report, user));
-  return toReportDetail(report, context);
+  const [json] = await presentReports([report], user, (row) => toReportDetail(row, context));
+  return json;
 }
 
 async function handlerAction(id, user, run) {
@@ -354,7 +359,7 @@ function overdueWhere(now) {
   };
 }
 
-export async function listQueue(board, query, now = new Date()) {
+export async function listQueue(board, query, user, now = new Date()) {
   const where = {
     boardId: board.id,
     isHidden: false,
@@ -370,13 +375,13 @@ export async function listQueue(board, query, now = new Date()) {
     prisma.report.findMany({
       where,
       include: QUEUE_INCLUDE,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy: REPORT_SORT_ORDER[query.sort ?? 'priority'],
       skip: (query.page - 1) * query.pageSize,
       take: query.pageSize,
     }),
   ]);
   return {
-    data: rows.map(toQueueItem),
+    data: await presentReports(rows, user, toQueueItem),
     meta: {
       page: query.page,
       pageSize: query.pageSize,

@@ -1,6 +1,8 @@
 import { Link } from 'react-router';
 import { Card } from '../ui/Card.jsx';
 import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
+import { EngagementBar } from './EngagementBar.jsx';
+import { VerificationBadge } from '../boards/BoardBadges.jsx';
 
 function relativeTime(value) {
   if (!value) return 'Waktu tidak tersedia';
@@ -13,12 +15,20 @@ function relativeTime(value) {
   return formatter.format(Math.round(hours / 24), 'day');
 }
 
-export function ReportCard({ report }) {
+export function ReportCard({ report, showBoard = false }) {
   const photo = report.media?.[0] ?? report.photos?.[0];
   const reportUrl = `/laporan/${report.id}`;
 
   return (
     <Card className="overflow-hidden p-0">
+      {showBoard && report.board && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs">
+          <Link to={`/b/${report.board.slug}`} className="font-semibold text-text hover:text-brand">
+            {report.board.name}
+          </Link>
+          <VerificationBadge verification={report.board.verification} size="sm" />
+        </div>
+      )}
       <Link
         to={reportUrl}
         className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
@@ -43,23 +53,8 @@ export function ReportCard({ report }) {
           </div>
         </div>
       </Link>
-      <div className="flex gap-2 border-t border-border px-4 py-3">
-        <button
-          type="button"
-          disabled
-          title="Segera hadir"
-          className="rounded-base px-2 py-1 text-sm text-text-muted disabled:cursor-not-allowed"
-        >
-          Dukung
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Segera hadir"
-          className="rounded-base px-2 py-1 text-sm text-text-muted disabled:cursor-not-allowed"
-        >
-          Reaksi
-        </button>
+      <div className="border-t border-border px-4 py-3">
+        <EngagementBar report={report} />
       </div>
     </Card>
   );

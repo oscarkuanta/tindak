@@ -8,6 +8,7 @@ import {
 } from './modules/boards/boards.routes.js';
 import {
   createBoardReportsRouter,
+  createFeedRouter,
   createMeReportsRouter,
   createReportsRouter,
   createTrackRouter,
@@ -22,6 +23,7 @@ export function createApiRouter() {
   router.use('/boards', createBoardsRouter());
   router.use('/reports', createReportsRouter());
   router.use('/track', createTrackRouter());
+  router.use('/feed', createFeedRouter());
   router.use('/me', createMeReportsRouter());
   router.use('/me', createMeBoardsRouter());
   router.use('/meta', createMetaRouter());
