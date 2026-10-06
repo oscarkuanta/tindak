@@ -131,12 +131,12 @@ Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
 
 Jalankan `npm run db:seed` untuk membuat akun dan Board contoh. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
 
-| Email                    | Role        | Keterangan                                                  |
-| ------------------------ | ----------- | ----------------------------------------------------------- |
-| `admin@tindak.test`      | ADMIN       | Moderator                                                   |
-| `boardadmin@tindak.test` | BOARD_ADMIN | Pemberi status Official                                     |
-| `budi@tindak.test`       | USER        | Penindak Utama 3 Board, termasuk SMKN 1 Surabaya (Official) |
-| `siti@tindak.test`       | USER        | Penindak Utama 2 Board                                      |
+| Email                    | Role        | Keterangan                                                                             |
+| ------------------------ | ----------- | -------------------------------------------------------------------------------------- |
+| `admin@tindak.test`      | ADMIN       | Moderator                                                                              |
+| `boardadmin@tindak.test` | BOARD_ADMIN | Pemberi status Official                                                                |
+| `budi@tindak.test`       | USER        | Penindak Utama 3 Board (termasuk SMKN 1 Surabaya, Official), punya 1 undangan Penindak |
+| `siti@tindak.test`       | USER        | Penindak Utama 2 Board, Penindak di SMKN 1 Surabaya                                    |
 
 Akun demo hanya untuk development. Jangan jalankan seed di server production.
 

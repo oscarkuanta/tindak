@@ -11,3 +11,22 @@ export const followNotifyLevelSchema = z.object({
 export const transferOwnershipSchema = z.object({
   userId: z.coerce.number().int().positive({ error: 'Penindak tujuan tidak valid' }),
 });
+
+export const inviteHandlerRequestSchema = z.strictObject({ email: emailSchema });
+
+export const followNotifyLevelRequestSchema = z.strictObject({
+  notifyLevel: followNotifyLevelSchema.shape.notifyLevel,
+});
+
+export const transferOwnershipRequestSchema = z.strictObject({
+  userId: transferOwnershipSchema.shape.userId,
+});
+
+export const boardMemberParamSchema = z.object({
+  slug: z.string().trim().min(1).max(120),
+  userId: z.coerce.number().int().positive({ error: 'ID pengguna tidak valid' }),
+});
+
+export const invitationParamSchema = z.object({
+  id: z.coerce.number().int().positive({ error: 'ID undangan tidak valid' }),
+});
