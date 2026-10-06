@@ -5,6 +5,7 @@ _Board pengaduan masalah fisik berbasis komunitas_
 - T!indak itu seperti Reddit, tapi khusus laporan masalah fisik: jalan rusak, sampah, toilet rusak, lampu mati, dll.
 - Pengganti subreddit namanya *Board*. Contoh: "Jalan Rungkut Madya", "SMKN 1 Surabaya".
 - Board *terbuka*. Cari saja namanya, tidak pakai kode.
+- Board berstatus *Komunitas* atau *Official* (✔️ centang biru). Semua board mulai sebagai Komunitas. Status Official diberikan manual oleh *Admin Board*.
 - *Tidak ada komentar*. Interaksi cuma dukung (⬆️) dan reaksi (🚨 ⏳ 😤).
 - Fokus di *web desktop*. Tapi halaman lapor dan lacak tetap harus enak dipakai di HP.
 
@@ -42,13 +43,22 @@ _Board pengaduan masalah fisik berbasis komunitas_
 - Tugasnya menangani laporan.
 - Tidak bisa ubah pengaturan board atau undang orang.
 
-*5. Admin*
+*5. Admin (Moderator)*
 - Moderator seluruh website.
 - Tinjau konten yang ditandai, hapus, dan ban.
 - Admin *tidak* menangani laporan. Itu tugas Penindak.
+- Admin *tidak* memberi status Official. Itu tugas Admin Board.
+
+*6. Admin Board*
+- Pemberi verifikasi board, seperti centang biru.
+- Mengubah board Komunitas menjadi *Official*, atau mencabut status Official.
+- Dasar keputusannya adalah rating dari user. Semakin banyak rating dan semakin tinggi skornya, semakin layak board dijadikan Official.
+- Admin Board *tidak* menangani laporan dan *tidak* memoderasi konten.
+- Ditunjuk oleh pengelola website (daftar email di pengaturan server), tidak bisa mendaftar sendiri.
 
 *⚠️ Catatan penting*
 - Role disimpan *per board*, bukan per akun. Jadi satu orang bisa jadi Penindak di board A, tapi jadi user biasa di board B.
+- Admin dan Admin Board adalah role *tingkat website*, bukan per board. Satu akun hanya punya satu role website: User, Admin, atau Admin Board.
 - Penindak tidak boleh kasih rating ke board-nya sendiri.
 
 *🏠 SISTEM BOARD*
@@ -59,14 +69,14 @@ _Board pengaduan masalah fisik berbasis komunitas_
    • Nama board (wajib). Contoh: "Jalan Rungkut Madya"
    • Kota (wajib). Biar beda antara Jl. A. Yani Surabaya dan Jl. A. Yani Sidoarjo
    • Jenis: Sekolah, Kampus, Kantor, Jalan, Wilayah (RT/RW/Kelurahan), Fasilitas Umum, Lainnya
-   • Status pengelola: *Pihak Resmi* (kepsek, HR, ketua RT, OSIS) atau *Relawan/Komunitas*
-   • Jabatan (opsional). Contoh: "Wakasek Sarpras"
+   • Jabatan pengelola (opsional). Contoh: "Wakasek Sarpras", "Ketua RT 05"
    • Deskripsi dan cakupan board
    • Foto sampul (opsional)
    • Kategori laporan. Sudah terisi otomatis sesuai jenis board, bisa ditambah
    • Target waktu penanganan laporan Berbahaya. Default 48 jam
 3. Saat ngetik nama, muncul daftar board yang mirip di kota yang sama. Ini cuma peringatan, bukan larangan.
 4. Board langsung aktif tanpa persetujuan Admin.
+5. Board baru selalu berstatus *Komunitas*. Pembuat board tidak bisa memilih Official sendiri. Status Official hanya diberikan Admin Board (lihat Sistem Verifikasi Board).
 
 *Kategori otomatis per jenis board*
 - Sekolah, Kampus, Kantor: Kebersihan, Kerusakan Fasilitas, Listrik, Air dan Sanitasi, Keamanan, Lainnya
@@ -75,12 +85,12 @@ _Board pengaduan masalah fisik berbasis komunitas_
 
 *Cara cari board*
 - Ada kolom pencarian di header setiap halaman.
-- Hasilnya berupa kartu board: nama, kota, jenis, Resmi/Relawan, skor kepercayaan, jumlah pengikut, jumlah laporan aktif.
-- Urutan: nama paling cocok, lalu skor kepercayaan, lalu yang paling aktif.
-- Bisa difilter per kota, jenis, dan status pengelola.
+- Hasilnya berupa kartu board: nama, kota, jenis, Official/Komunitas, skor kepercayaan, jumlah pengikut, jumlah laporan aktif.
+- Urutan: nama paling cocok, lalu board Official, lalu skor kepercayaan, lalu yang paling aktif.
+- Bisa difilter per kota, jenis, dan status Official/Komunitas.
 
 *Kalau ada 2 board dengan nama sama?*
-Tidak apa-apa. User yang menilai lewat rating. Board yang tidak tanggap akan turun sendiri di hasil pencarian.
+Tidak apa-apa. User yang menilai lewat rating. Board yang tidak tanggap akan turun sendiri di hasil pencarian. Board yang paling dipercaya bisa mendapat centang Official, jadi mudah dibedakan dari yang lain.
 
 *Board terbengkalai*
 - Kalau Penindak tidak aktif 30 hari, board dapat label 💤 Tidak Aktif.
@@ -128,6 +138,48 @@ Skor = (0,6 × Rating Tertimbang) + (0,4 × Tingkat Tanggap × 5)
 - Penindak *tidak bisa hapus laporan*. Laporan yang ditolak tetap tampil beserta alasannya.
 - Persentase laporan ditolak tampil di halaman board.
 - User bisa tandai board sebagai "Board Palsu", nanti dicek Admin.
+- Kalau board Official terbukti palsu dan dibekukan Admin, status Official-nya ikut dicabut otomatis.
+
+*🔵 SISTEM VERIFIKASI BOARD (OFFICIAL)*
+Tujuannya: user langsung tahu board mana yang sudah terbukti dipercaya banyak orang, seperti centang biru.
+
+*Dua status board*
+- *Komunitas* = status awal semua board.
+- *Official* ✔️ = sudah diverifikasi manual oleh Admin Board.
+
+*Admin Board tahu dari mana?*
+Dari rating user. Board otomatis masuk *Antrean Kandidat Official* kalau memenuhi syarat minimal:
+- Minimal 20 rating dari user
+- Skor Kepercayaan 4,0 ke atas
+- Umur board minimal 30 hari
+- Tidak berlabel 💤 Tidak Aktif
+- Tidak ada tanda "Board Palsu" yang belum ditinjau Admin
+
+Antrean diurutkan dari jumlah rating terbanyak, lalu skor tertinggi. Semakin banyak rating, semakin atas posisinya.
+_Angka syarat di atas bisa diubah tim. Syarat hanya menentukan siapa yang masuk antrean. Keputusan tetap di tangan Admin Board._
+
+*Yang dilihat Admin Board sebelum memutuskan*
+- Jumlah rating dan sebaran bintang 1 sampai 5
+- Skor Kepercayaan dan Tingkat Tanggap
+- Persentase laporan ditolak
+- Umur board dan jumlah pengikut
+- Jabatan pengelola yang ditulis Penindak Utama
+- Riwayat tanda "Board Palsu"
+
+*Pilihan Admin Board*
+- *Jadikan Official* (wajib tulis catatan singkat)
+- *Lewati* (board tetap di antrean, bisa dicek lagi nanti)
+
+*Cabut Official*
+- Admin Board bisa mencabut status Official kapan saja, wajib tulis alasan.
+- Board Official yang skornya turun di bawah 2,5 atau berlabel 💤 Tidak Aktif muncul di daftar *Perlu Ditinjau Ulang*.
+- Board yang dicabut kembali jadi Komunitas, dan bisa masuk antrean lagi kalau memenuhi syarat.
+
+*Aturan lain*
+- Status Official tidak mengubah rumus Skor Kepercayaan. Pengaruhnya hanya pada tanda ✔️ dan urutan pencarian.
+- Status Official tetap melekat walaupun kepemilikan board dialihkan ke Penindak lain.
+- Penindak tidak bisa mengajukan diri. Board cukup dikelola dengan baik sampai ratingnya banyak.
+- Semua keputusan Admin Board tercatat di Riwayat Aksi.
 
 
 *📝 ALUR LAPORAN*
@@ -361,6 +413,9 @@ Akun yang 5 tandanya ditolak Admin dalam 30 hari, tandanya tidak dihitung lagi u
 *Untuk pengikut board*
 - Laporan baru (bisa diatur: semua, hanya Berbahaya, atau mati)
 
+*Untuk Penindak Utama*
+- Board dijadikan Official atau status Official dicabut
+
 *Untuk Penindak*
 - Laporan baru
 - Laporan Berbahaya (tampil merah di atas)
@@ -368,6 +423,10 @@ Akun yang 5 tandanya ditolak Admin dalam 30 hari, tandanya tidak dihitung lagi u
 - Laporan Dibuka Ulang
 - Jawaban Perlu Info masuk
 - Ringkasan rating harian
+
+*Untuk Admin Board*
+- Board baru masuk Antrean Kandidat Official
+- Board Official masuk daftar Perlu Ditinjau Ulang
 
 *Untuk tamu*
 Cek di halaman Lacak.
@@ -381,7 +440,7 @@ Pakai Socket.IO. Jumlah dukungan, status, dan antrean Penindak berubah tanpa ref
 _Melihat_
 1. Buka website, masuk Beranda.
 2. Ketik nama board, misal "Rungkut".
-3. Pilih board. Bandingkan skor dan status Resmi/Relawan.
+3. Pilih board. Bandingkan skor dan status Official/Komunitas.
 4. Lihat feed dan info board.
 5. Klik laporan untuk lihat detail.
 
@@ -450,6 +509,16 @@ Lihat statistik: jumlah per status, rata-rata waktu penanganan, tingkat tanggap,
 
 ━━━━━━━━━━━━━━━
 
+*🔵 ADMIN BOARD*
+1. Login dengan akun Admin Board.
+2. Buka Dashboard Verifikasi.
+3. Lihat Antrean Kandidat Official.
+4. Buka detail board, cek rating dan statistiknya.
+5. Pilih Jadikan Official atau Lewati.
+6. Pantau daftar Perlu Ditinjau Ulang, cabut Official kalau perlu.
+
+━━━━━━━━━━━━━━━
+
 *📄 DAFTAR HALAMAN*
 
 *Publik (tamu dan user)*
@@ -493,6 +562,11 @@ Lihat statistik: jumlah per status, rata-rata waktu penanganan, tingkat tanggap,
 32. Kelola User
 33. Riwayat Aksi (Audit Log)
 
+*Admin Board*
+34. Dashboard Verifikasi (Antrean Kandidat Official dan Perlu Ditinjau Ulang)
+35. Detail Verifikasi Board
+36. Daftar Board Official
+
 *Komponen yang muncul di banyak halaman*
 - Header: logo, pencarian board, tombol "+ Lapor", Lacak Laporan, lonceng notifikasi, avatar atau tombol Masuk
 - Pop-up Login
@@ -504,7 +578,7 @@ Lihat statistik: jumlah per status, rata-rata waktu penanganan, tingkat tanggap,
 *🖥️ LAYOUT DESKTOP (3 kolom seperti Reddit)*
 - *Kiri*: menu (Beranda, Ramai, Laporan Saya) + daftar board yang diikuti
 - *Tengah*: tab urutan (Ramai, Prioritas, Terbaru, Selesai) + kartu laporan
-- *Kanan*: info board (nama, kota, Resmi/Relawan, skor, pengikut, tingkat tanggap, persentase ditolak, tombol Ikuti dan Rating, jumlah Penindak, aturan board)
+- *Kanan*: info board (nama, kota, Official/Komunitas, skor, pengikut, tingkat tanggap, persentase ditolak, tombol Ikuti dan Rating, jumlah Penindak, aturan board)
 
 *Isi kartu laporan*
 Label bahaya, label status, judul, foto, lokasi, waktu, tombol ⬆️ Dukung, dan jumlah 🚨 ⏳ 😤

@@ -53,7 +53,7 @@ jobs:
       - name: Migrate test database
         run: npm run db:deploy
 
-      - name: Test server
+      - name: Test server dan client
         run: npm test
 
       - name: Build client

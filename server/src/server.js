@@ -2,6 +2,7 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
 import { prisma } from './lib/prisma.js';
+import { sessionStore } from './config/session.js';
 
 const app = createApp();
 
@@ -12,6 +13,7 @@ const server = app.listen(env.PORT, () => {
 async function shutdown(signal) {
   logger.info(`${signal} diterima, menutup server`);
   server.close(async () => {
+    sessionStore.close();
     await prisma.$disconnect();
     process.exit(0);
   });
