@@ -1,6 +1,7 @@
 export * from './auth.js';
 export * from './boards.js';
 export * from './cities.js';
+export * from './notifications.js';
 export * from './reports.js';
 export * from './report-handling.js';
 
@@ -27,4 +28,12 @@ export const ERROR_CODES = Object.freeze({
   CATEGORY_EXISTS: 'CATEGORY_EXISTS',
   CATEGORY_PROTECTED: 'CATEGORY_PROTECTED',
   CATEGORY_LIMIT_REACHED: 'CATEGORY_LIMIT_REACHED',
+  FOLLOW_NOT_FOUND: 'FOLLOW_NOT_FOUND',
+  USER_NOT_FOUND: 'USER_NOT_FOUND',
+  HANDLER_ALREADY_MEMBER: 'HANDLER_ALREADY_MEMBER',
+  HANDLER_LIMIT_REACHED: 'HANDLER_LIMIT_REACHED',
+  HANDLER_NOT_FOUND: 'HANDLER_NOT_FOUND',
+  CANNOT_REMOVE_OWNER: 'CANNOT_REMOVE_OWNER',
+  INVITATION_NOT_FOUND: 'INVITATION_NOT_FOUND',
+  INVITATION_NOT_PENDING: 'INVITATION_NOT_PENDING',
 });
