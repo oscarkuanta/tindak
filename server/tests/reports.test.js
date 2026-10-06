@@ -447,7 +447,7 @@ describe('Membaca laporan', () => {
     });
   });
 
-  it('laporan tersembunyi tidak tampil untuk publik, tetap terlihat untuk Penindak dan pelapor', async () => {
+  it('laporan tersembunyi: publik melihat kartu ditinjau, Penindak dan pelapor melihat isi, yang dihapus 404', async () => {
     const { owner, board, budi, reports } = await seedReports();
     const hiddenId = reports[0].report.id;
     await prisma.report.update({ where: { id: hiddenId }, data: { isHidden: true } });
@@ -455,10 +455,28 @@ describe('Membaca laporan', () => {
 
     const list = await request(app).get(`/api/boards/${board.slug}/reports`);
     expect(list.body.meta.total).toBe(2);
+
+    const asGuest = await request(app).get(`/api/reports/${hiddenId}`);
+    const asStranger = await stranger.agent.get(`/api/reports/${hiddenId}`);
+    expect(asGuest.status).toBe(200);
+    expect(asGuest.body.data).toEqual({
+      id: hiddenId,
+      board: { slug: board.slug, name: board.name },
+      isHidden: true,
+      moderationNotice: 'Laporan ini sedang ditinjau moderator',
+    });
+    expect(asStranger.body.data).not.toHaveProperty('title');
+    expect(asStranger.body.data).not.toHaveProperty('description');
+
+    const asOwner = await owner.agent.get(`/api/reports/${hiddenId}`);
+    const asReporter = await budi.agent.get(`/api/reports/${hiddenId}`);
+    expect(asOwner.body.data).toMatchObject({ isHidden: true, title: expect.any(String) });
+    expect(asReporter.body.data).toMatchObject({ isHidden: true, title: expect.any(String) });
+
+    await prisma.report.update({ where: { id: hiddenId }, data: { removedAt: new Date() } });
     expect((await request(app).get(`/api/reports/${hiddenId}`)).status).toBe(404);
-    expect((await stranger.agent.get(`/api/reports/${hiddenId}`)).status).toBe(404);
-    expect((await owner.agent.get(`/api/reports/${hiddenId}`)).status).toBe(200);
-    expect((await budi.agent.get(`/api/reports/${hiddenId}`)).status).toBe(200);
+    expect((await budi.agent.get(`/api/reports/${hiddenId}`)).status).toBe(404);
+    expect((await budi.agent.get('/api/me/reports')).body.meta.total).toBe(2);
   });
 
   it('reporterType hanya untuk Penindak Board itu', async () => {

@@ -23,6 +23,7 @@ import { optionalAuth, requireAuth } from '../../middlewares/auth.js';
 import { guestToken } from '../../middlewares/guestToken.js';
 import { reportPhotosUpload } from '../../middlewares/upload.js';
 import { createRateLimiter } from '../../middlewares/rateLimit.js';
+import { rejectBanned } from '../../middlewares/rejectBanned.js';
 import { create, detail, homeFeed, listForBoard, mine, track } from './reports.controller.js';
 import { react, support, unreact, unsupport } from '../engagement/engagement.controller.js';
 import { requireBoardRole } from '../../middlewares/boardAccess.js';
@@ -87,17 +88,18 @@ export function createReportsRouter() {
   });
 
   router.get('/:id', optionalAuth, idParams, detail);
-  router.put('/:id/support', requireAuth, engagementLimiter, idParams, support);
-  router.delete('/:id/support', requireAuth, engagementLimiter, idParams, unsupport);
+  router.put('/:id/support', requireAuth, engagementLimiter, rejectBanned, idParams, support);
+  router.delete('/:id/support', requireAuth, engagementLimiter, rejectBanned, idParams, unsupport);
   router.put(
     '/:id/reaction',
     requireAuth,
     engagementLimiter,
+    rejectBanned,
     idParams,
     validate(reactionRequestSchema),
     react,
   );
-  router.delete('/:id/reaction', requireAuth, engagementLimiter, idParams, unreact);
+  router.delete('/:id/reaction', requireAuth, engagementLimiter, rejectBanned, idParams, unreact);
   router.post(
     '/:id/process',
     requireAuth,
