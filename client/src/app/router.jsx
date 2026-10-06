@@ -19,7 +19,6 @@ import { BoardDetailPage } from '../pages/board-detail/BoardDetailPage.jsx';
 import { BoardSettingsPage } from '../pages/board-settings/BoardSettingsPage.jsx';
 import { FollowedBoardsPage } from '../pages/followed-boards/FollowedBoardsPage.jsx';
 import { InvitationsPage } from '../pages/invitations/InvitationsPage.jsx';
-import { RolePlaceholderPage } from '../pages/placeholders/RolePlaceholderPage.jsx';
 import { BoardQueuePage } from '../pages/board-queue/BoardQueuePage.jsx';
 import { ReportBoardPickerPage } from '../pages/create-report/ReportBoardPickerPage.jsx';
 import { DeviceReportsPage } from '../pages/device-reports/DeviceReportsPage.jsx';
@@ -35,6 +34,9 @@ import { BansPage } from '../pages/admin/BansPage.jsx';
 import { AdminBoardsPage } from '../pages/admin/AdminBoardsPage.jsx';
 import { AdminUsersPage } from '../pages/admin/AdminUsersPage.jsx';
 import { AuditLogPage } from '../pages/admin/AuditLogPage.jsx';
+import { VerificationLayout } from '../pages/verification/VerificationLayout.jsx';
+import { VerificationDashboardPage } from '../pages/verification/VerificationDashboardPage.jsx';
+import { VerificationDetailPage } from '../pages/verification/VerificationDetailPage.jsx';
 
 export const routes = [
   {
@@ -75,11 +77,14 @@ export const routes = [
                   { path: '/undangan', element: <InvitationsPage /> },
                   { path: '/laporan-saya', element: <MyReportsPage /> },
                   { path: '/buat-board', element: <CreateBoardPage /> },
+                  { path: '/verifikasi-board', element: <Navigate to="/verifikasi" replace /> },
                   {
-                    path: '/verifikasi-board',
-                    element: (
-                      <RolePlaceholderPage title="Verifikasi Board" requiredRole="BOARD_ADMIN" />
-                    ),
+                    path: '/verifikasi',
+                    element: <VerificationLayout />,
+                    children: [
+                      { index: true, element: <VerificationDashboardPage /> },
+                      { path: ':slug', element: <VerificationDetailPage /> },
+                    ],
                   },
                   { path: '/panel-admin', element: <Navigate to="/admin" replace /> },
                   {

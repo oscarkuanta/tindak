@@ -69,7 +69,7 @@ describe('POST /api/boards', () => {
       managerTitle: 'Ketua RT 05',
       dangerousTargetHours: 48,
       status: 'ACTIVE',
-      trustScore: null,
+      trustScore: 3,
       trustLabel: 'NEW',
       handlerCount: 1,
       owner: { id: user.id, name: 'Pengguna Uji', avatarUrl: null },

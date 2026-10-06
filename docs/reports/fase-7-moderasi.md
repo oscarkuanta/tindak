@@ -3,7 +3,7 @@
 - Branch: `feat/f7-moderation`
 - Pemilik: Oscar (fullstack, bagian A dan B dalam satu branch)
 - Tanggal: 2026-10-06
-- PR: (diisi setelah PR dibuat)
+- PR: [#24](https://github.com/oscarkuanta/tindak/pull/24)
 
 ## Ringkasan
 

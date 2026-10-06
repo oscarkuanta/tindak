@@ -109,9 +109,9 @@ Tujuannya: user bisa tahu board ini bisa dipercaya atau tidak.
 
 *Siapa yang boleh kasih rating?*
 - User yang sudah login.
-- Sudah ikuti board minimal 24 jam, ATAU pernah lapor di board itu saat login.
+- Sudah mengikuti board itu.
 - Bukan Penindak di board itu.
-- 1 user cuma bisa kasih 1 rating per board. Bisa diubah tiap 7 hari.
+- 1 user cuma bisa kasih 1 rating per board. Bisa diubah kapan saja.
 
 *Isi rating*
 - Bintang 1 sampai 5 (wajib)
@@ -168,7 +168,7 @@ _Angka syarat di atas bisa diubah tim. Syarat hanya menentukan siapa yang masuk 
 
 *Pilihan Admin Board*
 - *Jadikan Official* (wajib tulis catatan singkat)
-- *Lewati* (board tetap di antrean, bisa dicek lagi nanti)
+- *Lewati* (board keluar dari antrean selama 30 hari, lalu bisa masuk lagi kalau masih memenuhi syarat)
 
 *Cabut Official*
 - Admin Board bisa mencabut status Official kapan saja, wajib tulis alasan.
