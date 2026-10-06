@@ -1,4 +1,4 @@
-import { ERROR_CODES, REPORT_MAX_PHOTOS, USER_ROLES } from '@tindak/shared';
+import { ERROR_CODES, REPORT_MAX_PHOTOS, USER_ROLES, priorityScore } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { env } from '../../config/env.js';
 import { isBanned } from '../../lib/bans.js';
@@ -16,7 +16,31 @@ import {
   REPORT_LIST_INCLUDE,
   toReport,
   toReportDetail,
+  withViewerEngagement,
 } from './reports.presenter.js';
+import { viewerEngagement } from '../engagement/engagement.service.js';
+
+const NEWEST_FIRST = [{ createdAt: 'desc' }, { id: 'desc' }];
+
+export const REPORT_SORT_ORDER = Object.freeze({
+  hot: [{ hotScore: 'desc' }, ...NEWEST_FIRST],
+  priority: [{ priorityScore: 'desc' }, ...NEWEST_FIRST],
+  new: NEWEST_FIRST,
+  resolved: [{ resolvedAt: 'desc' }, ...NEWEST_FIRST],
+});
+
+export async function presentReports(rows, user, present = toReport) {
+  const engagement = await viewerEngagement(
+    rows.map((row) => row.id),
+    user,
+  );
+  return rows.map((row) => withViewerEngagement(present(row), row, user, engagement));
+}
+
+async function presentDetail(report, user, context) {
+  const [json] = await presentReports([report], user, (row) => toReportDetail(row, context));
+  return json;
+}
 
 const TRACKING_CODE_RETRIES = 5;
 const HOUR_MS = 60 * 60 * 1000;
@@ -180,6 +204,7 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
         description: input.description,
         locationDetail: input.locationDetail,
         severity: input.severity,
+        priorityScore: priorityScore({ supportCount: 1, severity: input.severity }),
         trackingSecretHash: sha256(secret),
         needsModeration: photos.some((photo) => photo.isBlurred),
         dueAt:
@@ -196,25 +221,25 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
   }
 
   return {
-    report: toReportDetail(report, await viewerContext(report, user)),
+    report: await presentDetail(report, user, await viewerContext(report, user)),
     trackingCode: report.trackingCode,
     trackingUrl: trackingUrlFor(report.trackingCode, secret),
   };
 }
 
-async function paginate(where, { page, pageSize }) {
+export async function paginate(where, { page, pageSize }, { user, orderBy = NEWEST_FIRST } = {}) {
   const [total, rows] = await Promise.all([
     prisma.report.count({ where }),
     prisma.report.findMany({
       where,
       include: REPORT_LIST_INCLUDE,
-      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      orderBy,
       skip: (page - 1) * pageSize,
       take: pageSize,
     }),
   ]);
   return {
-    data: rows.map(toReport),
+    data: await presentReports(rows, user),
     meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
@@ -225,15 +250,38 @@ export async function listBoardReports(slug, user, query) {
     boardId: board.id,
     isHidden: false,
     ...(query.status && { status: query.status }),
+    ...(query.sort === 'resolved' && { status: 'RESOLVED' }),
     ...(query.categoryId && { categoryId: query.categoryId }),
     ...(query.severity && { severity: query.severity }),
     ...(query.q && { title: { contains: query.q } }),
   };
-  return paginate(where, query);
+  return paginate(where, query, { user, orderBy: REPORT_SORT_ORDER[query.sort] });
 }
 
 export async function listMyReports(user, query) {
-  return paginate({ userId: user.id }, query);
+  return paginate({ userId: user.id }, query, { user });
+}
+
+export async function listHomeFeed(user, { tab, page, pageSize }) {
+  if (tab === 'following' && !user) {
+    throw new AppError(
+      401,
+      ERROR_CODES.UNAUTHENTICATED,
+      'Masuk untuk melihat Board yang kamu ikuti',
+    );
+  }
+  const where = {
+    isHidden: false,
+    board: {
+      status: { not: 'FROZEN' },
+      ...(tab === 'following' && { followers: { some: { userId: user.id } } }),
+    },
+  };
+  return paginate(
+    where,
+    { page, pageSize },
+    { user, orderBy: tab === 'following' ? NEWEST_FIRST : REPORT_SORT_ORDER.hot },
+  );
 }
 
 export async function getReportDetail(id, user) {
@@ -244,7 +292,7 @@ export async function getReportDetail(id, user) {
     report.board.status === 'FROZEN' && !isStaff && user?.role !== USER_ROLES.BOARD_ADMIN;
   if ((report.isHidden && !isStaff && !isAuthor) || boardHidden) throw reportNotFound();
 
-  return toReportDetail(report, context);
+  return presentDetail(report, user, context);
 }
 
 export async function getTrackedReport(code, secret) {
@@ -253,5 +301,5 @@ export async function getTrackedReport(code, secret) {
     include: REPORT_DETAIL_INCLUDE,
   });
   if (!report || !matchesTrackingSecret(report, secret)) throw reportNotFound();
-  return toReportDetail(report, { isReporter: true });
+  return presentDetail(report, null, { isReporter: true });
 }
