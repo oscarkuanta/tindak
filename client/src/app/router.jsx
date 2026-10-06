@@ -20,6 +20,7 @@ import { BoardSettingsPage } from '../pages/board-settings/BoardSettingsPage.jsx
 import { FollowedBoardsPage } from '../pages/followed-boards/FollowedBoardsPage.jsx';
 import { InvitationsPage } from '../pages/invitations/InvitationsPage.jsx';
 import { RolePlaceholderPage } from '../pages/placeholders/RolePlaceholderPage.jsx';
+import { BoardQueuePage } from '../pages/board-queue/BoardQueuePage.jsx';
 import { ReportBoardPickerPage } from '../pages/create-report/ReportBoardPickerPage.jsx';
 import { DeviceReportsPage } from '../pages/device-reports/DeviceReportsPage.jsx';
 import { MyReportsPage } from '../pages/my-reports/MyReportsPage.jsx';
@@ -86,6 +87,14 @@ export const routes = [
             element: <BoardLayout />,
             children: [
               { path: '/b/:slug', element: <BoardDetailPage /> },
+              {
+                path: '/b/:slug/antrean',
+                element: (
+                  <RequireAuth>
+                    <BoardQueuePage />
+                  </RequireAuth>
+                ),
+              },
               { path: '/b/:slug/lapor', element: <ReportFormPage /> },
               { path: '/b/:slug/pengaturan', element: <BoardSettingsPage /> },
             ],

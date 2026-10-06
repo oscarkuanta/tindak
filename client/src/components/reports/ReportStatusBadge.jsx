@@ -1,38 +1,35 @@
-import { REPORT_SEVERITY_LABELS, REPORT_STATUS_LABELS } from '@tindak/shared';
+import { REPORT_HANDLING_STATUS_LABELS, REPORT_SEVERITY_LABELS } from '@tindak/shared';
+import { Badge } from '../ui/index.js';
 
-const severityStyle = {
-  LOW: 'bg-surface-muted text-text-muted',
-  MEDIUM: 'bg-warning/10 text-text',
-  DANGEROUS: 'bg-danger/10 text-danger',
+const STATUS_TONES = {
+  NEW: 'info',
+  NEED_INFO: 'warning',
+  IN_PROGRESS: 'brand',
+  AWAITING_CONFIRMATION: 'warning',
+  RESOLVED: 'success',
+  REOPENED: 'danger',
+  REJECTED: 'danger',
+  DUPLICATE: 'neutral',
 };
 
-const statusStyle = {
-  NEW: 'bg-accent-soft text-accent',
-  NEED_INFO: 'bg-warning/10 text-text',
-  IN_PROGRESS: 'bg-accent-soft text-accent',
-  AWAITING_CONFIRMATION: 'bg-warning/10 text-text',
-  RESOLVED: 'bg-success/10 text-success',
-  REOPENED: 'bg-warning/10 text-text',
-  REJECTED: 'bg-danger/10 text-danger',
-  DUPLICATE: 'bg-surface-muted text-text-muted',
+const SEVERITY_TONES = {
+  LOW: 'neutral',
+  MEDIUM: 'warning',
+  DANGEROUS: 'danger',
 };
 
 export function ReportSeverityBadge({ severity }) {
   return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${severityStyle[severity] ?? severityStyle.LOW}`}
-    >
+    <Badge tone={SEVERITY_TONES[severity] ?? 'neutral'}>
       {REPORT_SEVERITY_LABELS[severity] ?? severity}
-    </span>
+    </Badge>
   );
 }
 
 export function ReportStatusBadge({ status }) {
   return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyle[status] ?? statusStyle.NEW}`}
-    >
-      {REPORT_STATUS_LABELS[status] ?? status}
-    </span>
+    <Badge tone={STATUS_TONES[status] ?? 'neutral'}>
+      {REPORT_HANDLING_STATUS_LABELS[status] ?? status}
+    </Badge>
   );
 }
