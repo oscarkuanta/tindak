@@ -61,7 +61,7 @@ feat/f1a-auth-api, feat/f1b-auth-ui, ...  <- branch kerja
 
    Buka GitHub, klik **Compare & pull request**, pastikan base branch adalah `dev`, lalu isi template PR.
 
-6. Tunggu CI hijau dan 1 approval anggota lain, lalu merge.
+6. Tunggu CI hijau, lalu merge. Approval tidak wajib, pembuat PR boleh merge sendiri.
 
 Jangan push langsung ke `main` atau `dev`.
 
@@ -106,7 +106,7 @@ Saat menjadi reviewer:
    - Ada tes untuk endpoint baru.
    - Tidak ada secret, `.env`, atau `console.log`.
    - Teks yang dilihat pengguna memakai bahasa Indonesia.
-6. Beri komentar di baris kode yang perlu diperbaiki, atau klik **Approve** jika sudah oke.
+6. Beri komentar di baris kode yang perlu diperbaiki. Review bersifat opsional dan tidak menghalangi merge.
 
 ## Jika Migrasi Bentrok
 
