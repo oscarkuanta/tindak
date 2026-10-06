@@ -208,6 +208,142 @@ const REPORTS = [
   },
 ];
 
+const SMKN = ['SMKN 1 Surabaya', 'Kota Surabaya'];
+
+const WORKFLOW_REPORTS = [
+  {
+    board: SMKN,
+    category: 'Kebersihan',
+    reporter: 'admin',
+    severity: 'LOW',
+    title: 'Tempat sampah kantin penuh sejak kemarin',
+    locationDetail: 'Kantin belakang gedung A',
+    description: 'Tempat sampah kantin meluap sampai ke lantai dan mulai berbau.',
+    color: '#6b7a3a',
+    workflow: 'NEED_INFO',
+  },
+  {
+    board: SMKN,
+    category: 'Listrik',
+    reporter: null,
+    severity: 'DANGEROUS',
+    title: 'Kabel stop kontak lab terkelupas',
+    locationDetail: 'Lab komputer 2, meja paling belakang',
+    description: 'Kabel stop kontak terkelupas dan sempat memercikkan api saat dipakai siswa.',
+    color: '#3a3f6b',
+    workflow: 'IN_PROGRESS',
+    overdue: true,
+  },
+  {
+    board: SMKN,
+    category: 'Kerusakan Fasilitas',
+    reporter: 'admin',
+    severity: 'MEDIUM',
+    title: 'Kursi kelas XI TKJ 2 banyak yang patah',
+    locationDetail: 'Gedung C lantai 3, kelas XI TKJ 2',
+    description: 'Sekitar lima kursi patah kakinya sehingga siswa harus berdiri saat pelajaran.',
+    color: '#7a4e2d',
+    workflow: 'AWAITING_CONFIRMATION',
+  },
+  {
+    board: SMKN,
+    category: 'Keamanan',
+    reporter: 'boardAdmin',
+    severity: 'MEDIUM',
+    title: 'Lampu parkir motor mati',
+    locationDetail: 'Parkiran motor siswa sisi timur',
+    description: 'Lampu parkiran mati sehingga parkiran gelap total saat kegiatan sore.',
+    color: '#2d5f7a',
+    workflow: 'RESOLVED',
+  },
+  {
+    board: SMKN,
+    category: 'Lainnya',
+    reporter: null,
+    severity: 'LOW',
+    title: 'Jadwal ujian belum diumumkan',
+    locationDetail: 'Papan pengumuman lobi',
+    description: 'Jadwal ujian semester belum ditempel di papan pengumuman lobi sekolah.',
+    color: '#5a5a5a',
+    workflow: 'REJECTED',
+  },
+];
+
+function hoursAgo(hours) {
+  return new Date(Date.now() - hours * 60 * 60 * 1000);
+}
+
+async function applyWorkflow(reportId, item, users, createdAt) {
+  const handler = users.siti.id;
+  const owner = users.budi.id;
+  const events = [];
+  const data = {};
+
+  if (item.workflow === 'NEED_INFO') {
+    await prisma.infoRequest.create({
+      data: {
+        reportId,
+        question: 'Tempat sampah yang mana? Ada tiga di kantin.',
+        askedById: handler,
+        createdAt: hoursAgo(2),
+      },
+    });
+    events.push({
+      fromStatus: 'NEW',
+      toStatus: 'NEED_INFO',
+      actorId: handler,
+      note: 'Tempat sampah yang mana? Ada tiga di kantin.',
+    });
+  }
+  if (['IN_PROGRESS', 'AWAITING_CONFIRMATION', 'RESOLVED'].includes(item.workflow)) {
+    events.push({ fromStatus: 'NEW', toStatus: 'IN_PROGRESS', actorId: owner });
+    data.assigneeId = handler;
+  }
+  if (['AWAITING_CONFIRMATION', 'RESOLVED'].includes(item.workflow)) {
+    const after = await demoPhoto('#2f7a4a', `Sesudah: ${item.title}`);
+    await prisma.reportMedia.create({
+      data: { reportId, url: after.url, storageKey: after.key, kind: 'AFTER' },
+    });
+    events.push({
+      fromStatus: 'IN_PROGRESS',
+      toStatus: 'AWAITING_CONFIRMATION',
+      actorId: handler,
+      note: 'Sudah diperbaiki, mohon dicek.',
+    });
+  }
+  if (item.workflow === 'RESOLVED') {
+    events.push({
+      fromStatus: 'AWAITING_CONFIRMATION',
+      toStatus: 'RESOLVED',
+      actorType: 'REPORTER',
+      actorId: users[item.reporter]?.id ?? null,
+      note: 'Sudah terang lagi, terima kasih.',
+    });
+    data.resolvedAt = hoursAgo(1);
+  }
+  if (item.workflow === 'REJECTED') {
+    events.push({
+      fromStatus: 'NEW',
+      toStatus: 'REJECTED',
+      actorId: owner,
+      reason: 'NOT_PHYSICAL',
+      note: 'Bukan masalah fisik, silakan tanyakan ke wali kelas.',
+    });
+  }
+  if (item.overdue) {
+    data.dueAt = hoursAgo(3);
+  }
+
+  let at = createdAt.getTime();
+  for (const event of events) {
+    at += 20 * 60 * 1000;
+    await prisma.reportEvent.create({
+      data: { reportId, actorType: 'HANDLER', ...event, createdAt: new Date(at) },
+    });
+  }
+  await prisma.report.update({ where: { id: reportId }, data: { status: item.workflow, ...data } });
+}
+
 async function demoPhoto(color, title) {
   const svg = `<svg width="1200" height="800" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="${color}"/><text x="60" y="720" font-family="Arial" font-size="48" fill="#ffffff">Foto contoh: ${title.replace(/[<>&]/g, '')}</text></svg>`;
   const buffer = await normalizeImage(await sharp(Buffer.from(svg)).jpeg().toBuffer());
@@ -217,7 +353,7 @@ async function demoPhoto(color, title) {
 async function seedReports(users) {
   let created = 0;
   const ipHash = hashIp('seed');
-  for (const item of REPORTS) {
+  for (const item of [...REPORTS, ...WORKFLOW_REPORTS]) {
     const board = await prisma.board.findUnique({ where: { slug: boardBaseSlug(...item.board) } });
     const exists = await prisma.report.findFirst({
       where: { boardId: board.id, title: item.title },
@@ -228,8 +364,8 @@ async function seedReports(users) {
     });
     const user = item.reporter ? users[item.reporter] : null;
     const photo = await demoPhoto(item.color, item.title);
-    const now = new Date(Date.now() - (REPORTS.length - created) * 60 * 60 * 1000);
-    await prisma.report.create({
+    const now = item.workflow ? hoursAgo(30) : hoursAgo(REPORTS.length - created);
+    const report = await prisma.report.create({
       data: {
         boardId: board.id,
         categoryId: category.id,
@@ -260,6 +396,7 @@ async function seedReports(users) {
         },
       },
     });
+    if (item.workflow) await applyWorkflow(report.id, item, users, now);
     created += 1;
   }
   return created;
@@ -271,7 +408,7 @@ async function main() {
   await seedMembersAndFollows(users);
   const reports = await seedReports(users);
   logger.info(
-    `Seed selesai: ${USERS.length} akun disiapkan, ${created} Board baru dari ${BOARDS.length}, ${reports} laporan baru dari ${REPORTS.length}`,
+    `Seed selesai: ${USERS.length} akun disiapkan, ${created} Board baru dari ${BOARDS.length}, ${reports} laporan baru dari ${REPORTS.length + WORKFLOW_REPORTS.length}`,
   );
 }
 
