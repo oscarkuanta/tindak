@@ -21,7 +21,7 @@ import {
 const TRACKING_CODE_RETRIES = 5;
 const HOUR_MS = 60 * 60 * 1000;
 
-function reportNotFound() {
+export function reportNotFound() {
   return new AppError(404, ERROR_CODES.REPORT_NOT_FOUND, 'Laporan tidak ditemukan');
 }
 
@@ -37,14 +37,31 @@ function trackingUrlFor(code, secret) {
   return url.toString();
 }
 
-async function isBoardStaff(board, user) {
-  if (!user) return false;
-  if (user.role === USER_ROLES.ADMIN) return true;
-  return Boolean(await getBoardMembership(board.id, user.id));
+export async function viewerContext(report, user) {
+  const membership = user ? await getBoardMembership(report.boardId, user.id) : null;
+  const isHandler = Boolean(membership);
+  return {
+    isHandler,
+    isStaff: isHandler || user?.role === USER_ROLES.ADMIN,
+    isReporter: Boolean(user && report.userId === user.id),
+  };
 }
 
-async function preparePhotos(files) {
-  if (!files?.length) throw photoError('Unggah minimal 1 foto');
+export async function findReportWithDetail(id) {
+  const report = await prisma.report.findUnique({ where: { id }, include: REPORT_DETAIL_INCLUDE });
+  if (!report) throw reportNotFound();
+  return report;
+}
+
+export function matchesTrackingSecret(report, secret) {
+  return Boolean(secret) && safeEqualHex(report.trackingSecretHash, sha256(secret));
+}
+
+export async function preparePhotos(files, { required = true } = {}) {
+  if (!files?.length) {
+    if (required) throw photoError('Unggah minimal 1 foto');
+    return [];
+  }
   if (files.length > REPORT_MAX_PHOTOS) throw photoError(`Maksimal ${REPORT_MAX_PHOTOS} foto`);
 
   const prepared = [];
@@ -72,7 +89,7 @@ async function preparePhotos(files) {
   return prepared;
 }
 
-async function storePhotos(prepared) {
+export async function storePhotos(prepared) {
   const stored = [];
   try {
     for (const photo of prepared) {
@@ -179,7 +196,7 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
   }
 
   return {
-    report: toReportDetail(report, { isStaff: false }),
+    report: toReportDetail(report, await viewerContext(report, user)),
     trackingCode: report.trackingCode,
     trackingUrl: trackingUrlFor(report.trackingCode, secret),
   };
@@ -220,16 +237,14 @@ export async function listMyReports(user, query) {
 }
 
 export async function getReportDetail(id, user) {
-  const report = await prisma.report.findUnique({ where: { id }, include: REPORT_DETAIL_INCLUDE });
-  if (!report) throw reportNotFound();
-
-  const isStaff = await isBoardStaff(report.board, user);
-  const isAuthor = Boolean(user && report.userId === user.id);
+  const report = await findReportWithDetail(id);
+  const context = await viewerContext(report, user);
+  const { isStaff, isReporter: isAuthor } = context;
   const boardHidden =
     report.board.status === 'FROZEN' && !isStaff && user?.role !== USER_ROLES.BOARD_ADMIN;
   if ((report.isHidden && !isStaff && !isAuthor) || boardHidden) throw reportNotFound();
 
-  return toReportDetail(report, { isStaff });
+  return toReportDetail(report, context);
 }
 
 export async function getTrackedReport(code, secret) {
@@ -237,6 +252,6 @@ export async function getTrackedReport(code, secret) {
     where: { trackingCode: code },
     include: REPORT_DETAIL_INCLUDE,
   });
-  if (!report || !safeEqualHex(report.trackingSecretHash, sha256(secret))) throw reportNotFound();
-  return toReportDetail(report, { isStaff: false });
+  if (!report || !matchesTrackingSecret(report, secret)) throw reportNotFound();
+  return toReportDetail(report, { isReporter: true });
 }

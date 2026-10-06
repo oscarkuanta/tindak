@@ -1,21 +1,28 @@
-const STATUSES_WITHOUT_DEADLINE = new Set([
+import { reportAllowedActions } from '@tindak/shared';
+
+export const STATUSES_WITHOUT_DEADLINE = new Set([
   'AWAITING_CONFIRMATION',
   'RESOLVED',
   'REJECTED',
   'DUPLICATE',
 ]);
-const REPORTER_NOT_SATISFIED_REOPENS = 2;
 
 export const REPORT_LIST_INCLUDE = {
   board: { select: { id: true, slug: true, name: true, status: true } },
   category: { select: { id: true, name: true } },
   user: { select: { id: true, name: true, avatarUrl: true } },
   media: { orderBy: { id: 'asc' } },
+  assignee: { select: { id: true, name: true, avatarUrl: true } },
 };
 
 export const REPORT_DETAIL_INCLUDE = {
   ...REPORT_LIST_INCLUDE,
-  parent: { select: { id: true, title: true } },
+  parent: { select: { id: true, title: true, status: true } },
+  infoRequests: {
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: 1,
+    include: { askedBy: { select: { id: true, name: true } } },
+  },
   events: {
     orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     include: { actor: { select: { id: true, name: true } } },
@@ -56,6 +63,7 @@ export function toReport(report) {
     severity: report.severity,
     status: report.status,
     media: report.media.map(toMedia),
+    assignee: report.assignee ?? null,
     dueAt: report.dueAt,
     isOverdue: isOverdue(report),
     createdAt: report.createdAt,
@@ -77,15 +85,46 @@ function toTimelineEntry(event, report) {
   };
 }
 
-export function toReportDetail(report, { isStaff = false } = {}) {
+function toInfoRequest(infoRequest) {
+  if (!infoRequest) return null;
+  return {
+    id: infoRequest.id,
+    question: infoRequest.question,
+    answer: infoRequest.answer,
+    askedBy: infoRequest.askedBy,
+    createdAt: infoRequest.createdAt,
+    answeredAt: infoRequest.answeredAt,
+  };
+}
+
+export function allowedActionsFor(report, viewer) {
+  const latestInfo = report.infoRequests?.[0];
+  return reportAllowedActions(
+    { status: report.status, hasPendingInfoRequest: Boolean(latestInfo && !latestInfo.answer) },
+    viewer,
+  );
+}
+
+export function toQueueItem(report) {
+  return {
+    ...toReport(report),
+    media: report.media.slice(0, 1).map(toMedia),
+    allowedActions: allowedActionsFor(report, { isHandler: true }),
+  };
+}
+
+export function toReportDetail(
+  report,
+  { isStaff = false, isHandler = false, isReporter = false } = {},
+) {
   return {
     ...toReport(report),
     ...(isStaff && { reporterType: report.userId ? 'ACCOUNT' : 'GUEST' }),
     reopenCount: report.reopenCount,
-    reporterNotSatisfied: report.reopenCount >= REPORTER_NOT_SATISFIED_REOPENS,
+    reporterNotSatisfied: report.reporterNotSatisfied,
     parent: report.parent ?? null,
-    infoRequest: null,
+    infoRequest: toInfoRequest(report.infoRequests?.[0]),
     timeline: report.events.map((event) => toTimelineEntry(event, report)),
-    allowedActions: [],
+    allowedActions: allowedActionsFor(report, { isHandler, isReporter }),
   };
 }

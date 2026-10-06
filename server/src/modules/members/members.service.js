@@ -7,7 +7,7 @@ import {
 import { prisma } from '../../lib/prisma.js';
 import { recordAudit } from '../../lib/audit.js';
 import { AppError } from '../../utils/AppError.js';
-import { decorateCards, getBoardDetail } from '../boards/boards.service.js';
+import { decorateCards, getBoardDetail, recordHandlerActivity } from '../boards/boards.service.js';
 import { notifyBoardAdmins } from '../notifications/notifications.service.js';
 
 const MEMBER_USER_SELECT = { id: true, name: true, email: true, avatarUrl: true };
@@ -192,10 +192,8 @@ export async function transferOwnership(board, owner, { userId }) {
       data: { role: 'HANDLER' },
     });
     await tx.boardMember.update({ where: { id: target.id }, data: { role: 'OWNER' } });
-    await tx.board.update({
-      where: { id: board.id },
-      data: { ownerId: userId, lastHandlerActivityAt: new Date() },
-    });
+    await tx.board.update({ where: { id: board.id }, data: { ownerId: userId } });
+    await recordHandlerActivity(tx, board.id);
   });
 
   const event = {
