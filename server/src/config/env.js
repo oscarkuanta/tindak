@@ -40,6 +40,10 @@ const envSchema = z.object({
   BOARD_ADMIN_EMAILS: emailListSchema,
   TURNSTILE_SECRET_KEY: optionalString,
   NSFW_ENABLED: booleanFlag,
+  JOBS_ENABLED: z
+    .enum(['true', 'false', '1', '0', ''])
+    .optional()
+    .transform((value) => value !== 'false' && value !== '0'),
   UPLOAD_DIR: optionalString,
   IP_HASH_SECRET: z.string().min(16, 'minimal 16 karakter'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),

@@ -9,6 +9,7 @@ import {
   ERROR_CODES,
   REPORT_ACTIVE_STATUSES,
   USER_ROLES,
+  BOARD_INACTIVE_AFTER_DAYS,
 } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
@@ -199,9 +200,9 @@ export async function updateBoard(board, user, input) {
   for (const key of ['name', 'managerTitle', 'description', 'dangerousTargetHours']) {
     if (input[key] !== undefined) data[key] = input[key];
   }
-  await prisma.board.update({
-    where: { id: board.id },
-    data: { ...data, lastHandlerActivityAt: new Date() },
+  await prisma.$transaction(async (tx) => {
+    await tx.board.update({ where: { id: board.id }, data });
+    await recordHandlerActivity(tx, board.id);
   });
   return getBoardDetail(board.slug, user);
 }
@@ -279,8 +280,12 @@ export function searchCities(q) {
     .slice(0, CITY_SEARCH_LIMIT);
 }
 
-async function touchHandlerActivity(tx, boardId) {
-  await tx.board.update({ where: { id: boardId }, data: { lastHandlerActivityAt: new Date() } });
+export async function recordHandlerActivity(client, boardId, now = new Date()) {
+  await client.board.update({ where: { id: boardId }, data: { lastHandlerActivityAt: now } });
+  await client.board.updateMany({
+    where: { id: boardId, status: 'INACTIVE' },
+    data: { status: 'ACTIVE' },
+  });
 }
 
 async function assertCategoryNameFree(tx, boardId, name, exceptId) {
@@ -322,7 +327,7 @@ export async function addCategory(board, { name }) {
       const category = await tx.category.create({
         data: { boardId: board.id, name, sortOrder: (last?.sortOrder ?? -1) + 1 },
       });
-      await touchHandlerActivity(tx, board.id);
+      await recordHandlerActivity(tx, board.id);
       return toCategory(category);
     })
     .catch(mapCategoryClash);
@@ -342,7 +347,7 @@ export async function updateCategory(board, categoryId, { name, sortOrder }) {
           ...(sortOrder !== undefined && { sortOrder }),
         },
       });
-      await touchHandlerActivity(tx, board.id);
+      await recordHandlerActivity(tx, board.id);
       return toCategory(updated);
     })
     .catch(mapCategoryClash);
@@ -361,7 +366,7 @@ export async function deleteCategory(board, categoryId) {
       );
     }
     await tx.category.delete({ where: { id: category.id } });
-    await touchHandlerActivity(tx, board.id);
+    await recordHandlerActivity(tx, board.id);
     return { id: category.id, deleted: true };
   });
 }
@@ -382,11 +387,20 @@ export async function reorderCategories(board, { categoryIds }) {
     for (const [index, id] of categoryIds.entries()) {
       await tx.category.update({ where: { id }, data: { sortOrder: index } });
     }
-    await touchHandlerActivity(tx, board.id);
+    await recordHandlerActivity(tx, board.id);
     const categories = await tx.category.findMany({
       where: { boardId: board.id },
       orderBy: CATEGORY_ORDER,
     });
     return categories.map(toCategory);
   });
+}
+
+export async function markInactiveBoards(now = new Date(), afterDays = BOARD_INACTIVE_AFTER_DAYS) {
+  const cutoff = new Date(now.getTime() - afterDays * 24 * 60 * 60 * 1000);
+  const { count } = await prisma.board.updateMany({
+    where: { status: 'ACTIVE', lastHandlerActivityAt: { lt: cutoff } },
+    data: { status: 'INACTIVE' },
+  });
+  return count;
 }
