@@ -165,6 +165,7 @@ export function BoardDetailPage() {
 
   const board = boardQuery.data.data;
   const isOwner = board.viewer?.role === 'OWNER';
+  const isHandler = board.viewer?.role === 'HANDLER';
 
   return (
     <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -205,6 +206,14 @@ export function BoardDetailPage() {
                 Laporkan Masalah
               </Link>
               <FollowButton board={board} />
+              {(isOwner || isHandler) && (
+                <Link
+                  className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
+                  to={`/b/${slug}/antrean`}
+                >
+                  Antrean Laporan
+                </Link>
+              )}
               {isOwner && (
                 <Link
                   className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
