@@ -6,6 +6,7 @@ import {
   findSimilarBoards,
   getBoardDetail,
   listMyBoards,
+  listPopularBoards,
   reorderCategories,
   searchBoards,
   searchCities,
@@ -56,4 +57,8 @@ export async function myBoards(req, res) {
 
 export function cities(req, res) {
   sendData(res, searchCities(req.validated.query.q));
+}
+
+export async function popular(req, res) {
+  sendData(res, await listPopularBoards(req.validated.query.limit, req.user));
 }

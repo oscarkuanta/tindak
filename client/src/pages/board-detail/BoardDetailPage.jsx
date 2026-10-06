@@ -12,7 +12,7 @@ const FEED_TABS = [
   { label: 'Ramai', sort: 'hot' },
   { label: 'Prioritas', sort: 'priority' },
   { label: 'Terbaru', sort: 'new' },
-  { label: 'Selesai', sort: 'new', status: 'RESOLVED' },
+  { label: 'Selesai', sort: 'resolved' },
 ];
 
 function getInitials(name = '') {
@@ -116,11 +116,14 @@ function BoardInformation({ board }) {
 export function BoardDetailPage() {
   const { slug } = useParams();
   const boardQuery = useBoard(slug);
-  const [activeTab, setActiveTab] = useState(FEED_TABS[0]);
+  const [selectedTab, setSelectedTab] = useState(null);
+  const viewerRole = boardQuery.data?.data?.viewer?.role;
+  const defaultTab = viewerRole ? FEED_TABS[1] : FEED_TABS[0];
+  const activeTab = selectedTab ?? defaultTab;
+  const setActiveTab = setSelectedTab;
   const [page, setPage] = useState(1);
   const reportsQuery = useBoardReports(slug, {
     sort: activeTab.sort,
-    ...(activeTab.status ? { status: activeTab.status } : {}),
     page,
     pageSize: 10,
   });

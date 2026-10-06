@@ -8,6 +8,7 @@ import { HandlerActionPanel } from './HandlerActionPanel.jsx';
 import { ReporterResponsePanel } from './ReporterResponsePanel.jsx';
 import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
 import { ReportTimeline } from './ReportTimeline.jsx';
+import { EngagementBar } from './EngagementBar.jsx';
 
 function formatCreatedAt(value) {
   if (!value) return null;
@@ -74,6 +75,7 @@ export function ReportDetailContent({ report, credentials }) {
           )}
         </p>
         <p className="whitespace-pre-wrap text-sm leading-6">{report.description}</p>
+        {!credentials && <EngagementBar report={report} />}
         {report.parent && (
           <p className="rounded-base bg-surface-muted p-3 text-sm">
             Laporan ini ditandai sebagai duplikat dari{' '}

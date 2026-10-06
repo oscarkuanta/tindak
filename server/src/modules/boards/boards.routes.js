@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   boardCategoryParamSchema,
   boardMemberParamSchema,
+  popularBoardsQuerySchema,
   boardSearchQuerySchema,
   boardSlugParamSchema,
   citySearchQuerySchema,
@@ -28,6 +29,7 @@ import {
   editCategory,
   myBoards,
   orderCategories,
+  popular,
   removeCategory,
   search,
   similar,
@@ -60,6 +62,7 @@ export function createBoardsRouter() {
   router.post('/', requireAuth, createLimiter, validate(createBoardRequestSchema), create);
   router.get('/search', optionalAuth, validate(boardSearchQuerySchema, 'query'), search);
   router.get('/similar', optionalAuth, validate(similarBoardQuerySchema, 'query'), similar);
+  router.get('/popular', optionalAuth, validate(popularBoardsQuerySchema, 'query'), popular);
   router.get('/:slug', optionalAuth, slugParams, detail);
   router.patch('/:slug', ownerOnly, validate(updateBoardRequestSchema), update);
   router.post(

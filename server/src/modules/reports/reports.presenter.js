@@ -1,4 +1,4 @@
-import { reportAllowedActions } from '@tindak/shared';
+import { REPORT_LOCKED_STATUSES, reportAllowedActions } from '@tindak/shared';
 
 export const STATUSES_WITHOUT_DEADLINE = new Set([
   'AWAITING_CONFIRMATION',
@@ -8,7 +8,7 @@ export const STATUSES_WITHOUT_DEADLINE = new Set([
 ]);
 
 export const REPORT_LIST_INCLUDE = {
-  board: { select: { id: true, slug: true, name: true, status: true } },
+  board: { select: { id: true, slug: true, name: true, status: true, verification: true } },
   category: { select: { id: true, name: true } },
   user: { select: { id: true, name: true, avatarUrl: true } },
   media: { orderBy: { id: 'asc' } },
@@ -17,6 +17,16 @@ export const REPORT_LIST_INCLUDE = {
 
 export const REPORT_DETAIL_INCLUDE = {
   ...REPORT_LIST_INCLUDE,
+  board: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      status: true,
+      verification: true,
+      owner: { select: { id: true, name: true, avatarUrl: true } },
+    },
+  },
   parent: { select: { id: true, title: true, status: true } },
   infoRequests: {
     orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
@@ -66,6 +76,15 @@ export function toReport(report) {
     assignee: report.assignee ?? null,
     dueAt: report.dueAt,
     isOverdue: isOverdue(report),
+    supportCount: report.supportCount,
+    reactionCounts: {
+      DANGEROUS: report.dangerousCount,
+      LONG_STANDING: report.longStandingCount,
+      ANNOYING: report.annoyingCount,
+    },
+    priorityScore: report.priorityScore,
+    isEngagementLocked: REPORT_LOCKED_STATUSES.includes(report.status),
+    resolvedAt: report.resolvedAt,
     createdAt: report.createdAt,
     updatedAt: report.updatedAt,
   };
@@ -126,5 +145,14 @@ export function toReportDetail(
     infoRequest: toInfoRequest(report.infoRequests?.[0]),
     timeline: report.events.map((event) => toTimelineEntry(event, report)),
     allowedActions: allowedActionsFor(report, { isHandler, isReporter }),
+  };
+}
+
+export function withViewerEngagement(json, report, user, engagement) {
+  return {
+    ...json,
+    mySupport: engagement.supports.has(report.id),
+    myReaction: engagement.reactions.get(report.id) ?? null,
+    isOwnReport: Boolean(user && report.userId === user.id),
   };
 }

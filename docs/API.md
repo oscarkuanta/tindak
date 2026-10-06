@@ -811,14 +811,14 @@ Error:
 
 Auth: publik.
 
-| Query                              | Aturan                                                                                               |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `sort`                             | `new` (default), `hot`, atau `priority`. Sampai Fase 6, `hot` dan `priority` diurutkan seperti `new` |
-| `status`, `severity`, `categoryId` | opsional, filter                                                                                     |
-| `q`                                | opsional, 2 sampai 100 karakter, mencari di judul (dipakai pemilih laporan induk duplikat Fase 5)    |
-| `page`, `pageSize`                 | default 1 dan 10, `pageSize` maks 50                                                                 |
+| Query                              | Aturan                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `sort`                             | `new` (default), `hot`, `priority`, atau `resolved`. Lihat Urutan feed di Fase 6                  |
+| `status`, `severity`, `categoryId` | opsional, filter                                                                                  |
+| `q`                                | opsional, 2 sampai 100 karakter, mencari di judul (dipakai pemilih laporan induk duplikat Fase 5) |
+| `page`, `pageSize`                 | default 1 dan 10, `pageSize` maks 50                                                              |
 
-Urutan: terbaru dulu. Laporan tersembunyi (`isHidden`) tidak pernah masuk daftar.
+Urutan sesuai `sort` (lihat Fase 6). Laporan tersembunyi (`isHidden`) tidak pernah masuk daftar.
 
 Sukses `200`: `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
 
@@ -919,7 +919,7 @@ Error: 404 REPORT_NOT_FOUND.
 
 ### GET /api/boards/:slug/queue
 
-Auth: login sebagai Penindak Utama atau Penindak aktif pada Board. Query opsional: status, categoryId, severity, assigneeId, overdue (true/false), page, pageSize (default 20, maks 50). Urutan: terbaru dulu (urutan prioritas menyusul di Fase 6). Laporan tersembunyi tidak ikut sampai antrean moderasi Fase 7. overdue=false berarti semua laporan yang tidak terlambat.
+Auth: login sebagai Penindak Utama atau Penindak aktif pada Board. Query opsional: status, categoryId, severity, assigneeId, overdue (true/false), page, pageSize (default 20, maks 50). Query `sort`: `priority` (default), `hot`, atau `new` (lihat Fase 6). Laporan tersembunyi tidak ikut sampai antrean moderasi Fase 7. overdue=false berarti semua laporan yang tidak terlambat.
 
 Sukses 200: respons paginasi umum, item berisi data laporan, kategori, media pertama, assignee, isOverdue, dan allowedActions.
 
@@ -1002,3 +1002,109 @@ Job terjadwal berjalan setiap jam di menit ke-7 (node-cron), bisa dimatikan deng
 - Board ACTIVE tanpa aktivitas Penindak selama 30 hari menjadi INACTIVE.
 
 isOverdue dihitung saat respons dibuat: severity DANGEROUS, dueAt sudah lewat, dan status belum AWAITING_CONFIRMATION, RESOLVED, REJECTED, atau DUPLICATE.
+
+---
+
+## Fase 6: Dukungan, Reaksi, Prioritas, Beranda
+
+### Field tambahan di objek Report
+
+Semua objek `Report` dan `Report detail` (feed Board, beranda, laporan saya, antrean, detail, lacak) sekarang berisi:
+
+```json
+{
+  "supportCount": 4,
+  "reactionCounts": { "DANGEROUS": 2, "LONG_STANDING": 1, "ANNOYING": 0 },
+  "priorityScore": 42,
+  "isEngagementLocked": false,
+  "resolvedAt": null,
+  "mySupport": false,
+  "myReaction": null,
+  "isOwnReport": false
+}
+```
+
+- `supportCount` sudah termasuk 1 dukungan otomatis dari pelapor.
+- `isEngagementLocked` bernilai `true` untuk `RESOLVED`, `REJECTED`, dan `DUPLICATE`.
+- `mySupport`, `myReaction`, dan `isOwnReport` diisi untuk user login. Untuk tamu: `false`, `null`, `false`.
+- `board` di setiap laporan berisi `verification`. Di detail laporan, `board.owner` (`{ id, name, avatarUrl }`) juga dikirim, dipakai sebagai pilihan penanggung jawab.
+
+### Rumus skor
+
+- `priorityScore` = dukungan + 🚨 × 3 + ⏳ × 2 + 😤 + bobot bahaya (Rendah 0, Sedang 10, Berbahaya 30) + hari belum selesai × 2. Rumus ada di `shared/src/reportScore.js` (`priorityScore`, `daysOpen`). Dihitung ulang saat ada dukungan atau reaksi, saat status berubah, dan oleh job harian (00.20) untuk faktor hari. Laporan yang sudah ditutup berhenti menghitung hari.
+- `hotScore` = jumlah dukungan baru + reaksi baru atau diganti dalam 48 jam terakhir. Disimpan sebagai kolom cache, diperbarui langsung saat ada dukungan atau reaksi, dan dikoreksi job tiap 15 menit supaya aktivitas yang lewat 48 jam turun.
+
+### PUT /api/reports/:id/support
+
+Auth: Login. Mendukung laporan. Idempoten. Penindak Board boleh mendukung.
+
+Sukses `200`:
+
+```json
+{
+  "data": {
+    "reportId": 7,
+    "supportCount": 5,
+    "reactionCounts": { "DANGEROUS": 2, "LONG_STANDING": 1, "ANNOYING": 0 },
+    "priorityScore": 43,
+    "mySupport": true,
+    "myReaction": null
+  }
+}
+```
+
+Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN` (pelapor mendukung laporannya sendiri), `404 REPORT_NOT_FOUND` (termasuk laporan tersembunyi dan Board `FROZEN`), `409 REPORT_LOCKED`, `429 RATE_LIMITED` (60 per menit).
+
+### DELETE /api/reports/:id/support
+
+Auth: Login. Menarik dukungan. Idempoten. Sukses `200` dengan bentuk yang sama. Error sama, tanpa 403.
+
+### PUT /api/reports/:id/reaction
+
+Auth: Login. Body: `{ "type": "DANGEROUS" }` (`DANGEROUS`, `LONG_STANDING`, `ANNOYING`). Membuat atau mengganti reaksi; satu reaksi per user per laporan. Pelapor boleh bereaksi pada laporannya sendiri. Field lain ditolak 400.
+
+Sukses `200`: bentuk sama seperti dukungan.
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `404 REPORT_NOT_FOUND`, `409 REPORT_LOCKED`, `429 RATE_LIMITED`.
+
+### DELETE /api/reports/:id/reaction
+
+Auth: Login. Menghapus reaksi. Idempoten. Sukses `200` dengan bentuk yang sama.
+
+### Urutan feed
+
+`GET /api/boards/:slug/reports?sort=`:
+
+| sort       | Urutan                                                                     |
+| ---------- | -------------------------------------------------------------------------- |
+| `new`      | terbaru dulu (default)                                                     |
+| `hot`      | `hotScore` tertinggi, lalu terbaru                                         |
+| `priority` | `priorityScore` tertinggi, lalu terbaru                                    |
+| `resolved` | hanya status `RESOLVED`, yang paling baru diselesaikan (`resolvedAt`) dulu |
+
+`GET /api/boards/:slug/queue` menerima `sort` = `priority` (default), `hot`, atau `new`.
+
+### GET /api/feed/home
+
+Auth: opsional. Query: `tab` (`hot` default, atau `following`), `page`, `pageSize` (default 10, maks 50).
+
+- `hot`: laporan dari semua Board yang tidak beku, urut `hotScore` lalu terbaru.
+- `following`: wajib login (`401` untuk tamu). Laporan dari Board yang diikuti, terbaru dulu.
+
+Laporan tersembunyi tidak ikut. Setiap item berisi `board` (`id`, `slug`, `name`, `status`, `verification`).
+
+Sukses `200`: `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`.
+
+### GET /api/boards/popular
+
+Auth: opsional. Query: `limit` (default 6, maks 20).
+
+Board yang tidak beku, diurutkan dari pengikut terbanyak, lalu laporan aktif terbanyak, lalu Official, lalu terbaru. Fase 8 akan menyisipkan rating di fungsi `comparePopularity` (`server/src/modules/boards/boards.ranking.js`).
+
+Sukses `200`: `{ "data": [<BoardCard>] }`. Setiap item berisi `verification`, `followerCount`, `activeReportCount`, dan `viewer`.
+
+### Perubahan pencarian Board
+
+`GET /api/boards/search` tanpa `q` sekarang diurutkan dengan urutan populer yang sama seperti `GET /api/boards/popular`, sehingga kotak cari bisa langsung menampilkan Board terpopuler sebelum user mengetik. Dengan `q`, urutan tetap seperti Fase 2.

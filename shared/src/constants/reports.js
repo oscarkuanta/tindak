@@ -47,7 +47,7 @@ export const REPORT_ACTIVE_STATUSES = Object.freeze([
 ]);
 
 export const REPORT_MEDIA_KINDS = Object.freeze(['BEFORE', 'AFTER', 'EXTRA']);
-export const REPORT_SORTS = Object.freeze(['new', 'hot', 'priority']);
+export const REPORT_SORTS = Object.freeze(['hot', 'priority', 'new', 'resolved']);
 export const REPORT_REPORTER_TYPES = Object.freeze(['GUEST', 'ACCOUNT']);
 
 export const REPORT_TITLE_MAX = 100;
@@ -68,3 +68,28 @@ export const REPORT_LIMITS = Object.freeze({
 
 export const TRACKING_CODE_LENGTH = 8;
 export const TRACKING_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+export const REACTION_TYPES = Object.freeze(['DANGEROUS', 'LONG_STANDING', 'ANNOYING']);
+
+export const REACTION_META = Object.freeze({
+  DANGEROUS: Object.freeze({
+    emoji: '🚨',
+    label: 'Berbahaya',
+    description: 'Bisa melukai orang',
+  }),
+  LONG_STANDING: Object.freeze({
+    emoji: '⏳',
+    label: 'Sudah Lama',
+    description: 'Masalah dibiarkan lama',
+  }),
+  ANNOYING: Object.freeze({
+    emoji: '😤',
+    label: 'Mengganggu',
+    description: 'Mengganggu aktivitas',
+  }),
+});
+
+export const REPORT_LOCKED_STATUSES = Object.freeze(['RESOLVED', 'REJECTED', 'DUPLICATE']);
+
+export const HOME_FEED_TABS = Object.freeze(['following', 'hot']);
+export const POPULAR_BOARDS_LIMIT = 6;

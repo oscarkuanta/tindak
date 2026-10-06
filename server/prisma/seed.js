@@ -9,6 +9,7 @@ import { normalizeImage } from '../src/lib/images.js';
 import { saveFile } from '../src/lib/storage.js';
 import { hashIp, sha256 } from '../src/utils/crypto.js';
 import { generateTrackingCode } from '../src/utils/trackingCode.js';
+import { refreshReportScores } from '../src/modules/engagement/scores.service.js';
 
 const DEMO_TRACKING = { code: 'DEMAK234', secret: 'rahasia-demo-tindak' };
 
@@ -402,11 +403,63 @@ async function seedReports(users) {
   return created;
 }
 
+const ENGAGEMENTS = [
+  {
+    title: 'Lubang besar di depan Indomaret',
+    supporters: ['siti', 'admin', 'boardAdmin'],
+    reactions: { siti: 'DANGEROUS', admin: 'DANGEROUS', budi: 'LONG_STANDING' },
+  },
+  {
+    title: 'Tiga lampu jalan mati berturut-turut',
+    supporters: ['admin', 'boardAdmin'],
+    reactions: { admin: 'ANNOYING' },
+  },
+  {
+    title: 'Pagar besi taman roboh dan tajam',
+    supporters: ['siti'],
+    reactions: { siti: 'DANGEROUS' },
+  },
+  {
+    title: 'Kabel stop kontak lab terkelupas',
+    supporters: ['boardAdmin'],
+    reactions: { boardAdmin: 'DANGEROUS' },
+  },
+];
+
+async function seedEngagement(users) {
+  for (const item of ENGAGEMENTS) {
+    const report = await prisma.report.findFirst({ where: { title: item.title } });
+    if (!report) continue;
+    for (const key of item.supporters) {
+      if (report.userId === users[key].id) continue;
+      await prisma.support.upsert({
+        where: { reportId_userId: { reportId: report.id, userId: users[key].id } },
+        create: { reportId: report.id, userId: users[key].id },
+        update: {},
+      });
+    }
+    for (const [key, type] of Object.entries(item.reactions)) {
+      await prisma.reaction.upsert({
+        where: { reportId_userId: { reportId: report.id, userId: users[key].id } },
+        create: { reportId: report.id, userId: users[key].id, type },
+        update: {},
+      });
+    }
+    await prisma.report.update({
+      where: { id: report.id },
+      data: { lastEngagementAt: new Date() },
+    });
+  }
+  const reports = await prisma.report.findMany({ select: { id: true } });
+  for (const report of reports) await refreshReportScores(prisma, report.id);
+}
+
 async function main() {
   const users = await seedUsers();
   const created = await seedBoards(users);
   await seedMembersAndFollows(users);
   const reports = await seedReports(users);
+  await seedEngagement(users);
   logger.info(
     `Seed selesai: ${USERS.length} akun disiapkan, ${created} Board baru dari ${BOARDS.length}, ${reports} laporan baru dari ${REPORTS.length + WORKFLOW_REPORTS.length}`,
   );
