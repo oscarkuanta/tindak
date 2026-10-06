@@ -16,7 +16,9 @@ T!indak adalah board pengaduan masalah fisik (jalan rusak, sampah, fasilitas rus
 - Reaksi = Reaction (`DANGEROUS` 🚨, `LONG_STANDING` ⏳, `ANNOYING` 😤)
 - Tandai Pelanggaran = Flag
 - Tingkat bahaya = severity (`LOW`, `MEDIUM`, `DANGEROUS`)
-- Admin = platform admin (`User.role` `ADMIN`)
+- Admin = moderator platform (`User.role` `ADMIN`)
+- Admin Board = pemberi verifikasi board (`User.role` `BOARD_ADMIN`)
+- Komunitas / Official = status verifikasi board (`Board.verification` `COMMUNITY` / `OFFICIAL`). Official hanya diberikan Admin Board
 
 ## Stack
 
@@ -60,7 +62,8 @@ Node.js 22+ ESM JavaScript, Express 5, Prisma + MySQL 8, Zod, Passport + express
 - Branch utama: `main` (rilis) dan `dev` (integrasi). Jangan push langsung ke keduanya.
 - Nama branch: `feat/f<nomor><bagian>-nama-singkat`. Contoh: `feat/f1a-auth-api`, `feat/f2b-board-ui`. Fase 0: `chore/f0-fondasi`.
 - Commit format Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`, `refactor:`. Contoh: `feat(auth): tambah login google`
-- Satu PR per bagian fase, ke branch `dev`. PR butuh CI hijau dan 1 approval anggota lain.
+- Satu PR per bagian fase, ke branch `dev`. Approval tidak wajib: pembuat PR boleh merge sendiri setelah CI hijau.
+- Jangan menambahkan baris Co-Authored-By atau tanda tangan AI di pesan commit.
 
 ## Protokol Fase (WAJIB diikuti setiap sesi)
 
@@ -75,8 +78,11 @@ Node.js 22+ ESM JavaScript, Express 5, Prisma + MySQL 8, Zod, Passport + express
 9. Commit, push, buat PR ke `dev` dengan `gh pr create` jika tersedia. Jika tidak, tampilkan judul dan isi PR untuk disalin manusia.
 10. Berikan ringkasan akhir: apa yang selesai, cara menguji manual, apa yang tertunda.
 
+Jika AI tidak bisa menjalankan perintah terminal, tulis perintahnya satu per satu dan tunggu manusia menjalankannya. Jika AI tidak bisa membuat PR, tulis judul dan isi PR untuk disalin.
+
 ## Definition of Done
 
+- PR ke `dev` dengan CI hijau. Approval tidak wajib, pembuat PR boleh merge sendiri.
 - Semua kriteria selesai di prompt fase terpenuhi.
 - Lint dan test lolos.
 - `docs/API.md` sesuai dengan kode.
