@@ -144,6 +144,14 @@ describe('findOrCreateGoogleUser', () => {
     expect(user.email).toBe('lama@gmail.com');
   });
 
+  it('memberi role BOARD_ADMIN untuk akun Google di BOARD_ADMIN_EMAILS', async () => {
+    const user = await service.findOrCreateGoogleUser(
+      profile({ id: 'g-board', emails: [{ value: 'boardadmin@tindak.test', verified: true }] }),
+    );
+
+    expect(user.role).toBe('BOARD_ADMIN');
+  });
+
   it('menolak email Google yang belum terverifikasi', async () => {
     await expect(
       service.findOrCreateGoogleUser(

@@ -1,5 +1,6 @@
 export * from './auth.js';
 export * from './boards.js';
+export * from './cities.js';
 export * from './reports.js';
 export * from './report-handling.js';
 
@@ -20,4 +21,10 @@ export const ERROR_CODES = Object.freeze({
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
   USE_GOOGLE_LOGIN: 'USE_GOOGLE_LOGIN',
   CSRF_REJECTED: 'CSRF_REJECTED',
+  BOARD_NOT_FOUND: 'BOARD_NOT_FOUND',
+  BOARD_LIMIT_REACHED: 'BOARD_LIMIT_REACHED',
+  CATEGORY_NOT_FOUND: 'CATEGORY_NOT_FOUND',
+  CATEGORY_EXISTS: 'CATEGORY_EXISTS',
+  CATEGORY_PROTECTED: 'CATEGORY_PROTECTED',
+  CATEGORY_LIMIT_REACHED: 'CATEGORY_LIMIT_REACHED',
 });

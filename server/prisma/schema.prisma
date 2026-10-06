@@ -12,21 +12,26 @@ datasource db {
 enum UserRole {
   USER
   ADMIN
+  BOARD_ADMIN
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  name         String    @db.VarChar(50)
-  email        String    @unique @db.VarChar(191)
-  passwordHash String?   @map("password_hash") @db.VarChar(255)
-  googleId     String?   @unique @map("google_id") @db.VarChar(64)
-  avatarUrl    String?   @map("avatar_url") @db.VarChar(500)
-  role         UserRole  @default(USER)
-  onboardedAt  DateTime? @map("onboarded_at")
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  sessions     Session[]
+  id               Int           @id @default(autoincrement())
+  name             String        @db.VarChar(50)
+  email            String        @unique @db.VarChar(191)
+  passwordHash     String?       @map("password_hash") @db.VarChar(255)
+  googleId         String?       @unique @map("google_id") @db.VarChar(64)
+  avatarUrl        String?       @map("avatar_url") @db.VarChar(500)
+  role             UserRole      @default(USER)
+  onboardedAt      DateTime?     @map("onboarded_at")
+  lastLoginAt      DateTime?     @map("last_login_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+  sessions         Session[]
+  ownedBoards      Board[]       @relation("BoardOwner")
+  verifiedBoards   Board[]       @relation("BoardVerifiedBy")
+  boardMemberships BoardMember[] @relation("BoardMembership")
+  boardInvitations BoardMember[] @relation("BoardMemberInvitedBy")
 
   @@map("users")
 }
@@ -41,4 +46,97 @@ model Session {
   @@index([expiresAt])
   @@index([userId])
   @@map("sessions")
+}
+
+enum BoardType {
+  SCHOOL
+  CAMPUS
+  OFFICE
+  ROAD
+  AREA
+  PUBLIC_FACILITY
+  OTHER
+}
+
+enum BoardVerification {
+  COMMUNITY
+  OFFICIAL
+}
+
+enum BoardStatus {
+  ACTIVE
+  INACTIVE
+  FROZEN
+}
+
+enum BoardMemberRole {
+  OWNER
+  HANDLER
+}
+
+enum BoardMemberStatus {
+  INVITED
+  ACTIVE
+}
+
+model Board {
+  id                    Int               @id @default(autoincrement())
+  slug                  String            @unique @db.VarChar(120)
+  name                  String            @db.VarChar(80)
+  city                  String            @db.VarChar(80)
+  type                  BoardType
+  managerTitle          String?           @map("manager_title") @db.VarChar(80)
+  description           String            @db.VarChar(1000)
+  coverImageUrl         String?           @map("cover_image_url") @db.VarChar(500)
+  verification          BoardVerification @default(COMMUNITY)
+  verifiedAt            DateTime?         @map("verified_at")
+  verifiedById          Int?              @map("verified_by_id")
+  verifiedBy            User?             @relation("BoardVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  dangerousTargetHours  Int               @default(48) @map("dangerous_target_hours")
+  status                BoardStatus       @default(ACTIVE)
+  lastHandlerActivityAt DateTime          @default(now()) @map("last_handler_activity_at")
+  ownerId               Int               @map("owner_id")
+  owner                 User              @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+  members               BoardMember[]
+  categories            Category[]
+
+  @@index([name])
+  @@index([city])
+  @@index([city, type])
+  @@index([verification])
+  @@index([ownerId])
+  @@map("boards")
+}
+
+model BoardMember {
+  id          Int               @id @default(autoincrement())
+  boardId     Int               @map("board_id")
+  board       Board             @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId      Int               @map("user_id")
+  user        User              @relation("BoardMembership", fields: [userId], references: [id], onDelete: Cascade)
+  role        BoardMemberRole
+  status      BoardMemberStatus
+  invitedById Int?              @map("invited_by_id")
+  invitedBy   User?             @relation("BoardMemberInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@unique([boardId, userId])
+  @@index([userId, status])
+  @@map("board_members")
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  boardId   Int      @map("board_id")
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  name      String   @db.VarChar(40)
+  isDefault Boolean  @default(false) @map("is_default")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([boardId, name])
+  @@index([boardId, sortOrder])
+  @@map("categories")
 }
