@@ -9,7 +9,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 0    | Fondasi                                      | A+B    | Selesai     | Oscar   | [#1](https://github.com/oscarkuanta/tindak/pull/1)                                                     | 2026-10-03 |
 | 1A   | Auth backend                                 | A      | Selesai     | Oscar   | [#2](https://github.com/oscarkuanta/tindak/pull/2), [#4](https://github.com/oscarkuanta/tindak/pull/4) | 2026-10-03 |
 | 1B   | Auth frontend                                | B      | Selesai     | Oscar   | [#5](https://github.com/oscarkuanta/tindak/pull/5)                                                     | 2026-10-03 |
-| 2A   | Board backend                                | A      | Dikerjakan  | Oscar   | -                                                                                                      | 2026-10-06 |
+| 2A   | Board backend                                | A      | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
 | 2B   | Board frontend                               | B      | Review      | Akmal   | [#14](https://github.com/oscarkuanta/tindak/pull/14)                                                   | 2026-10-04 |
 | 3A   | Ikuti Board dan Penindak                     | A      | Belum Mulai | -       | -                                                                                                      | -          |
 | 3B   | Ikuti Board dan Penindak                     | B      | Review      | Akmal   | [#15](https://github.com/oscarkuanta/tindak/pull/15)                                                   | 2026-10-04 |

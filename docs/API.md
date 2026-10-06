@@ -101,8 +101,9 @@ Error: `503 SERVICE_UNAVAILABLE` jika database tidak dapat dihubungi.
 }
 ```
 
-- `role`: role tingkat website. `USER`, `ADMIN` (moderator), atau `BOARD_ADMIN` (pemberi status Official, baru aktif di Fase 8).
-- `ADMIN` diberikan otomatis jika email ada di env `ADMIN_EMAILS` (saat daftar atau login), atau lewat `npm run make-admin -- email@contoh.com`. Role `ADMIN` tidak pernah diturunkan otomatis.
+- `role`: role tingkat website. `USER`, `ADMIN` (moderator), atau `BOARD_ADMIN` (pemberi status Official). Satu akun hanya punya satu role.
+- Saat daftar atau login (email maupun Google): email di env `ADMIN_EMAILS` menjadi `ADMIN`. Jika tidak, email di `BOARD_ADMIN_EMAILS` menjadi `BOARD_ADMIN`. Jika ada di kedua daftar, `ADMIN` yang dipakai. Role juga bisa diberikan lewat `npm run make-admin -- email` atau `npm run make-board-admin -- email`. Role `ADMIN` tidak pernah diturunkan otomatis.
+- Middleware server: `requireAdmin` hanya untuk `ADMIN`, `requireBoardAdmin` hanya untuk `BOARD_ADMIN` (`ADMIN` juga ditolak, karena memberi status Official adalah tugas khusus Admin Board).
 - `hasPassword`: `false` untuk akun yang hanya bisa masuk lewat Google.
 - `needsOnboarding`: `true` sampai user melewati Halaman Sambutan (endpoint penyelesaiannya dibuat di fase berikutnya).
 - `passwordHash` dan `googleId` tidak pernah dikirim.
@@ -223,6 +224,7 @@ Aturan akun:
 | `BoardType`         | `SCHOOL` (Sekolah), `CAMPUS` (Kampus), `OFFICE` (Kantor), `ROAD` (Jalan), `AREA` (Wilayah RT/RW/Kelurahan), `PUBLIC_FACILITY` (Fasilitas Umum), `OTHER` (Lainnya) |
 | `BoardVerification` | `COMMUNITY` (Komunitas, status awal semua board), `OFFICIAL` (Official ✔️, diberikan Admin Board)                                                                 |
 | `BoardRole`         | `OWNER` (Penindak Utama), `HANDLER` (Penindak)                                                                                                                    |
+| `BoardStatus`       | `ACTIVE` (Aktif), `INACTIVE` (💤 Tidak Aktif, Penindak tidak aktif 30 hari), `FROZEN` (dibekukan Admin)                                                           |
 | `TrustLabel`        | `NEW` (🆕 Baru), `TRUSTED` (✅ Terpercaya), `NONE` (tanpa label), `CAUTION` (⚠️ Perlu Waspada), `INACTIVE` (💤 Tidak Aktif)                                       |
 
 Kategori bawaan per jenis (disimpan di `shared`, otomatis dibuat saat board dibuat):
@@ -240,14 +242,17 @@ Dipakai di hasil pencarian dan daftar.
   "id": 3,
   "slug": "jalan-rungkut-madya-surabaya",
   "name": "Jalan Rungkut Madya",
-  "city": "Surabaya",
+  "city": "Kota Surabaya",
   "type": "ROAD",
   "verification": "COMMUNITY",
+  "verifiedAt": null,
   "coverImageUrl": null,
-  "trustScore": 3.6,
+  "status": "ACTIVE",
+  "trustScore": null,
   "trustLabel": "NEW",
   "followerCount": 0,
-  "activeReportCount": 0
+  "activeReportCount": 0,
+  "createdAt": "2026-10-03T08:14:00.000Z"
 }
 ```
 
@@ -260,24 +265,26 @@ Semua field BoardCard ditambah:
   "managerTitle": "Ketua RT 05",
   "description": "Melayani laporan kerusakan sepanjang Jalan Rungkut Madya.",
   "dangerousTargetHours": 48,
-  "verifiedAt": null,
   "ratingCount": 0,
   "responseRate": 0,
   "rejectedPercentage": 0,
   "handlerCount": 1,
   "isInactive": false,
-  "createdAt": "2026-10-03T08:14:00.000Z",
+  "owner": { "id": 5, "name": "Budi Santoso", "avatarUrl": null },
   "categories": [
-    { "id": 10, "name": "Jalan Berlubang", "isDefault": true },
-    { "id": 15, "name": "Lainnya", "isDefault": true }
+    { "id": 10, "name": "Jalan Berlubang", "isDefault": true, "sortOrder": 0 },
+    { "id": 15, "name": "Lainnya", "isDefault": true, "sortOrder": 5 }
   ],
-  "viewer": { "isFollowing": false, "role": "OWNER" }
+  "viewer": { "isFollowing": false, "notifyLevel": null, "role": "OWNER" }
 }
 ```
 
-- `slug` dibuat dari nama dan kota, unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
-- `trustScore` dan `trustLabel` dihitung dengan rumus di PRODUCT.md. Di Fase 2 nilainya dari board tanpa rating (`trustLabel` `NEW`). Field rating dan pengikut terisi penuh di Fase 3 dan 8.
-- `viewer` bernilai `null` untuk tamu. `viewer.role` bernilai `OWNER`, `HANDLER`, atau `null`.
+- `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
+- `trustScore` bernilai `null` sampai Fase 8 menghitungnya dengan rumus di PRODUCT.md. Sampai Fase 8, `trustLabel` bernilai `NEW`, atau `INACTIVE` jika `status` `INACTIVE`. `followerCount` dan `activeReportCount` bernilai `0` sampai Fase 3 dan 4. `ratingCount`, `responseRate`, dan `rejectedPercentage` bernilai `0` sampai Fase 5 dan 8.
+- `handlerCount` adalah jumlah anggota Board berstatus aktif, termasuk Penindak Utama.
+- `owner` adalah Penindak Utama saat ini.
+- Board `FROZEN` tidak muncul di pencarian dan detailnya membalas `404 BOARD_NOT_FOUND`, kecuali untuk user dengan role website `ADMIN` atau `BOARD_ADMIN`.
+- `viewer` bernilai `null` untuk tamu. `viewer.role` bernilai `OWNER`, `HANDLER`, atau `null`. `viewer.isFollowing` selalu `false` dan `viewer.notifyLevel` selalu `null` sampai Fase 3A. Objek `viewer` di BoardCard (hasil pencarian) ditambahkan di Fase 3A.
 - `coverImageUrl` selalu `null` sampai infrastruktur upload dibuat di Fase 4.
 - `verification` selalu `COMMUNITY` saat board dibuat. Pembuat board tidak bisa memilih `OFFICIAL`. `verifiedAt` berisi waktu board dijadikan Official, atau `null`.
 - `managerTitle` adalah jabatan pengelola yang ditulis sendiri oleh Penindak Utama. Field ini hanya informasi, bukan bukti resmi.
@@ -303,7 +310,7 @@ Body:
 | Field                  | Aturan                                                                                                                                                |
 | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`                 | wajib, 3 sampai 80 karakter, di-trim                                                                                                                  |
-| `city`                 | wajib, harus ada di daftar `GET /api/meta/cities`                                                                                                     |
+| `city`                 | wajib, nama resmi persis seperti di `GET /api/meta/cities`, contoh `Kota Surabaya` atau `Kabupaten Sidoarjo`                                          |
 | `type`                 | wajib, `BoardType`                                                                                                                                    |
 | `managerTitle`         | opsional, maks 80 karakter                                                                                                                            |
 | `description`          | wajib, 20 sampai 1000 karakter                                                                                                                        |
@@ -314,12 +321,12 @@ Sukses `201`: `{ "data": <Board> }`
 
 Error:
 
-| Status | Code                  | Kapan                                     |
-| ------ | --------------------- | ----------------------------------------- |
-| 400    | `VALIDATION_ERROR`    | Input tidak valid atau kota tidak dikenal |
-| 401    | `UNAUTHENTICATED`     | Belum login                               |
-| 403    | `BOARD_LIMIT_REACHED` | User sudah memiliki 3 board sebagai OWNER |
-| 429    | `RATE_LIMITED`        | Terlalu banyak permintaan                 |
+| Status | Code                  | Kapan                                                                                                                                                                                              |
+| ------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`    | Input tidak valid, kota tidak dikenal, atau ada field yang tidak dikenal (misalnya `verification`, `status`, `slug`). Field asing muncul di `details` dengan pesan "Field ini tidak boleh dikirim" |
+| 401    | `UNAUTHENTICATED`     | Belum login                                                                                                                                                                                        |
+| 403    | `BOARD_LIMIT_REACHED` | User sudah memiliki 3 board sebagai OWNER                                                                                                                                                          |
+| 429    | `RATE_LIMITED`        | Terlalu banyak permintaan                                                                                                                                                                          |
 
 ### GET /api/boards/search
 
@@ -333,9 +340,11 @@ Query:
 | `city`             | opsional, nama kota dari daftar kota                       |
 | `type`             | opsional, `BoardType`                                      |
 | `verification`     | opsional, `BoardVerification`                              |
-| `page`, `pageSize` | pagination standar                                         |
+| `page`, `pageSize` | pagination standar (`pageSize` default 20, maks 50)        |
 
-Urutan: nama paling cocok (sama persis, lalu diawali `q`, lalu mengandung `q`), lalu board `OFFICIAL`, lalu `trustScore` tertinggi, lalu `activeReportCount` terbanyak.
+Board `FROZEN` tidak pernah muncul. Parameter kosong (`q=`) dianggap tidak dikirim.
+
+Urutan: nama paling cocok (sama persis, lalu diawali `q`, lalu mengandung `q`), lalu board `OFFICIAL`, lalu `trustScore` tertinggi (mulai Fase 8), lalu `activeReportCount` terbanyak, lalu yang paling baru dibuat. Seluruh urutan ada di satu fungsi `compareSearchResults` di `server/src/modules/boards/boards.ranking.js`.
 
 Sukses `200`:
 
@@ -365,6 +374,8 @@ Sukses `200`: maksimal 5 board.
 { "data": [<BoardCard>] }
 ```
 
+Cara mencari: nama dipecah menjadi kata (minimal 3 huruf). Kata umum seperti jalan, jl, raya, sekolah, smk, sma, kampus, kantor, perumahan, rt, rw, kelurahan diabaikan selama masih ada kata lain, supaya "Jalan A" tidak dianggap mirip dengan semua "Jalan B". Board di kota yang sama yang namanya memuat salah satu kata diambil, lalu diurutkan dari yang paling banyak kata cocok, kemudian kecocokan nama, lalu Official. Board `FROZEN` diabaikan.
+
 Error: `400 VALIDATION_ERROR`.
 
 ### GET /api/boards/:slug
@@ -390,7 +401,7 @@ Body:
 }
 ```
 
-Aturan field sama seperti `POST /api/boards`. `city` dan `type` tidak bisa diubah. Slug tidak berubah. `verification` tidak bisa diubah lewat endpoint ini, karena hanya Admin Board yang boleh mengubahnya (endpoint verifikasi dibuat di Fase 8).
+Aturan field sama seperti `POST /api/boards`. Field yang tidak dikirim tidak berubah. `managerTitle` boleh `""` atau `null` untuk mengosongkan jabatan. `slug`, `city`, `type`, `status`, dan `verification` tidak bisa diubah: mengirim field selain empat field di atas membalas `400 VALIDATION_ERROR`. `verification` hanya diubah Admin Board lewat endpoint verifikasi di Fase 8.
 
 Sukses `200`: `{ "data": <Board> }`
 
@@ -413,12 +424,12 @@ Body:
 { "name": "Parkir Liar" }
 ```
 
-`name` wajib, 2 sampai 40 karakter. Maksimal 20 kategori per board.
+`name` wajib, 2 sampai 40 karakter. Maksimal 20 kategori per board. Kategori baru ditaruh di urutan terakhir.
 
 Sukses `201`:
 
 ```json
-{ "data": { "id": 21, "name": "Parkir Liar", "isDefault": false } }
+{ "data": { "id": 21, "name": "Parkir Liar", "isDefault": false, "sortOrder": 6 } }
 ```
 
 Error:
@@ -434,17 +445,17 @@ Error:
 
 ### PATCH /api/boards/:slug/categories/:id
 
-Auth: OWNER. Mengganti nama kategori, termasuk kategori bawaan, kecuali "Lainnya".
+Auth: OWNER. Mengganti nama dan/atau urutan kategori. Nama kategori bawaan boleh diganti, kecuali "Lainnya". Urutan "Lainnya" boleh diubah.
 
-Body: `{ "name": "Parkir Sembarangan" }`
+Body: `{ "name": "Parkir Sembarangan", "sortOrder": 3 }`. Minimal salah satu field dikirim. `sortOrder` bilangan bulat mulai 0. Untuk mengurutkan banyak kategori sekaligus, pakai `PUT /api/boards/:slug/categories/order`.
 
-Sukses `200`: `{ "data": { "id": 21, "name": "Parkir Sembarangan", "isDefault": false } }`
+Sukses `200`: `{ "data": { "id": 21, "name": "Parkir Sembarangan", "isDefault": false, "sortOrder": 3 } }`
 
 Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 CATEGORY_NOT_FOUND`, `409 CATEGORY_EXISTS`, `409 CATEGORY_PROTECTED` (kategori "Lainnya").
 
 ### DELETE /api/boards/:slug/categories/:id
 
-Auth: OWNER. Menghapus kategori. Kategori yang sudah dipakai laporan (mulai Fase 4) diarsipkan, bukan dihapus permanen, sehingga laporan lama tetap menampilkan namanya.
+Auth: OWNER. Menghapus kategori. Kategori "Lainnya" tidak bisa dihapus, sehingga setiap board selalu punya minimal satu kategori. Catatan untuk Fase 4A: kategori yang sudah dipakai laporan harus diarsipkan, bukan dihapus permanen, sehingga laporan lama tetap menampilkan namanya.
 
 Sukses `200`:
 
@@ -466,11 +477,11 @@ Body berisi semua ID kategori di board tepat satu kali, dalam urutan yang diingi
 
 Sukses `200`: `{ "data": [<Category>] }` dalam urutan baru. Urutan array dipakai sebagai urutan kategori.
 
-Error: `400 VALIDATION_ERROR` jika daftar kosong, ada ID duplikat, atau bentuk input tidak valid; `401 UNAUTHENTICATED`; `403 FORBIDDEN`; `404 BOARD_NOT_FOUND`; `404 CATEGORY_NOT_FOUND` jika ID kategori tidak cocok dengan kategori di board tersebut.
+Error: `400 VALIDATION_ERROR` jika daftar kosong, ada ID duplikat, ada kategori board yang tidak disertakan, atau bentuk input tidak valid; `401 UNAUTHENTICATED`; `403 FORBIDDEN`; `404 BOARD_NOT_FOUND`; `404 CATEGORY_NOT_FOUND` jika ID kategori tidak cocok dengan kategori di board tersebut.
 
 ### GET /api/me/boards
 
-Auth: Login. Daftar board tempat user menjadi Penindak Utama atau Penindak.
+Auth: Login. Daftar board tempat user menjadi Penindak Utama atau Penindak dengan status `ACTIVE`. Undangan yang belum diterima (`INVITED`) tidak ikut.
 
 Sukses `200`:
 
@@ -486,20 +497,26 @@ Error: `401 UNAUTHENTICATED`.
 
 ### GET /api/meta/cities
 
-Auth: Publik. Daftar kota yang boleh dipilih untuk board. Data tetap disimpan di `shared`.
+Auth: Publik. Daftar 514 kabupaten dan kota di Indonesia yang boleh dipilih untuk board, dengan nama resmi (contoh `Kota Surabaya`, `Kabupaten Sidoarjo`, `Kota Administrasi Jakarta Selatan`). Nama resmi dipakai karena banyak daerah punya versi Kota dan Kabupaten, misalnya Malang dan Bogor. Data statis di `shared/src/constants/cities.js` (`CITIES`), sumber Kepmendagri No 300.2.2-2138 Tahun 2025.
+
+Query:
+
+| Field | Aturan                                                                                                                                                                             |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `q`   | opsional, maks 80 karakter. Tanpa `q`: semua kota. Dengan `q`: maksimal 20 kota yang namanya diawali atau mengandung `q` (awalan Kota/Kabupaten diabaikan saat mencocokkan awalan) |
 
 Sukses `200`:
 
 ```json
 {
   "data": [
-    { "name": "Surabaya", "province": "Jawa Timur" },
-    { "name": "Sidoarjo", "province": "Jawa Timur" }
+    { "name": "Kabupaten Sidoarjo", "province": "Jawa Timur" },
+    { "name": "Kota Surabaya", "province": "Jawa Timur" }
   ]
 }
 ```
 
-Urutan: provinsi A sampai Z, lalu nama kota A sampai Z.
+Urutan tanpa `q`: provinsi A sampai Z, lalu nama A sampai Z. Dengan `q`: yang diawali `q` dulu.
 
 ---
 
