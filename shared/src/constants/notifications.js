@@ -1,0 +1,3 @@
+export const NOTIFICATION_TYPES = Object.freeze({
+  BOARD_OWNER_CHANGED: 'BOARD_OWNER_CHANGED',
+});
