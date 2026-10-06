@@ -36,6 +36,7 @@ model User {
   reports          Report[]        @relation("ReportAuthor")
   assignedReports  Report[]        @relation("ReportAssignee")
   reportEvents     ReportEvent[]   @relation("ReportEventActor")
+  infoRequests     InfoRequest[]   @relation("InfoRequestAsker")
 
   @@map("users")
 }
@@ -191,6 +192,14 @@ enum ReportMediaKind {
   EXTRA
 }
 
+enum RejectionReason {
+  NOT_PHYSICAL
+  OUT_OF_SCOPE
+  INSUFFICIENT_INFORMATION
+  FALSE_REPORT
+  OTHER
+}
+
 enum ReportActorType {
   REPORTER
   HANDLER
@@ -198,38 +207,40 @@ enum ReportActorType {
 }
 
 model Report {
-  id                 Int            @id @default(autoincrement())
-  boardId            Int            @map("board_id")
-  board              Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  categoryId         Int            @map("category_id")
-  category           Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  userId             Int?           @map("user_id")
-  user               User?          @relation("ReportAuthor", fields: [userId], references: [id], onDelete: SetNull)
-  isAnonymous        Boolean        @default(false) @map("is_anonymous")
-  guestTokenHash     String?        @map("guest_token_hash") @db.Char(64)
-  ipHash             String         @map("ip_hash") @db.Char(64)
-  title              String         @db.VarChar(100)
-  description        String         @db.Text
-  locationDetail     String         @map("location_detail") @db.VarChar(200)
-  severity           ReportSeverity
-  status             ReportStatus   @default(NEW)
-  trackingCode       String         @unique @map("tracking_code") @db.Char(8)
-  trackingSecretHash String         @map("tracking_secret_hash") @db.Char(64)
-  parentId           Int?           @map("parent_id")
-  parent             Report?        @relation("ReportDuplicates", fields: [parentId], references: [id], onDelete: SetNull)
-  duplicates         Report[]       @relation("ReportDuplicates")
-  assigneeId         Int?           @map("assignee_id")
-  assignee           User?          @relation("ReportAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  priorityScore      Int            @default(0) @map("priority_score")
-  reopenCount        Int            @default(0) @map("reopen_count")
-  isHidden           Boolean        @default(false) @map("is_hidden")
-  needsModeration    Boolean        @default(false) @map("needs_moderation")
-  dueAt              DateTime?      @map("due_at")
-  resolvedAt         DateTime?      @map("resolved_at")
-  createdAt          DateTime       @default(now()) @map("created_at")
-  updatedAt          DateTime       @updatedAt @map("updated_at")
-  media              ReportMedia[]
-  events             ReportEvent[]
+  id                   Int            @id @default(autoincrement())
+  boardId              Int            @map("board_id")
+  board                Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  categoryId           Int            @map("category_id")
+  category             Category       @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  userId               Int?           @map("user_id")
+  user                 User?          @relation("ReportAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  isAnonymous          Boolean        @default(false) @map("is_anonymous")
+  guestTokenHash       String?        @map("guest_token_hash") @db.Char(64)
+  ipHash               String         @map("ip_hash") @db.Char(64)
+  title                String         @db.VarChar(100)
+  description          String         @db.Text
+  locationDetail       String         @map("location_detail") @db.VarChar(200)
+  severity             ReportSeverity
+  status               ReportStatus   @default(NEW)
+  trackingCode         String         @unique @map("tracking_code") @db.Char(8)
+  trackingSecretHash   String         @map("tracking_secret_hash") @db.Char(64)
+  parentId             Int?           @map("parent_id")
+  parent               Report?        @relation("ReportDuplicates", fields: [parentId], references: [id], onDelete: SetNull)
+  duplicates           Report[]       @relation("ReportDuplicates")
+  assigneeId           Int?           @map("assignee_id")
+  assignee             User?          @relation("ReportAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  priorityScore        Int            @default(0) @map("priority_score")
+  reopenCount          Int            @default(0) @map("reopen_count")
+  reporterNotSatisfied Boolean        @default(false) @map("reporter_not_satisfied")
+  isHidden             Boolean        @default(false) @map("is_hidden")
+  needsModeration      Boolean        @default(false) @map("needs_moderation")
+  dueAt                DateTime?      @map("due_at")
+  resolvedAt           DateTime?      @map("resolved_at")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+  media                ReportMedia[]
+  events               ReportEvent[]
+  infoRequests         InfoRequest[]
 
   @@index([boardId, isHidden, createdAt])
   @@index([boardId, status])
@@ -256,18 +267,33 @@ model ReportMedia {
 }
 
 model ReportEvent {
-  id         Int             @id @default(autoincrement())
-  reportId   Int             @map("report_id")
-  report     Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  fromStatus ReportStatus?   @map("from_status")
-  toStatus   ReportStatus    @map("to_status")
-  actorType  ReportActorType @map("actor_type")
-  actorId    Int?            @map("actor_id")
-  actor      User?           @relation("ReportEventActor", fields: [actorId], references: [id], onDelete: SetNull)
-  reason     String?         @db.VarChar(40)
-  note       String?         @db.VarChar(1000)
-  createdAt  DateTime        @default(now()) @map("created_at")
+  id         Int              @id @default(autoincrement())
+  reportId   Int              @map("report_id")
+  report     Report           @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fromStatus ReportStatus?    @map("from_status")
+  toStatus   ReportStatus     @map("to_status")
+  actorType  ReportActorType  @map("actor_type")
+  actorId    Int?             @map("actor_id")
+  actor      User?            @relation("ReportEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  reason     RejectionReason?
+  note       String?          @db.VarChar(1000)
+  createdAt  DateTime         @default(now()) @map("created_at")
 
   @@index([reportId, createdAt])
   @@map("report_events")
+}
+
+model InfoRequest {
+  id         Int       @id @default(autoincrement())
+  reportId   Int       @map("report_id")
+  report     Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  question   String    @db.VarChar(1000)
+  answer     String?   @db.VarChar(2000)
+  askedById  Int?      @map("asked_by_id")
+  askedBy    User?     @relation("InfoRequestAsker", fields: [askedById], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  answeredAt DateTime? @map("answered_at")
+
+  @@index([reportId, createdAt])
+  @@map("info_requests")
 }

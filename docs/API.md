@@ -873,11 +873,21 @@ Transisi sah:
 - AWAITING_CONFIRMATION → RESOLVED, REOPENED
 - REOPENED → IN_PROGRESS, AWAITING_CONFIRMATION
 
-Transisi lain menghasilkan 409 INVALID_TRANSITION. Nilai allowedActions: PROCESS, REQUEST_INFO, ANSWER_INFO, REJECT, DUPLICATE, RESOLVE, CONFIRM. Server menghitungnya berdasarkan status, pelapor, peran anggota Board, dan batas buka ulang.
+Transisi lain menghasilkan 409 INVALID_TRANSITION. Tabel transisi ada di `shared` (`REPORT_TRANSITIONS`, `canTransition(from, to)`), sehingga frontend memakai aturan yang sama dengan server.
+
+Nilai allowedActions: PROCESS, REQUEST_INFO, ANSWER_INFO, REJECT, DUPLICATE, RESOLVE, CONFIRM. Server menghitungnya dengan `reportAllowedActions` dari `shared`:
+
+- Penindak aktif Board (OWNER atau HANDLER): aksi yang transisinya sah dari status sekarang, berurutan PROCESS, REQUEST_INFO, RESOLVE, REJECT, DUPLICATE.
+- Pelapor (akun pembuat laporan di `GET /api/reports/:id`, atau pemegang Kode Lacak di `GET /api/track/:code`): ANSWER_INFO jika status NEED_INFO dan pertanyaan terakhir belum dijawab, CONFIRM jika status AWAITING_CONFIRMATION.
+- Pengunjung lain: `[]`.
+
+Setiap perubahan status memakai update bersyarat ("hanya jika status masih sama"). Jika dua Penindak bertindak bersamaan, yang kalah mendapat 409 INVALID_TRANSITION.
 
 Detail laporan menambahkan dueAt, isOverdue, reporterNotSatisfied, reopenCount, parent, infoRequest, timeline, dan allowedActions. dueAt hanya diisi untuk severity DANGEROUS. isOverdue benar jika dueAt sudah lewat dan laporan belum menunggu konfirmasi atau selesai. Foto memakai kind BEFORE, AFTER, atau EXTRA.
 
-Setiap timeline berisi id, fromStatus, toStatus, actorType (HANDLER, REPORTER, SYSTEM), actor atau null, reason atau null, note atau null, dan createdAt. infoRequest berisi id, question, answer atau null, askedBy, createdAt, dan answeredAt atau null.
+Setiap timeline berisi id, fromStatus, toStatus, actorType (HANDLER, REPORTER, SYSTEM), actor ({ id, name } atau null), reason (alasan penolakan atau null), note atau null, dan createdAt. Entri pertama setiap laporan adalah `null → NEW` oleh REPORTER dengan note "Laporan dibuat". actor bernilai null untuk SYSTEM dan untuk pelapor anonim atau tamu. Catatan yang ditulis server: REQUEST_INFO memakai pertanyaannya, jawaban info "Pelapor menjawab pertanyaan Penindak", duplikat "Duplikat dari laporan #<id>", konfirmasi otomatis "Dikonfirmasi otomatis", dan batas buka ulang "Pelapor tidak puas: <catatan>".
+
+infoRequest adalah pertanyaan terakhir: id, question, answer atau null, askedBy ({ id, name } atau null), createdAt, dan answeredAt atau null. Detail dan item antrean juga berisi assignee ({ id, name, avatarUrl } atau null).
 
 Alasan penolakan: NOT_PHYSICAL, OUT_OF_SCOPE, INSUFFICIENT_INFORMATION, FALSE_REPORT, OTHER. Note wajib jika reason OTHER.
 
@@ -909,7 +919,7 @@ Error: 404 REPORT_NOT_FOUND.
 
 ### GET /api/boards/:slug/queue
 
-Auth: login sebagai Penindak Utama atau Penindak aktif pada Board. Query opsional: status, categoryId, severity, assigneeId, overdue (true/false), page, pageSize.
+Auth: login sebagai Penindak Utama atau Penindak aktif pada Board. Query opsional: status, categoryId, severity, assigneeId, overdue (true/false), page, pageSize (default 20, maks 50). Urutan: terbaru dulu (urutan prioritas menyusul di Fase 6). Laporan tersembunyi tidak ikut sampai antrean moderasi Fase 7. overdue=false berarti semua laporan yang tidak terlambat.
 
 Sukses 200: respons paginasi umum, item berisi data laporan, kategori, media pertama, assignee, isOverdue, dan allowedActions.
 
@@ -917,7 +927,7 @@ Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 BOARD_NOT_F
 
 ### POST /api/reports/:id/process
 
-Auth: Penindak Utama atau Penindak aktif Board laporan. Memindahkan NEW atau REOPENED ke IN_PROGRESS. Body opsional: { "assigneeId": 18 }; assigneeId harus Penindak aktif Board yang sama.
+Auth: Penindak Utama atau Penindak aktif Board laporan. Memindahkan NEW atau REOPENED ke IN_PROGRESS. Body opsional: { "assigneeId": 18 }; assigneeId harus anggota aktif Board yang sama (OWNER atau HANDLER). Tanpa assigneeId, penanggung jawab lama dipertahankan (laporan baru tetap tanpa penanggung jawab). assigneeId null mengosongkan penanggung jawab.
 
 Sukses 200: { "data": <Report detail> }.
 
@@ -937,7 +947,9 @@ Auth: pelapor login atau tamu dengan Kode Lacak dan secret yang benar. Jawaban h
 
 Sukses 200: { "data": <Report detail> }.
 
-Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 404 REPORT_NOT_FOUND, 409 INFO_ALREADY_ANSWERED, 409 INVALID_TRANSITION.
+Kode Lacak boleh ditulis dengan awalan TND- atau huruf kecil. trackingCode dan secret harus dikirim bersama. Rate limit 30 per 15 menit per IP.
+
+Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED (tanpa login dan tanpa Kode Lacak), 403 FORBIDDEN (login sebagai user yang bukan pelapor), 404 REPORT_NOT_FOUND (termasuk Kode Lacak atau secret salah), 409 INFO_ALREADY_ANSWERED, 409 INVALID_TRANSITION.
 
 ### POST /api/reports/:id/reject
 
@@ -949,7 +961,7 @@ Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 REPORT_NOT_
 
 ### POST /api/reports/:id/duplicate
 
-Auth: Penindak Utama atau Penindak aktif Board laporan. parentId harus laporan aktif lain di Board yang sama dan bukan duplikat lain.
+Auth: Penindak Utama atau Penindak aktif Board laporan. parentId harus laporan lain di Board yang sama, berstatus aktif (NEW, NEED_INFO, IN_PROGRESS, AWAITING_CONFIRMATION, REOPENED), tidak tersembunyi, dan bukan duplikat laporan lain. Semua pelanggaran, termasuk ID yang tidak ada, membalas 409 INVALID_DUPLICATE.
 
 Body: { "parentId": 42 }.
 
@@ -972,7 +984,9 @@ Auth: pelapor login atau tamu dengan Kode Lacak dan secret yang benar. result be
 Body JSON: { "result": "not_resolved", "note": "Saluran masih tersumbat.", "trackingCode": "K7M2P9QX", "secret": "<rahasia>" }. Untuk foto opsional gunakan multipart/form-data dan file photos (kind EXTRA).
 
 - resolved mengubah status menjadi RESOLVED.
-- not_resolved mengubah status menjadi REOPENED maksimal dua kali. Setelah batas tercapai, status menjadi RESOLVED dan reporterNotSatisfied bernilai true.
+- not_resolved mengubah status menjadi REOPENED dan menambah reopenCount, maksimal dua kali. not_resolved ketiga langsung mengubah status menjadi RESOLVED dengan reporterNotSatisfied true. Karena itu 409 REOPEN_LIMIT_REACHED tidak pernah dikirim server; kodenya tetap ada di shared.
+- Foto (kind EXTRA) hanya boleh dikirim bersama not_resolved, maksimal 4. Foto dengan resolved membalas 400.
+- Aturan login, Kode Lacak, rate limit, 401, 403, dan 404 sama seperti answer-info.
 
 Sukses 200: { "data": <Report detail> }.
 
@@ -980,4 +994,11 @@ Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 404 REPORT_NOT_FOUND, 409 INVA
 
 ### Aktivitas dan otomatisasi
 
-Setiap aksi Penindak memperbarui aktivitas terakhir Board. Laporan AWAITING_CONFIRMATION yang tidak dijawab lebih dari tiga hari berubah menjadi RESOLVED oleh SYSTEM dengan catatan Dikonfirmasi otomatis. Board tanpa aktivitas Penindak selama 30 hari menjadi INACTIVE dan kembali ACTIVE setelah ada aktivitas Penindak.
+Setiap aksi Penindak (termasuk mengubah pengaturan, kategori, dan anggota Board) memperbarui aktivitas terakhir Board, dan Board INACTIVE langsung kembali ACTIVE. Aksi pelapor tidak dihitung.
+
+Job terjadwal berjalan setiap jam di menit ke-7 (node-cron), bisa dimatikan dengan env JOBS_ENABLED=false:
+
+- Laporan AWAITING_CONFIRMATION yang sudah lebih dari tiga hari sejak masuk status itu berubah menjadi RESOLVED oleh SYSTEM dengan catatan "Dikonfirmasi otomatis".
+- Board ACTIVE tanpa aktivitas Penindak selama 30 hari menjadi INACTIVE.
+
+isOverdue dihitung saat respons dibuat: severity DANGEROUS, dueAt sudah lewat, dan status belum AWAITING_CONFIRMATION, RESOLVED, REJECTED, atau DUPLICATE.
