@@ -455,7 +455,7 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOAR
 
 ### DELETE /api/boards/:slug/categories/:id
 
-Auth: OWNER. Menghapus kategori. Kategori "Lainnya" tidak bisa dihapus, sehingga setiap board selalu punya minimal satu kategori. Catatan untuk Fase 4A: kategori yang sudah dipakai laporan harus diarsipkan, bukan dihapus permanen, sehingga laporan lama tetap menampilkan namanya.
+Auth: OWNER. Menghapus kategori. Kategori "Lainnya" tidak bisa dihapus, sehingga setiap board selalu punya minimal satu kategori. Kategori yang sudah dipakai laporan juga tidak bisa dihapus (`409 CATEGORY_IN_USE`), supaya laporan lama tetap menampilkan namanya.
 
 Sukses `200`:
 
@@ -463,7 +463,7 @@ Sukses `200`:
 { "data": { "id": 21, "deleted": true } }
 ```
 
-Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 CATEGORY_NOT_FOUND`, `409 CATEGORY_PROTECTED` (kategori "Lainnya" tidak bisa dihapus).
+Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 CATEGORY_NOT_FOUND`, `409 CATEGORY_PROTECTED` (kategori "Lainnya" tidak bisa dihapus), `409 CATEGORY_IN_USE` (sudah dipakai laporan).
 
 ### PUT /api/boards/:slug/categories/order
 
@@ -673,63 +673,187 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOAR
 
 ## Fase 4: Laporan dan Tamu
 
-Kontrak berikut dipakai frontend Fase 4B dan menjadi acuan implementasi backend Fase 4A.
+Kontrak berikut dipakai frontend Fase 4B dan diimplementasikan backend Fase 4A.
 
 ### Enum dan objek Laporan
 
 `severity`: `LOW`, `MEDIUM`, atau `DANGEROUS`.
 
-`status`: `NEW`, `NEED_INFO`, `IN_PROGRESS`, `AWAITING_CONFIRMATION`, `RESOLVED`, `REOPENED`, `REJECTED`, atau `DUPLICATE`.
+`status`: `NEW`, `NEED_INFO`, `IN_PROGRESS`, `AWAITING_CONFIRMATION`, `RESOLVED`, `REOPENED`, `REJECTED`, atau `DUPLICATE`. Status aktif (dihitung di `activeReportCount` Board): `NEW`, `NEED_INFO`, `IN_PROGRESS`, `AWAITING_CONFIRMATION`, `REOPENED`.
 
-Objek `Report` publik berisi `id`, `board`, `category`, `isAnonymous`, `title`, `description`, `locationDetail`, `severity`, `status`, `media`, `createdAt`, dan `updatedAt`. Detail yang hanya terlihat oleh Penindak Board dapat menambahkan `reporterType` (`GUEST` atau `ACCOUNT`). Pelapor anonim ditampilkan sebagai `Anonim`.
+Objek `Report` (dipakai di daftar):
 
-Setiap item `media` berisi `id`, `url`, `kind`, `isBlurred`, dan `createdAt`.
+```json
+{
+  "id": 41,
+  "board": {
+    "id": 3,
+    "slug": "jalan-rungkut-madya-surabaya",
+    "name": "Jalan Rungkut Madya",
+    "status": "ACTIVE"
+  },
+  "category": { "id": 10, "name": "Jalan Berlubang" },
+  "isAnonymous": false,
+  "reporter": { "id": 5, "name": "Budi Santoso", "avatarUrl": null },
+  "title": "Lubang besar di depan Indomaret",
+  "description": "Lubang selebar satu meter dan cukup dalam.",
+  "locationDetail": "Depan Indomaret Rungkut Madya",
+  "severity": "DANGEROUS",
+  "status": "NEW",
+  "media": [
+    {
+      "id": 7,
+      "url": "/api/uploads/muw2f5nc-vWpxHjvu.webp",
+      "kind": "BEFORE",
+      "isBlurred": false,
+      "createdAt": "2026-10-06T04:24:00.000Z"
+    }
+  ],
+  "dueAt": "2026-10-08T04:24:00.000Z",
+  "isOverdue": false,
+  "createdAt": "2026-10-06T04:24:00.000Z",
+  "updatedAt": "2026-10-06T04:24:00.000Z"
+}
+```
+
+- `reporter` bernilai `null` jika laporan anonim atau dibuat tamu. Frontend menampilkan "Anonim".
+- `media[].url` adalah path relatif di bawah `/api/uploads/`, sehingga tetap lewat proxy Vite di development. Semua foto disimpan sebagai WebP tanpa metadata EXIF/GPS, maksimal 1600 px.
+- `isBlurred` bernilai `true` untuk foto yang dicurigai tidak pantas (skor NSFW 0,4 sampai 0,7). Frontend sebaiknya memburamkannya.
+- `dueAt` hanya diisi untuk `DANGEROUS`: waktu dibuat ditambah `dangerousTargetHours` Board. `isOverdue` benar jika `dueAt` sudah lewat dan status belum `AWAITING_CONFIRMATION`, `RESOLVED`, `REJECTED`, atau `DUPLICATE`.
+
+Objek `Report detail` (dipakai `GET /api/reports/:id` dan `GET /api/track/:code`) berisi semua field di atas ditambah:
+
+```json
+{
+  "reopenCount": 0,
+  "reporterNotSatisfied": false,
+  "parent": null,
+  "infoRequest": null,
+  "timeline": [
+    {
+      "id": 1,
+      "fromStatus": null,
+      "toStatus": "NEW",
+      "actorType": "REPORTER",
+      "actor": null,
+      "reason": null,
+      "note": "Laporan dibuat",
+      "createdAt": "2026-10-06T04:24:00.000Z"
+    }
+  ],
+  "allowedActions": [],
+  "reporterType": "ACCOUNT"
+}
+```
+
+- `reporterType` (`GUEST` atau `ACCOUNT`) hanya dikirim kepada Penindak aktif Board tersebut dan Admin.
+- `timeline.actor` bernilai `null` untuk aksi pelapor anonim.
+- Sampai Fase 5A, `allowedActions` selalu `[]`, `infoRequest` dan `parent` selalu `null`.
 
 ### POST /api/boards/:slug/reports
 
-Auth: optional. Menerima `multipart/form-data` dengan field `title`, `categoryId`, `severity`, `locationDetail`, `description`, `isAnonymous`, `turnstileToken`, dan satu sampai empat field file bernama `photos`. Setiap foto maksimal 5 MB dan bertipe JPEG, PNG, atau WebP. Tamu selalu anonim. Board beku dan kategori dari Board lain ditolak. Frontend membaca public site key Turnstile dari `VITE_TURNSTILE_SITE_KEY`.
+Auth: opsional (tamu atau login). Menerima `multipart/form-data`.
+
+| Field            | Aturan                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `title`          | wajib, 1 sampai 100 karakter                                                                                                         |
+| `categoryId`     | wajib, ID kategori milik Board ini                                                                                                   |
+| `severity`       | wajib, `LOW`, `MEDIUM`, atau `DANGEROUS`                                                                                             |
+| `locationDetail` | wajib, 1 sampai 200 karakter                                                                                                         |
+| `description`    | wajib, 20 sampai 2000 karakter                                                                                                       |
+| `isAnonymous`    | opsional, `"true"` atau `"false"`. Tamu selalu anonim apa pun nilainya                                                               |
+| `turnstileToken` | wajib, token Cloudflare Turnstile dari widget                                                                                        |
+| `photos`         | wajib 1 sampai 4 file, masing-masing maks 5 MB, JPEG, PNG, atau WebP. Jenis file dicek dari isi file, bukan nama atau `Content-Type` |
+
+Field lain ditolak `400 VALIDATION_ERROR`. Frontend membaca public site key Turnstile dari `VITE_TURNSTILE_SITE_KEY`.
+
+Urutan pengecekan server: Board ada dan tidak beku, kategori milik Board, cek ban (Fase 7), batas laporan, captcha, lalu foto (jenis, pemrosesan, scan NSFW). Laporan dan foto baru disimpan setelah semua lolos.
+
+Cookie tamu: setiap pengirim mendapat cookie `tindak.gt` (httpOnly, 1 tahun). Server hanya menyimpan hash-nya untuk menghitung batas per perangkat. IP disimpan sebagai HMAC-SHA256 (`IP_HASH_SECRET`), tidak pernah sebagai IP asli.
+
+Batas laporan (dihitung dari tabel laporan, tetap berlaku setelah server restart, jendela 24 jam bergulir):
+
+| Pengirim           | Batas                                                                       |
+| ------------------ | --------------------------------------------------------------------------- |
+| Tamu               | 3 per 24 jam per perangkat (cookie `tindak.gt`), jeda 2 menit antar laporan |
+| User login         | 5 per 24 jam per akun, jeda 1 menit                                         |
+| Satu jaringan (IP) | 30 per 24 jam, tamu dan user digabung                                       |
+
+Ditambah rate limit 10 percobaan kirim per menit per IP.
 
 Sukses `201`:
 
 ```json
 {
   "data": {
-    "report": <Report>,
+    "report": "<Report detail>",
     "trackingCode": "K7M2P9QX",
-    "trackingUrl": "https://tindak.id/lacak/K7M2P9QX?secret=<rahasia-sekali-kirim>"
+    "trackingUrl": "http://localhost:5173/lacak/K7M2P9QX?secret=<rahasia-sekali-kirim>"
   }
 }
 ```
 
-Tautan berisi secret yang hanya dikirim saat laporan dibuat. Frontend menyimpannya di browser untuk halaman Laporan di Perangkat Ini. Error utama: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED` bila sesi login bermasalah, `404 BOARD_NOT_FOUND`, `404 CATEGORY_NOT_FOUND`, `422 IMAGE_REJECTED`, `429 RATE_LIMITED`, dan `503 SERVICE_UNAVAILABLE` bila verifikasi captcha tidak tersedia.
+`trackingCode` 8 karakter dari `ABCDEFGHJKMNPQRSTUVWXYZ23456789` (tanpa 0, O, 1, I, L). `trackingUrl` memakai `CLIENT_URL` dan berisi secret yang hanya dikirim sekali. Server hanya menyimpan hash secret.
+
+Error:
+
+| Status | Code                  | Kapan                                                                                                                                                                              |
+| ------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`    | Field tidak valid, field asing, foto kosong, lebih dari 4, di atas 5 MB, bukan gambar, atau rusak (`details.field` = `photos`), captcha gagal (`details.field` = `turnstileToken`) |
+| 403    | `FORBIDDEN`           | Pengirim sedang di-ban (aktif di Fase 7)                                                                                                                                           |
+| 404    | `BOARD_NOT_FOUND`     | Board tidak ada atau `FROZEN`                                                                                                                                                      |
+| 404    | `CATEGORY_NOT_FOUND`  | Kategori bukan milik Board ini                                                                                                                                                     |
+| 422    | `IMAGE_REJECTED`      | Foto terdeteksi tidak pantas (skor NSFW di atas 0,7)                                                                                                                               |
+| 429    | `RATE_LIMITED`        | Batas atau jeda tercapai. `message` menyebut kapan bisa lapor lagi, `details` berisi `{ "field": "retryAt", "message": "<ISO date>" }`                                             |
+| 503    | `SERVICE_UNAVAILABLE` | Server Cloudflare Turnstile tidak dapat dihubungi                                                                                                                                  |
 
 ### GET /api/boards/:slug/reports
 
-Auth: publik. Query: `sort` (`new`, `hot`, atau `priority`), `status`, `categoryId`, `severity`, `page`, dan `pageSize`. Selama urutan hot/prioritas belum aktif, kedua nilai diperlakukan seperti `new`. Laporan tersembunyi tidak masuk hasil publik.
+Auth: publik.
 
-Sukses `200`: respons paginasi umum `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+| Query                              | Aturan                                                                                               |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `sort`                             | `new` (default), `hot`, atau `priority`. Sampai Fase 6, `hot` dan `priority` diurutkan seperti `new` |
+| `status`, `severity`, `categoryId` | opsional, filter                                                                                     |
+| `q`                                | opsional, 2 sampai 100 karakter, mencari di judul (dipakai pemilih laporan induk duplikat Fase 5)    |
+| `page`, `pageSize`                 | default 1 dan 10, `pageSize` maks 50                                                                 |
+
+Urutan: terbaru dulu. Laporan tersembunyi (`isHidden`) tidak pernah masuk daftar.
+
+Sukses `200`: `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+
+Error: `400 VALIDATION_ERROR`, `404 BOARD_NOT_FOUND`.
 
 ### GET /api/reports/:id
 
-Auth: optional. Mengambil detail laporan, media, dan timeline. Untuk pelapor anonim, nama yang ditampilkan adalah `Anonim`. Hanya Penindak Board terkait menerima `reporterType`.
+Auth: opsional.
 
-Sukses `200`: `{ "data": <Report dengan timeline> }`.
+Sukses `200`: `{ "data": <Report detail> }`.
+
+Laporan tersembunyi hanya terlihat oleh Penindak aktif Board itu, Admin, dan pelapornya sendiri (akun). Laporan di Board `FROZEN` hanya terlihat oleh Penindak, Admin, dan Admin Board.
 
 Error: `404 REPORT_NOT_FOUND`.
 
 ### GET /api/track/:code?secret=...
 
-Auth: publik dengan secret. Mengambil detail, status, dan timeline untuk pemegang tautan rahasia. Secret salah atau kode tidak ditemukan menghasilkan respons yang sama.
+Auth: publik dengan secret. Kode boleh ditulis huruf kecil, dengan spasi, atau berawalan `TND-`. Rate limit 60 per 15 menit per IP.
 
-Sukses `200`: `{ "data": <Report dengan timeline> }`.
+Sukses `200`: `{ "data": <Report detail> }`.
 
-Error: `404 REPORT_NOT_FOUND`.
+Error: `400 VALIDATION_ERROR` jika `secret` tidak dikirim atau format kode salah. `404 REPORT_NOT_FOUND` jika kode tidak ada atau secret salah (respons sama persis untuk keduanya).
 
 ### GET /api/me/reports
 
-Auth: Login. Query opsional: `page` dan `pageSize`.
+Auth: Login. Laporan yang dibuat user ini, termasuk yang anonim dan yang tersembunyi, terbaru dulu. Query `page` dan `pageSize`.
 
-Sukses `200`: respons paginasi umum `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+Sukses `200`: `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+
+Error: `401 UNAUTHENTICATED`.
+
+### Perubahan pada Board
+
+- `activeReportCount` di BoardCard dan detail sekarang jumlah laporan berstatus aktif yang tidak tersembunyi. Urutan pencarian Board memakainya.
+- `DELETE /api/boards/:slug/categories/:id` menolak kategori yang sudah dipakai laporan dengan `409 CATEGORY_IN_USE`. Kategori tetap bisa diganti namanya.
 
 ---
 
