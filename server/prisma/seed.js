@@ -96,9 +96,57 @@ async function seedBoards(users) {
   return created;
 }
 
+const MEMBERSHIPS = [
+  { board: ['SMKN 1 Surabaya', 'Kota Surabaya'], user: 'siti', status: 'ACTIVE' },
+  { board: ['Perumahan Pondok Jati RW 05', 'Kabupaten Sidoarjo'], user: 'budi', status: 'INVITED' },
+];
+
+const FOLLOWS = [
+  { board: ['Jalan Rungkut Madya', 'Kota Surabaya'], user: 'siti', notifyLevel: 'ALL' },
+  {
+    board: ['Alun-Alun Sidoarjo', 'Kabupaten Sidoarjo'],
+    user: 'siti',
+    notifyLevel: 'DANGEROUS_ONLY',
+  },
+  { board: ['Kampus ITS Sukolilo', 'Kota Surabaya'], user: 'budi', notifyLevel: 'ALL' },
+  { board: ['SMKN 1 Surabaya', 'Kota Surabaya'], user: 'admin', notifyLevel: 'ALL' },
+  { board: ['Jalan Rungkut Madya', 'Kota Surabaya'], user: 'boardAdmin', notifyLevel: 'OFF' },
+];
+
+async function boardIdFor([name, city]) {
+  const board = await prisma.board.findUnique({ where: { slug: boardBaseSlug(name, city) } });
+  return board.id;
+}
+
+async function seedMembersAndFollows(users) {
+  for (const { board, user, status } of MEMBERSHIPS) {
+    const boardId = await boardIdFor(board);
+    const userId = users[user].id;
+    const owner = await prisma.board.findUnique({
+      where: { id: boardId },
+      select: { ownerId: true },
+    });
+    await prisma.boardMember.upsert({
+      where: { boardId_userId: { boardId, userId } },
+      create: { boardId, userId, role: 'HANDLER', status, invitedById: owner.ownerId },
+      update: {},
+    });
+  }
+  for (const { board, user, notifyLevel } of FOLLOWS) {
+    const boardId = await boardIdFor(board);
+    const userId = users[user].id;
+    await prisma.boardFollower.upsert({
+      where: { boardId_userId: { boardId, userId } },
+      create: { boardId, userId, notifyLevel },
+      update: {},
+    });
+  }
+}
+
 async function main() {
   const users = await seedUsers();
   const created = await seedBoards(users);
+  await seedMembersAndFollows(users);
   logger.info(
     `Seed selesai: ${USERS.length} akun disiapkan, ${created} Board baru dari ${BOARDS.length}`,
   );

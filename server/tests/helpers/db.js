@@ -5,6 +5,7 @@ import { assertTestDatabase } from './assertTestDatabase.js';
 export async function resetDatabase() {
   assertTestDatabase(process.env.DATABASE_URL);
   await prisma.session.deleteMany();
+  await prisma.boardFollower.deleteMany();
   await prisma.category.deleteMany();
   await prisma.boardMember.deleteMany();
   await prisma.board.deleteMany();

@@ -16,22 +16,23 @@ enum UserRole {
 }
 
 model User {
-  id               Int           @id @default(autoincrement())
-  name             String        @db.VarChar(50)
-  email            String        @unique @db.VarChar(191)
-  passwordHash     String?       @map("password_hash") @db.VarChar(255)
-  googleId         String?       @unique @map("google_id") @db.VarChar(64)
-  avatarUrl        String?       @map("avatar_url") @db.VarChar(500)
-  role             UserRole      @default(USER)
-  onboardedAt      DateTime?     @map("onboarded_at")
-  lastLoginAt      DateTime?     @map("last_login_at")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+  id               Int             @id @default(autoincrement())
+  name             String          @db.VarChar(50)
+  email            String          @unique @db.VarChar(191)
+  passwordHash     String?         @map("password_hash") @db.VarChar(255)
+  googleId         String?         @unique @map("google_id") @db.VarChar(64)
+  avatarUrl        String?         @map("avatar_url") @db.VarChar(500)
+  role             UserRole        @default(USER)
+  onboardedAt      DateTime?       @map("onboarded_at")
+  lastLoginAt      DateTime?       @map("last_login_at")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  updatedAt        DateTime        @updatedAt @map("updated_at")
   sessions         Session[]
-  ownedBoards      Board[]       @relation("BoardOwner")
-  verifiedBoards   Board[]       @relation("BoardVerifiedBy")
-  boardMemberships BoardMember[] @relation("BoardMembership")
-  boardInvitations BoardMember[] @relation("BoardMemberInvitedBy")
+  ownedBoards      Board[]         @relation("BoardOwner")
+  verifiedBoards   Board[]         @relation("BoardVerifiedBy")
+  boardMemberships BoardMember[]   @relation("BoardMembership")
+  boardInvitations BoardMember[]   @relation("BoardMemberInvitedBy")
+  boardFollows     BoardFollower[]
 
   @@map("users")
 }
@@ -101,6 +102,7 @@ model Board {
   updatedAt             DateTime          @updatedAt @map("updated_at")
   members               BoardMember[]
   categories            Category[]
+  followers             BoardFollower[]
 
   @@index([name])
   @@index([city])
@@ -139,4 +141,24 @@ model Category {
   @@unique([boardId, name])
   @@index([boardId, sortOrder])
   @@map("categories")
+}
+
+enum FollowNotifyLevel {
+  ALL
+  DANGEROUS_ONLY
+  OFF
+}
+
+model BoardFollower {
+  id          Int               @id @default(autoincrement())
+  boardId     Int               @map("board_id")
+  board       Board             @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId      Int               @map("user_id")
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifyLevel FollowNotifyLevel @default(ALL) @map("notify_level")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@unique([boardId, userId])
+  @@index([userId, createdAt])
+  @@map("board_followers")
 }

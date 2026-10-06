@@ -280,11 +280,11 @@ Semua field BoardCard ditambah:
 ```
 
 - `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
-- `trustScore` bernilai `null` sampai Fase 8 menghitungnya dengan rumus di PRODUCT.md. Sampai Fase 8, `trustLabel` bernilai `NEW`, atau `INACTIVE` jika `status` `INACTIVE`. `followerCount` dan `activeReportCount` bernilai `0` sampai Fase 3 dan 4. `ratingCount`, `responseRate`, dan `rejectedPercentage` bernilai `0` sampai Fase 5 dan 8.
+- `trustScore` bernilai `null` sampai Fase 8 menghitungnya dengan rumus di PRODUCT.md. Sampai Fase 8, `trustLabel` bernilai `NEW`, atau `INACTIVE` jika `status` `INACTIVE`. `followerCount` adalah jumlah pengikut sebenarnya. `activeReportCount` bernilai `0` sampai Fase 4. `ratingCount`, `responseRate`, dan `rejectedPercentage` bernilai `0` sampai Fase 5 dan 8.
 - `handlerCount` adalah jumlah anggota Board berstatus aktif, termasuk Penindak Utama.
 - `owner` adalah Penindak Utama saat ini.
 - Board `FROZEN` tidak muncul di pencarian dan detailnya membalas `404 BOARD_NOT_FOUND`, kecuali untuk user dengan role website `ADMIN` atau `BOARD_ADMIN`.
-- `viewer` bernilai `null` untuk tamu. `viewer.role` bernilai `OWNER`, `HANDLER`, atau `null`. `viewer.isFollowing` selalu `false` dan `viewer.notifyLevel` selalu `null` sampai Fase 3A. Objek `viewer` di BoardCard (hasil pencarian) ditambahkan di Fase 3A.
+- `viewer` bernilai `null` untuk tamu. `viewer.role` bernilai `OWNER`, `HANDLER`, atau `null`. `viewer.isFollowing` dan `viewer.notifyLevel` (`ALL`, `DANGEROUS_ONLY`, `OFF`, atau `null` jika tidak mengikuti) mengikuti data Fase 3. Semua respons yang berisi BoardCard (pencarian, Board mirip, `me/boards`, `me/follows`, `me/invitations`) juga mengisi `viewer`.
 - `coverImageUrl` selalu `null` sampai infrastruktur upload dibuat di Fase 4.
 - `verification` selalu `COMMUNITY` saat board dibuat. Pembuat board tidak bisa memilih `OFFICIAL`. `verifiedAt` berisi waktu board dijadikan Official, atau `null`.
 - `managerTitle` adalah jabatan pengelola yang ditulis sendiri oleh Penindak Utama. Field ini hanya informasi, bukan bukti resmi.
@@ -539,7 +539,7 @@ Tamu mendapat `viewer: null`. `role` bernilai `OWNER`, `HANDLER`, atau `null` un
 
 ### POST /api/boards/:slug/follow
 
-Auth: Login. Mengikuti Board dengan notifikasi awal `ALL`. Idempoten; jika sudah mengikuti, status tidak berubah.
+Auth: Login. Mengikuti Board dengan notifikasi awal `ALL`. Idempoten; jika sudah mengikuti, status dan `notifyLevel` tidak berubah. Tanpa body.
 
 Sukses `200`: `{ "data": { "notifyLevel": "ALL" } }`.
 
@@ -565,7 +565,7 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `404 BOARD_NOT_FOUND`, `40
 
 ### GET /api/me/follows
 
-Auth: Login. Daftar Board yang diikuti user.
+Auth: Login. Daftar Board yang diikuti user. Board `FROZEN` tidak ditampilkan.
 
 Sukses `200`:
 
@@ -599,7 +599,7 @@ Urutan: yang terbaru diikuti lebih dahulu.
 
 Auth: OWNER. Mengundang akun yang sudah terdaftar menjadi Penindak.
 
-Body: `{ "email": "dewi@example.com" }`.
+Body: `{ "email": "dewi@example.com" }`. Hanya field `email` yang diterima. Rate limit 30 undangan per jam. Mengundang diri sendiri atau anggota yang sudah ada (aktif maupun diundang) membalas `409 HANDLER_ALREADY_MEMBER`.
 
 Sukses `201`: `{ "data": <BoardMember> }` dengan status `INVITED`. Maksimal 10 Penindak per Board, termasuk undangan yang belum dijawab.
 
@@ -607,7 +607,7 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOAR
 
 ### GET /api/boards/:slug/handlers
 
-Auth: OWNER atau HANDLER. Mengambil anggota Penindak di Board.
+Auth: OWNER atau HANDLER aktif. Mengambil anggota dengan role `HANDLER` (aktif dan yang masih diundang). Penindak Utama tidak ikut di daftar ini, karena datanya sudah ada di `owner` pada detail Board. Urutan: `ACTIVE` dulu, lalu yang paling lama bergabung.
 
 Sukses `200`: `{ "data": [<BoardMember>] }`.
 
@@ -623,7 +623,7 @@ Error: `401 UNAUTHENTICATED`, `403 FORBIDDEN` atau `403 CANNOT_REMOVE_OWNER`, `4
 
 ### GET /api/me/invitations
 
-Auth: Login. Mengambil undangan Penindak yang masih menunggu jawaban.
+Auth: Login. Mengambil undangan Penindak yang masih menunggu jawaban, terbaru lebih dulu. Undangan ke Board `FROZEN` tidak ditampilkan. Undangan milik user lain dianggap tidak ada (`404 INVITATION_NOT_FOUND`).
 
 Sukses `200`:
 
@@ -641,7 +641,7 @@ Sukses `200`:
 
 ### POST /api/me/invitations/:id/accept
 
-Auth: Login sebagai penerima undangan. Mengaktifkan keanggotaan HANDLER.
+Auth: Login sebagai penerima undangan. Mengaktifkan keanggotaan HANDLER. Jika penerima sedang mengikuti Board itu, status mengikutinya dihapus, karena Penindak tidak mengikuti Board yang dikelolanya.
 
 Sukses `200`: `{ "data": <BoardMember> }` dengan status `ACTIVE`.
 
@@ -659,9 +659,9 @@ Error: `401 UNAUTHENTICATED`, `404 INVITATION_NOT_FOUND`, `409 INVITATION_NOT_PE
 
 Auth: OWNER. Mengalihkan kepemilikan kepada Penindak berstatus `ACTIVE`.
 
-Body: `{ "userId": 18 }`.
+Body: `{ "userId": 18 }`. Hanya field `userId` yang diterima; field lain seperti `verification` membalas `400 VALIDATION_ERROR`.
 
-Sukses `200`: `{ "data": <Board> }`. Perubahan OWNER dan HANDLER dilakukan dalam satu transaksi. Penerima harus tetap berada dalam batas tiga Board milik. Field `verification` dan `verifiedAt` tidak berubah saat kepemilikan dialihkan.
+Sukses `200`: `{ "data": <Board> }` dilihat dari sudut pandang pemilik lama (`viewer.role` sekarang `HANDLER`, `owner` sudah berganti). `Board.ownerId` ikut pindah, sehingga batas tiga Board milik dihitung untuk pemilik baru. Perubahan OWNER dan HANDLER dilakukan dalam satu transaksi. Penerima harus tetap berada dalam batas tiga Board milik. Field `verification` dan `verifiedAt` tidak berubah saat kepemilikan dialihkan. Server mencatat audit `BOARD_OWNER_CHANGED` dan memanggil notifikasi `BOARD_OWNER_CHANGED` untuk semua Admin Board (untuk sekarang dicatat di log server; tabel audit dibuat di Fase 7 dan pengiriman notifikasi di Fase 9).
 
 Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 HANDLER_NOT_FOUND`, `409 BOARD_LIMIT_REACHED`.
 

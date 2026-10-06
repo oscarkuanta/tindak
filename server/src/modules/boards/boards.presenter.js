@@ -11,7 +11,16 @@ export function toCategory(category) {
   };
 }
 
-export function toBoardCard(board) {
+export function toViewer(user, { follow, membership } = {}) {
+  if (!user) return null;
+  return {
+    isFollowing: Boolean(follow),
+    notifyLevel: follow?.notifyLevel ?? null,
+    role: membership?.role ?? null,
+  };
+}
+
+export function toBoardCard(board, { followerCount = 0, viewer = null } = {}) {
   return {
     id: board.id,
     slug: board.slug,
@@ -24,15 +33,16 @@ export function toBoardCard(board) {
     status: board.status,
     trustScore: null,
     trustLabel: trustLabelFor(board),
-    followerCount: 0,
+    followerCount,
     activeReportCount: 0,
     createdAt: board.createdAt,
+    viewer,
   };
 }
 
-export function toBoardDetail(board, { handlerCount, membership, viewerLoggedIn }) {
+export function toBoardDetail(board, { handlerCount, followerCount, viewer }) {
   return {
-    ...toBoardCard(board),
+    ...toBoardCard(board, { followerCount, viewer }),
     managerTitle: board.managerTitle,
     description: board.description,
     dangerousTargetHours: board.dangerousTargetHours,
@@ -45,8 +55,5 @@ export function toBoardDetail(board, { handlerCount, membership, viewerLoggedIn 
       ? { id: board.owner.id, name: board.owner.name, avatarUrl: board.owner.avatarUrl }
       : null,
     categories: (board.categories ?? []).map(toCategory),
-    viewer: viewerLoggedIn
-      ? { isFollowing: false, notifyLevel: null, role: membership?.role ?? null }
-      : null,
   };
 }
