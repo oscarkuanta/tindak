@@ -18,12 +18,12 @@ export async function create(req, res) {
 }
 
 export async function search(req, res) {
-  const { data, meta } = await searchBoards(req.validated.query);
+  const { data, meta } = await searchBoards(req.validated.query, req.user);
   sendData(res, data, { meta });
 }
 
 export async function similar(req, res) {
-  sendData(res, await findSimilarBoards(req.validated.query));
+  sendData(res, await findSimilarBoards(req.validated.query, req.user));
 }
 
 export async function detail(req, res) {
