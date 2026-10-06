@@ -5,9 +5,15 @@ import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { ScopeBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { FollowButton } from '../../components/boards/FollowButton.jsx';
 import { useBoard } from '../../features/boards/hooks.js';
-import { useToast } from '../../features/boards/toastContext.js';
+import { useBoardReports } from '../../features/reports/hooks.js';
+import { ReportCard } from '../../components/reports/ReportCard.jsx';
 
-const FEED_TABS = ['Ramai', 'Prioritas', 'Terbaru', 'Selesai'];
+const FEED_TABS = [
+  { label: 'Ramai', sort: 'hot' },
+  { label: 'Prioritas', sort: 'priority' },
+  { label: 'Terbaru', sort: 'new' },
+  { label: 'Selesai', sort: 'new', status: 'RESOLVED' },
+];
 
 function getInitials(name = '') {
   return name
@@ -110,8 +116,14 @@ function BoardInformation({ board }) {
 export function BoardDetailPage() {
   const { slug } = useParams();
   const boardQuery = useBoard(slug);
-  const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState('Ramai');
+  const [activeTab, setActiveTab] = useState(FEED_TABS[0]);
+  const [page, setPage] = useState(1);
+  const reportsQuery = useBoardReports(slug, {
+    sort: activeTab.sort,
+    ...(activeTab.status ? { status: activeTab.status } : {}),
+    page,
+    pageSize: 10,
+  });
 
   if (boardQuery.isPending) {
     return (
@@ -186,7 +198,12 @@ export function BoardDetailPage() {
               <p className="mt-2 text-sm text-text-muted">{board.managerTitle}</p>
             )}
             <div className="mt-5 flex flex-wrap gap-2">
-              <Button onClick={() => showToast('Segera hadir')}>Laporkan Masalah</Button>
+              <Link
+                to={`/b/${slug}/lapor`}
+                className="inline-flex h-10 items-center rounded-base bg-brand px-4 text-sm font-semibold text-brand-contrast hover:bg-brand-hover"
+              >
+                Laporkan Masalah
+              </Link>
               <FollowButton board={board} />
               {isOwner && (
                 <Link
@@ -207,22 +224,77 @@ export function BoardDetailPage() {
         >
           {FEED_TABS.map((tab) => (
             <button
-              key={tab}
+              key={tab.label}
               type="button"
               role="tab"
-              aria-selected={activeTab === tab}
-              onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium ${activeTab === tab ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text'}`}
+              aria-selected={activeTab.label === tab.label}
+              onClick={() => {
+                setActiveTab(tab);
+                setPage(1);
+              }}
+              className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium ${activeTab.label === tab.label ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text'}`}
             >
-              {tab}
+              {tab.label}
             </button>
           ))}
         </nav>
-        <div className="mt-4">
-          <EmptyState
-            title="Belum ada laporan di Board ini"
-            description="Laporan yang masuk akan muncul di sini."
-          />
+        <div className="mt-4 flex flex-col gap-3" aria-live="polite">
+          {reportsQuery.isPending ? (
+            Array.from({ length: 3 }, (_, index) => (
+              <Card key={index} className="animate-pulse">
+                <div className="h-4 w-1/3 rounded bg-surface-muted" />
+                <div className="mt-4 h-5 w-2/3 rounded bg-surface-muted" />
+                <div className="mt-3 h-3 w-1/2 rounded bg-surface-muted" />
+              </Card>
+            ))
+          ) : reportsQuery.isError ? (
+            <Alert>
+              {reportsQuery.error.message}{' '}
+              <button
+                type="button"
+                className="font-semibold underline"
+                onClick={() => reportsQuery.refetch()}
+              >
+                Coba lagi
+              </button>
+            </Alert>
+          ) : reportsQuery.data.data.length ? (
+            <>
+              {reportsQuery.data.data.map((report) => (
+                <ReportCard key={report.id} report={report} />
+              ))}
+              {reportsQuery.data.meta?.totalPages > 1 && (
+                <nav
+                  aria-label="Halaman laporan Board"
+                  className="flex items-center justify-between"
+                >
+                  <Button
+                    variant="secondary"
+                    disabled={page <= 1}
+                    onClick={() => setPage((current) => current - 1)}
+                  >
+                    Sebelumnya
+                  </Button>
+                  <span className="text-sm text-text-muted">
+                    Halaman {reportsQuery.data.meta.page ?? page} dari{' '}
+                    {reportsQuery.data.meta.totalPages}
+                  </span>
+                  <Button
+                    variant="secondary"
+                    disabled={page >= reportsQuery.data.meta.totalPages}
+                    onClick={() => setPage((current) => current + 1)}
+                  >
+                    Berikutnya
+                  </Button>
+                </nav>
+              )}
+            </>
+          ) : (
+            <EmptyState
+              title="Belum ada laporan di Board ini"
+              description="Laporan yang masuk akan muncul di sini."
+            />
+          )}
         </div>
       </main>
       <BoardInformation board={board} />
