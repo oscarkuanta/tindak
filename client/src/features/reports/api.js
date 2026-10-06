@@ -20,14 +20,6 @@ export function createBoardReport(slug, { fields, photos }) {
   return api.post(`/boards/${encodeURIComponent(slug)}/reports`, body);
 }
 
-export function getReport(id) {
-  return api.get(`/reports/${encodeURIComponent(id)}`);
-}
-
-export function getTrackedReport(code, secret) {
-  return api.get(withQuery(`/track/${encodeURIComponent(code)}`, { secret }));
-}
-
 export function getMyReports(params = {}) {
   return api.get(withQuery('/me/reports', params));
 }

@@ -1,15 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  createBoardReport,
-  getBoardReports,
-  getMyReports,
-  getReport,
-  getTrackedReport,
-} from './api.js';
+import { createBoardReport, getBoardReports, getMyReports } from './api.js';
 
 export const boardReportsKey = (slug, params) => ['boards', slug, 'reports', params];
-export const reportKey = (id) => ['reports', id];
-export const trackedReportKey = (code, secret) => ['reports', 'track', code, secret];
 export const myReportsKey = (params) => ['me', 'reports', params];
 
 export function useBoardReports(slug, params) {
@@ -31,22 +23,6 @@ export function useCreateBoardReport() {
         queryClient.invalidateQueries({ queryKey: ['me', 'reports'] }),
       ]);
     },
-  });
-}
-
-export function useReport(id) {
-  return useQuery({
-    queryKey: reportKey(id),
-    queryFn: () => getReport(id),
-    enabled: Boolean(id),
-  });
-}
-
-export function useTrackedReport(code, secret) {
-  return useQuery({
-    queryKey: trackedReportKey(code, secret),
-    queryFn: () => getTrackedReport(code, secret),
-    enabled: Boolean(code && secret),
   });
 }
 
