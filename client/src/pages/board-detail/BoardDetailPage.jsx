@@ -7,6 +7,7 @@ import { FollowButton } from '../../components/boards/FollowButton.jsx';
 import { useBoard } from '../../features/boards/hooks.js';
 import { useBoardReports } from '../../features/reports/hooks.js';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
+import { FlagButton } from '../../components/moderation/FlagButton.jsx';
 
 const FEED_TABS = [
   { label: 'Ramai', sort: 'hot' },
@@ -90,6 +91,12 @@ function BoardInformation({ board }) {
             <dt className="text-text-muted">Penindak</dt>
             <dd>{board.handlerCount ?? 'Belum ada data'}</dd>
           </div>
+          {board.restoredByAdminCount > 0 && (
+            <div className="flex justify-between gap-3">
+              <dt className="text-text-muted">Laporan dipulihkan moderator</dt>
+              <dd>{board.restoredByAdminCount}</dd>
+            </div>
+          )}
         </dl>
       </Card>
       <Card>
@@ -192,6 +199,9 @@ export function BoardDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{board.name}</h1>
               <VerificationBadge verification={board.verification} />
+              <div className="ml-auto">
+                <FlagButton targetType="BOARD" targetId={board.id} label="Opsi Board" />
+              </div>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-muted">
               <span>{board.city}</span>

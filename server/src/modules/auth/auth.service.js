@@ -3,6 +3,7 @@ import { ERROR_CODES, NAME_MAX_LENGTH, USER_ROLES } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { env } from '../../config/env.js';
 import { AppError } from '../../utils/AppError.js';
+import { assertNotBanned } from '../../lib/bans.js';
 
 export const BCRYPT_COST = 12;
 
@@ -106,6 +107,7 @@ export async function authenticateUser({ email, password }) {
 
   const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) throw invalidCredentials();
+  await assertNotBanned({ userId: user.id });
 
   return recordLogin(user);
 }
@@ -123,7 +125,10 @@ export async function findOrCreateGoogleUser(profile) {
   const avatarUrl = profile.photos?.[0]?.value ?? null;
 
   const byGoogleId = await prisma.user.findUnique({ where: { googleId } });
-  if (byGoogleId) return recordLogin(byGoogleId);
+  if (byGoogleId) {
+    await assertNotBanned({ userId: byGoogleId.id });
+    return recordLogin(byGoogleId);
+  }
 
   if (!email || primaryEmail.verified !== true) {
     throw new AppError(401, ERROR_CODES.UNAUTHENTICATED, 'Email Google belum terverifikasi');
@@ -131,6 +136,7 @@ export async function findOrCreateGoogleUser(profile) {
 
   const byEmail = await prisma.user.findUnique({ where: { email } });
   if (byEmail) {
+    await assertNotBanned({ userId: byEmail.id });
     const [, linked] = await prisma.$transaction([
       prisma.session.deleteMany({ where: { userId: byEmail.id } }),
       prisma.user.update({
