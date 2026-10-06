@@ -654,6 +654,68 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOAR
 
 ---
 
+## Fase 4: Laporan dan Tamu
+
+Kontrak berikut dipakai frontend Fase 4B dan menjadi acuan implementasi backend Fase 4A.
+
+### Enum dan objek Laporan
+
+`severity`: `LOW`, `MEDIUM`, atau `DANGEROUS`.
+
+`status`: `NEW`, `NEED_INFO`, `IN_PROGRESS`, `AWAITING_CONFIRMATION`, `RESOLVED`, `REOPENED`, `REJECTED`, atau `DUPLICATE`.
+
+Objek `Report` publik berisi `id`, `board`, `category`, `isAnonymous`, `title`, `description`, `locationDetail`, `severity`, `status`, `media`, `createdAt`, dan `updatedAt`. Detail yang hanya terlihat oleh Penindak Board dapat menambahkan `reporterType` (`GUEST` atau `ACCOUNT`). Pelapor anonim ditampilkan sebagai `Anonim`.
+
+Setiap item `media` berisi `id`, `url`, `kind`, `isBlurred`, dan `createdAt`.
+
+### POST /api/boards/:slug/reports
+
+Auth: optional. Menerima `multipart/form-data` dengan field `title`, `categoryId`, `severity`, `locationDetail`, `description`, `isAnonymous`, `turnstileToken`, dan satu sampai empat field file bernama `photos`. Setiap foto maksimal 5 MB dan bertipe JPEG, PNG, atau WebP. Tamu selalu anonim. Board beku dan kategori dari Board lain ditolak. Frontend membaca public site key Turnstile dari `VITE_TURNSTILE_SITE_KEY`.
+
+Sukses `201`:
+
+```json
+{
+  "data": {
+    "report": <Report>,
+    "trackingCode": "K7M2P9QX",
+    "trackingUrl": "https://tindak.id/lacak/K7M2P9QX?secret=<rahasia-sekali-kirim>"
+  }
+}
+```
+
+Tautan berisi secret yang hanya dikirim saat laporan dibuat. Frontend menyimpannya di browser untuk halaman Laporan di Perangkat Ini. Error utama: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED` bila sesi login bermasalah, `404 BOARD_NOT_FOUND`, `404 CATEGORY_NOT_FOUND`, `422 IMAGE_REJECTED`, `429 RATE_LIMITED`, dan `503 SERVICE_UNAVAILABLE` bila verifikasi captcha tidak tersedia.
+
+### GET /api/boards/:slug/reports
+
+Auth: publik. Query: `sort` (`new`, `hot`, atau `priority`), `status`, `categoryId`, `severity`, `page`, dan `pageSize`. Selama urutan hot/prioritas belum aktif, kedua nilai diperlakukan seperti `new`. Laporan tersembunyi tidak masuk hasil publik.
+
+Sukses `200`: respons paginasi umum `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+
+### GET /api/reports/:id
+
+Auth: optional. Mengambil detail laporan, media, dan timeline. Untuk pelapor anonim, nama yang ditampilkan adalah `Anonim`. Hanya Penindak Board terkait menerima `reporterType`.
+
+Sukses `200`: `{ "data": <Report dengan timeline> }`.
+
+Error: `404 REPORT_NOT_FOUND`.
+
+### GET /api/track/:code?secret=...
+
+Auth: publik dengan secret. Mengambil detail, status, dan timeline untuk pemegang tautan rahasia. Secret salah atau kode tidak ditemukan menghasilkan respons yang sama.
+
+Sukses `200`: `{ "data": <Report dengan timeline> }`.
+
+Error: `404 REPORT_NOT_FOUND`.
+
+### GET /api/me/reports
+
+Auth: Login. Query opsional: `page` dan `pageSize`.
+
+Sukses `200`: respons paginasi umum `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
+
+---
+
 ## Fase 5: Penindakan dan Status
 
 Fase ini melengkapi data detail dan pelacakan laporan Fase 4. Frontend menggunakan timeline dan allowedActions dari server agar tidak menebak hak akses atau transisi status.

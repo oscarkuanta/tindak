@@ -6,14 +6,15 @@ import { useReportAction } from '../../features/handling/hooks.js';
 import { Alert, Badge, Card, Spinner } from '../ui/index.js';
 import { HandlerActionPanel } from './HandlerActionPanel.jsx';
 import { ReporterResponsePanel } from './ReporterResponsePanel.jsx';
-import { ReportStatusBadge } from './ReportStatusBadge.jsx';
+import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
 import { ReportTimeline } from './ReportTimeline.jsx';
 
-const SEVERITY_LABELS = {
-  LOW: 'Rendah',
-  MEDIUM: 'Sedang',
-  DANGEROUS: 'Berbahaya',
-};
+function formatCreatedAt(value) {
+  if (!value) return null;
+  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'long', timeStyle: 'short' }).format(
+    new Date(value),
+  );
+}
 
 const HANDLER_ACTIONS = [
   REPORT_HANDLING_ACTIONS.PROCESS,
@@ -54,9 +55,7 @@ export function ReportDetailContent({ report, credentials }) {
             </Link>
           )}
           <ReportStatusBadge status={report.status} />
-          <Badge tone={report.severity === 'DANGEROUS' ? 'danger' : 'neutral'}>
-            {SEVERITY_LABELS[report.severity] ?? report.severity}
-          </Badge>
+          <ReportSeverityBadge severity={report.severity} />
           {report.isOverdue && <Badge tone="danger">⏰ Terlambat</Badge>}
           {report.reporterNotSatisfied && <Badge tone="warning">Pelapor tidak puas</Badge>}
         </div>
@@ -64,6 +63,15 @@ export function ReportDetailContent({ report, credentials }) {
         <p className="text-sm text-text-muted">
           {report.category?.name ?? 'Tanpa kategori'}
           {report.locationDetail ? ` · ${report.locationDetail}` : ''}
+        </p>
+        <p className="text-xs text-text-muted">
+          Dilaporkan oleh {report.isAnonymous ? 'Anonim' : (report.reporter?.name ?? 'Anonim')}
+          {report.createdAt && (
+            <>
+              {' · '}
+              <time dateTime={report.createdAt}>{formatCreatedAt(report.createdAt)}</time>
+            </>
+          )}
         </p>
         <p className="whitespace-pre-wrap text-sm leading-6">{report.description}</p>
         {report.parent && (
