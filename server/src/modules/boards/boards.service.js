@@ -7,6 +7,7 @@ import {
   CITIES,
   CITY_SEARCH_LIMIT,
   ERROR_CODES,
+  REPORT_ACTIVE_STATUSES,
   USER_ROLES,
 } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
@@ -19,6 +20,7 @@ const SLUG_RETRIES = 3;
 const SIMILAR_CANDIDATES = 50;
 const CATEGORY_ORDER = [{ sortOrder: 'asc' }, { id: 'asc' }];
 const STAFF_ROLES = new Set([USER_ROLES.ADMIN, USER_ROLES.BOARD_ADMIN]);
+const ACTIVE_REPORT_WHERE = { isHidden: false, status: { in: [...REPORT_ACTIVE_STATUSES] } };
 
 function boardNotFound() {
   return new AppError(404, ERROR_CODES.BOARD_NOT_FOUND, 'Board tidak ditemukan');
@@ -63,10 +65,15 @@ export async function getBoardMembership(boardId, userId) {
 export async function decorateCards(boards, user) {
   if (boards.length === 0) return [];
   const ids = boards.map((board) => board.id);
-  const [counts, follows, memberships] = await Promise.all([
+  const [counts, reportCounts, follows, memberships] = await Promise.all([
     prisma.boardFollower.groupBy({
       by: ['boardId'],
       where: { boardId: { in: ids } },
+      _count: { _all: true },
+    }),
+    prisma.report.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids }, ...ACTIVE_REPORT_WHERE },
       _count: { _all: true },
     }),
     user ? prisma.boardFollower.findMany({ where: { userId: user.id, boardId: { in: ids } } }) : [],
@@ -77,12 +84,14 @@ export async function decorateCards(boards, user) {
       : [],
   ]);
   const countByBoard = new Map(counts.map((row) => [row.boardId, row._count._all]));
+  const reportsByBoard = new Map(reportCounts.map((row) => [row.boardId, row._count._all]));
   const followByBoard = new Map(follows.map((follow) => [follow.boardId, follow]));
   const memberByBoard = new Map(memberships.map((member) => [member.boardId, member]));
 
   return boards.map((board) =>
     toBoardCard(board, {
       followerCount: countByBoard.get(board.id) ?? 0,
+      activeReportCount: reportsByBoard.get(board.id) ?? 0,
       viewer: toViewer(user, {
         follow: followByBoard.get(board.id),
         membership: memberByBoard.get(board.id),
@@ -109,9 +118,10 @@ export async function getBoardDetail(slug, user) {
   if (!board) throw boardNotFound();
   if (board.status === 'FROZEN' && !canSeeFrozenBoards(user)) throw boardNotFound();
 
-  const [handlerCount, followerCount, membership, follow] = await Promise.all([
+  const [handlerCount, followerCount, activeReportCount, membership, follow] = await Promise.all([
     prisma.boardMember.count({ where: { boardId: board.id, status: 'ACTIVE' } }),
     prisma.boardFollower.count({ where: { boardId: board.id } }),
+    prisma.report.count({ where: { boardId: board.id, ...ACTIVE_REPORT_WHERE } }),
     getBoardMembership(board.id, user?.id),
     user
       ? prisma.boardFollower.findUnique({
@@ -123,6 +133,7 @@ export async function getBoardDetail(slug, user) {
   return toBoardDetail(board, {
     handlerCount,
     followerCount,
+    activeReportCount,
     viewer: toViewer(user, { follow, membership }),
   });
 }
@@ -203,8 +214,16 @@ export async function searchBoards({ q, city, type, verification, page, pageSize
     ...(verification && { verification }),
     ...(q && { name: { contains: q } }),
   };
-  const rows = await prisma.board.findMany({ where });
-  rows.sort(compareSearchResults(q));
+  const boards = await prisma.board.findMany({ where });
+  const reportCounts = await prisma.report.groupBy({
+    by: ['boardId'],
+    where: { boardId: { in: boards.map((board) => board.id) }, ...ACTIVE_REPORT_WHERE },
+    _count: { _all: true },
+  });
+  const reportsByBoard = new Map(reportCounts.map((row) => [row.boardId, row._count._all]));
+  const rows = boards
+    .map((board) => ({ ...board, activeReportCount: reportsByBoard.get(board.id) ?? 0 }))
+    .sort(compareSearchResults(q));
   const total = rows.length;
   const start = (page - 1) * pageSize;
 
@@ -333,6 +352,14 @@ export async function deleteCategory(board, categoryId) {
   return prisma.$transaction(async (tx) => {
     const category = await findBoardCategory(tx, board.id, categoryId);
     if (isProtectedCategory(category)) throw categoryProtected();
+    const used = await tx.report.count({ where: { categoryId: category.id } });
+    if (used > 0) {
+      throw new AppError(
+        409,
+        ERROR_CODES.CATEGORY_IN_USE,
+        'Kategori sudah dipakai laporan sehingga tidak bisa dihapus. Ganti namanya jika perlu.',
+      );
+    }
     await tx.category.delete({ where: { id: category.id } });
     await touchHandlerActivity(tx, board.id);
     return { id: category.id, deleted: true };
