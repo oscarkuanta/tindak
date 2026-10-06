@@ -21,6 +21,7 @@ import {
   viewerContext,
 } from './reports.service.js';
 import { refreshReportScores } from '../engagement/scores.service.js';
+import { recomputeBoardTrust } from '../trust/trust.service.js';
 import {
   REPORT_LIST_INCLUDE,
   STATUSES_WITHOUT_DEADLINE,
@@ -126,6 +127,7 @@ async function handlerAction(id, user, action, run) {
     await recordHandlerActivity(tx, report.boardId);
   });
   await recordAudit(action, { actorId: user.id, reportId: id, fromStatus: report.status });
+  await recomputeBoardTrust(report.boardId);
   return detailFor(id, user);
 }
 
@@ -246,6 +248,7 @@ export async function resolveReport(id, user, { note }, files) {
     reportId: id,
     fromStatus: report.status,
   });
+  await recomputeBoardTrust(report.boardId);
   return detailFor(id, user);
 }
 
@@ -275,6 +278,7 @@ export async function answerInfo(id, user, { answer, trackingCode, secret }) {
       note: 'Pelapor menjawab pertanyaan Penindak',
     });
   });
+  await recomputeBoardTrust(report.boardId);
   return detailFor(id, user, { isReporter: true });
 }
 
@@ -321,6 +325,7 @@ export async function confirmReport(id, user, input, files) {
     result: input.result,
     toStatus: change.to,
   });
+  await recomputeBoardTrust(report.boardId);
   return detailFor(id, user, { isReporter: true });
 }
 
@@ -353,6 +358,7 @@ export async function autoConfirmReports(now = new Date(), olderThanDays = 3) {
       );
       resolved += 1;
       await recordAudit('REPORT_AUTO_CONFIRMED', { reportId: report.id });
+      await recomputeBoardTrust(report.boardId);
     } catch (error) {
       if (error?.code !== ERROR_CODES.INVALID_TRANSITION) throw error;
     }

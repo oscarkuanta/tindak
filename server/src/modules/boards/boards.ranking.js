@@ -49,11 +49,25 @@ export function nameMatchRank(name, query) {
   return 3;
 }
 
+export function compareTrustScore(a, b) {
+  const left = a.trustScore ?? null;
+  const right = b.trustScore ?? null;
+  if (left === right) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return right - left;
+}
+
+function compareRecentActivity(a, b) {
+  return new Date(b.lastHandlerActivityAt ?? 0) - new Date(a.lastHandlerActivityAt ?? 0);
+}
+
 export function comparePopularity(a, b) {
   return (
     (b.followerCount ?? 0) - (a.followerCount ?? 0) ||
     (b.activeReportCount ?? 0) - (a.activeReportCount ?? 0) ||
     VERIFICATION_RANK[a.verification] - VERIFICATION_RANK[b.verification] ||
+    compareTrustScore(a, b) ||
     new Date(b.createdAt) - new Date(a.createdAt) ||
     b.id - a.id
   );
@@ -64,7 +78,9 @@ export function compareSearchResults(query) {
   return (a, b) =>
     nameMatchRank(a.name, query) - nameMatchRank(b.name, query) ||
     VERIFICATION_RANK[a.verification] - VERIFICATION_RANK[b.verification] ||
+    compareTrustScore(a, b) ||
     (b.activeReportCount ?? 0) - (a.activeReportCount ?? 0) ||
+    compareRecentActivity(a, b) ||
     new Date(b.createdAt) - new Date(a.createdAt) ||
     b.id - a.id;
 }

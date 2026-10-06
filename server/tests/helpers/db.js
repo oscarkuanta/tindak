@@ -8,6 +8,8 @@ export async function resetDatabase() {
   await prisma.auditLog.deleteMany();
   await prisma.ban.deleteMany();
   await prisma.flag.deleteMany();
+  await prisma.boardVerificationLog.deleteMany();
+  await prisma.boardRating.deleteMany();
   await prisma.reportEvent.deleteMany();
   await prisma.reportMedia.deleteMany();
   await prisma.report.deleteMany();
