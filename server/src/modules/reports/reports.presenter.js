@@ -66,6 +66,7 @@ export function toReport(report) {
     board: report.board,
     category: report.category,
     isAnonymous: report.isAnonymous,
+    isHidden: report.isHidden,
     reporter: toReporter(report),
     title: report.title,
     description: report.description,
@@ -145,6 +146,15 @@ export function toReportDetail(
     infoRequest: toInfoRequest(report.infoRequests?.[0]),
     timeline: report.events.map((event) => toTimelineEntry(event, report)),
     allowedActions: allowedActionsFor(report, { isHandler, isReporter }),
+  };
+}
+
+export function toHiddenReport(report) {
+  return {
+    id: report.id,
+    board: report.board ? { slug: report.board.slug, name: report.board.name } : null,
+    isHidden: true,
+    moderationNotice: 'Laporan ini sedang ditinjau moderator',
   };
 }
 

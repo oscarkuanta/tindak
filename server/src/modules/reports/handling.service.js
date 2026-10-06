@@ -7,6 +7,7 @@ import {
 } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { removeFile } from '../../lib/storage.js';
+import { recordAudit } from '../../lib/audit.js';
 import { AppError } from '../../utils/AppError.js';
 import { getBoardMembership, recordHandlerActivity } from '../boards/boards.service.js';
 import {
@@ -118,17 +119,18 @@ async function detailFor(id, user, override) {
   return json;
 }
 
-async function handlerAction(id, user, run) {
+async function handlerAction(id, user, action, run) {
   const report = await loadForHandler(id, user);
   await prisma.$transaction(async (tx) => {
     await run(tx, report);
     await recordHandlerActivity(tx, report.boardId);
   });
+  await recordAudit(action, { actorId: user.id, reportId: id, fromStatus: report.status });
   return detailFor(id, user);
 }
 
 export async function processReport(id, user, { assigneeId }) {
-  return handlerAction(id, user, async (tx, report) => {
+  return handlerAction(id, user, 'REPORT_PROCESSED', async (tx, report) => {
     if (assigneeId) {
       const assignee = await getBoardMembership(report.boardId, assigneeId);
       if (!assignee) {
@@ -150,7 +152,7 @@ export async function processReport(id, user, { assigneeId }) {
 }
 
 export async function requestInfo(id, user, { question }) {
-  return handlerAction(id, user, async (tx, report) => {
+  return handlerAction(id, user, 'REPORT_INFO_REQUESTED', async (tx, report) => {
     await applyTransition(tx, report, {
       to: 'NEED_INFO',
       actorType: 'HANDLER',
@@ -162,7 +164,7 @@ export async function requestInfo(id, user, { question }) {
 }
 
 export async function rejectReport(id, user, { reason, note }) {
-  return handlerAction(id, user, async (tx, report) => {
+  return handlerAction(id, user, 'REPORT_REJECTED', async (tx, report) => {
     await applyTransition(tx, report, {
       to: 'REJECTED',
       actorType: 'HANDLER',
@@ -174,7 +176,7 @@ export async function rejectReport(id, user, { reason, note }) {
 }
 
 export async function markDuplicate(id, user, { parentId }) {
-  return handlerAction(id, user, async (tx, report) => {
+  return handlerAction(id, user, 'REPORT_MARKED_DUPLICATE', async (tx, report) => {
     assertCanTransition(report, 'DUPLICATE');
     const parent = await tx.report.findFirst({
       where: {
@@ -239,6 +241,11 @@ export async function resolveReport(id, user, { note }, files) {
       await recordHandlerActivity(tx, report.boardId);
     }),
   );
+  await recordAudit('REPORT_MARKED_RESOLVED', {
+    actorId: user.id,
+    reportId: id,
+    fromStatus: report.status,
+  });
   return detailFor(id, user);
 }
 
@@ -308,6 +315,12 @@ export async function confirmReport(id, user, input, files) {
       }
     }),
   );
+  await recordAudit('REPORT_CONFIRMED_BY_REPORTER', {
+    actorId,
+    reportId: id,
+    result: input.result,
+    toStatus: change.to,
+  });
   return detailFor(id, user, { isReporter: true });
 }
 
@@ -339,6 +352,7 @@ export async function autoConfirmReports(now = new Date(), olderThanDays = 3) {
         }),
       );
       resolved += 1;
+      await recordAudit('REPORT_AUTO_CONFIRMED', { reportId: report.id });
     } catch (error) {
       if (error?.code !== ERROR_CODES.INVALID_TRANSITION) throw error;
     }

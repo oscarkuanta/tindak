@@ -9,6 +9,8 @@ import { ReporterResponsePanel } from './ReporterResponsePanel.jsx';
 import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
 import { ReportTimeline } from './ReportTimeline.jsx';
 import { EngagementBar } from './EngagementBar.jsx';
+import { BlurredImage } from './BlurredImage.jsx';
+import { FlagButton } from '../moderation/FlagButton.jsx';
 
 function formatCreatedAt(value) {
   if (!value) return null;
@@ -43,6 +45,12 @@ export function ReportDetailContent({ report, credentials }) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
+      {report.isHidden && (
+        <Alert tone="warning">
+          Laporan ini sedang ditinjau moderator dan disembunyikan dari publik. Kamu tetap dapat
+          melihatnya karena kamu pelapor atau pengelola Board.
+        </Alert>
+      )}
       {report.board?.status === 'INACTIVE' && (
         <Alert tone="warning">
           Board Tidak Aktif. Laporan tetap dapat dibaca, tetapi mungkin belum ditangani.
@@ -59,6 +67,11 @@ export function ReportDetailContent({ report, credentials }) {
           <ReportSeverityBadge severity={report.severity} />
           {report.isOverdue && <Badge tone="danger">⏰ Terlambat</Badge>}
           {report.reporterNotSatisfied && <Badge tone="warning">Pelapor tidak puas</Badge>}
+          {!credentials && (
+            <div className="ml-auto">
+              <FlagButton targetType="REPORT" targetId={report.id} label="Opsi laporan" />
+            </div>
+          )}
         </div>
         <h1 className="text-2xl font-bold">{report.title}</h1>
         <p className="text-sm text-text-muted">
@@ -102,8 +115,10 @@ export function ReportDetailContent({ report, credentials }) {
           <div className="grid gap-4 sm:grid-cols-2">
             {[...beforeMedia, ...afterMedia, ...extraMedia].map((item) => (
               <figure key={item.id} className="space-y-1">
-                <img
+                <BlurredImage
                   src={item.url}
+                  isBlurred={item.isBlurred}
+                  wrapperClassName="rounded-base"
                   alt={
                     item.kind === 'AFTER'
                       ? 'Foto sesudah penindakan'
@@ -111,7 +126,7 @@ export function ReportDetailContent({ report, credentials }) {
                         ? 'Foto tambahan'
                         : 'Foto sebelum penindakan'
                   }
-                  className={`aspect-[4/3] w-full rounded-base object-cover ${item.isBlurred ? 'blur-md' : ''}`}
+                  className="aspect-[4/3] w-full rounded-base object-cover"
                 />
                 <figcaption className="text-xs text-text-muted">
                   {item.kind === 'AFTER'

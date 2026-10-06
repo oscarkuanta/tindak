@@ -3,6 +3,7 @@ import { AUTO_CONFIRM_AFTER_DAYS } from '@tindak/shared';
 import { logger } from '../lib/logger.js';
 import { autoConfirmReports } from '../modules/reports/handling.service.js';
 import { markInactiveBoards } from '../modules/boards/boards.service.js';
+import { purgeOldIpHashes } from '../modules/moderation/admin.service.js';
 import { refreshHotScores, refreshPriorityScores } from '../modules/engagement/scores.service.js';
 
 export const JOB_SCHEDULES = Object.freeze({
@@ -37,8 +38,9 @@ export function startJobs() {
   const tasks = [
     schedule(JOB_SCHEDULES.hourly, 'status', () => runScheduledJobs()),
     schedule(JOB_SCHEDULES.hot, 'hot', async () => ({ hotScores: await refreshHotScores() })),
-    schedule(JOB_SCHEDULES.daily, 'prioritas', async () => ({
+    schedule(JOB_SCHEDULES.daily, 'harian', async () => ({
       priorityScores: await refreshPriorityScores(),
+      purgedIpHashes: await purgeOldIpHashes(),
     })),
   ];
   logger.info('Job terjadwal aktif');
