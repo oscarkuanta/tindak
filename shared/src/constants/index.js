@@ -3,6 +3,7 @@ export * from './boards.js';
 export * from './cities.js';
 export * from './notifications.js';
 export * from './moderation.js';
+export * from './verification.js';
 export * from './reports.js';
 export * from './report-handling.js';
 
@@ -48,4 +49,5 @@ export const ERROR_CODES = Object.freeze({
   ACCOUNT_BANNED: 'ACCOUNT_BANNED',
   ALREADY_FLAGGED: 'ALREADY_FLAGGED',
   FLAG_TARGET_NOT_FOUND: 'FLAG_TARGET_NOT_FOUND',
+  RATING_NOT_ALLOWED: 'RATING_NOT_ALLOWED',
 });

@@ -4,6 +4,7 @@ import { logger } from '../lib/logger.js';
 import { autoConfirmReports } from '../modules/reports/handling.service.js';
 import { markInactiveBoards } from '../modules/boards/boards.service.js';
 import { purgeOldIpHashes } from '../modules/moderation/admin.service.js';
+import { recomputeAllBoardTrust } from '../modules/trust/trust.service.js';
 import { refreshHotScores, refreshPriorityScores } from '../modules/engagement/scores.service.js';
 
 export const JOB_SCHEDULES = Object.freeze({
@@ -41,6 +42,7 @@ export function startJobs() {
     schedule(JOB_SCHEDULES.daily, 'harian', async () => ({
       priorityScores: await refreshPriorityScores(),
       purgedIpHashes: await purgeOldIpHashes(),
+      trustScores: await recomputeAllBoardTrust(),
     })),
   ];
   logger.info('Job terjadwal aktif');
