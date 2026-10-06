@@ -22,6 +22,18 @@ export function requireAuth(req, res, next) {
   next(new AppError(401, ERROR_CODES.UNAUTHENTICATED, 'Kamu harus masuk terlebih dahulu'));
 }
 
+export function requireBoardAdmin(req, res, next) {
+  if (!req.user) {
+    return next(new AppError(401, ERROR_CODES.UNAUTHENTICATED, 'Kamu harus masuk terlebih dahulu'));
+  }
+  if (req.user.role !== USER_ROLES.BOARD_ADMIN) {
+    return next(
+      new AppError(403, ERROR_CODES.FORBIDDEN, 'Hanya Admin Board yang boleh melakukan ini'),
+    );
+  }
+  next();
+}
+
 export function requireAdmin(req, res, next) {
   if (!req.user) {
     return next(new AppError(401, ERROR_CODES.UNAUTHENTICATED, 'Kamu harus masuk terlebih dahulu'));

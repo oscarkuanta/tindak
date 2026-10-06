@@ -6,6 +6,16 @@ const optionalString = z
   .optional()
   .transform((value) => value || undefined);
 
+const emailListSchema = z
+  .string()
+  .optional()
+  .transform((value) =>
+    (value ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -21,15 +31,8 @@ const envSchema = z.object({
     .url()
     .optional()
     .or(z.literal('').transform(() => undefined)),
-  ADMIN_EMAILS: z
-    .string()
-    .optional()
-    .transform((value) =>
-      (value ?? '')
-        .split(',')
-        .map((email) => email.trim().toLowerCase())
-        .filter(Boolean),
-    ),
+  ADMIN_EMAILS: emailListSchema,
+  BOARD_ADMIN_EMAILS: emailListSchema,
   TURNSTILE_SECRET_KEY: optionalString,
   IP_HASH_SECRET: z.string().min(16, 'minimal 16 karakter'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
