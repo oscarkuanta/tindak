@@ -17,8 +17,8 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 4B   | Laporan dan tamu                             | B      | Review      | Akmal   | [#16](https://github.com/oscarkuanta/tindak/pull/16)                                                   | 2026-10-05 |
 | 5A   | Penindakan dan status                        | A      | Selesai     | Oscar   | [#22](https://github.com/oscarkuanta/tindak/pull/22)                                                   | 2026-10-06 |
 | 5B   | Penindakan dan status                        | B      | Review      | Akmal   | -                                                                                                      | 2026-10-05 |
-| 6    | Dukungan, reaksi, prioritas, beranda         | A+B    | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
-| 7    | Moderasi dan Admin                           | A+B    | Belum Mulai | -       | -                                                                                                      | -          |
+| 6    | Dukungan, reaksi, prioritas, beranda         | A+B    | Selesai     | Oscar   | [#23](https://github.com/oscarkuanta/tindak/pull/23)                                                   | 2026-10-06 |
+| 7    | Moderasi dan Admin                           | A+B    | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
 | 8    | Rating, kepercayaan, dan verifikasi Official | A+B    | Belum Mulai | -       | -                                                                                                      | -          |
 | 9    | Notifikasi dan realtime                      | A+B    | Belum Mulai | -       | -                                                                                                      | -          |
 | 10   | Dashboard statistik                          | A+B    | Belum Mulai | -       | -                                                                                                      | -          |
