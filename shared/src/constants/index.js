@@ -1,5 +1,6 @@
 export * from './auth.js';
 export * from './boards.js';
+export * from './reports.js';
 
 export const APP_NAME = 'T!indak';
 
