@@ -31,12 +31,21 @@ function useGoogleLogin() {
   );
 }
 
-export function isAdminEmail(email) {
-  return env.ADMIN_EMAILS.includes(email.toLowerCase());
+export function roleFromEmailLists(email) {
+  const normalized = email.toLowerCase();
+  if (env.ADMIN_EMAILS.includes(normalized)) return USER_ROLES.ADMIN;
+  if (env.BOARD_ADMIN_EMAILS.includes(normalized)) return USER_ROLES.BOARD_ADMIN;
+  return null;
 }
 
-function roleForLogin(user) {
-  return isAdminEmail(user.email) ? USER_ROLES.ADMIN : user.role;
+export function roleForNewUser(email) {
+  return roleFromEmailLists(email) ?? USER_ROLES.USER;
+}
+
+export function roleForLogin(user) {
+  const listed = roleFromEmailLists(user.email);
+  if (listed === USER_ROLES.ADMIN || user.role === USER_ROLES.ADMIN) return USER_ROLES.ADMIN;
+  return listed ?? user.role;
 }
 
 export function toPublicUser(user) {
@@ -75,7 +84,7 @@ export async function registerUser({ name, email, password }) {
         name,
         email,
         passwordHash,
-        role: isAdminEmail(email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
+        role: roleForNewUser(email),
         lastLoginAt: new Date(),
       },
     });
@@ -144,13 +153,13 @@ export async function findOrCreateGoogleUser(profile) {
       email,
       googleId,
       avatarUrl,
-      role: isAdminEmail(email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
+      role: roleForNewUser(email),
       lastLoginAt: new Date(),
     },
   });
 }
 
-export async function promoteToAdmin(email) {
+export async function promoteUser(email, role) {
   const normalized = email.trim().toLowerCase();
   const user = await prisma.user.findUnique({ where: { email: normalized } });
   if (!user) {
@@ -160,5 +169,5 @@ export async function promoteToAdmin(email) {
       `User dengan email ${normalized} tidak ditemukan`,
     );
   }
-  return prisma.user.update({ where: { id: user.id }, data: { role: USER_ROLES.ADMIN } });
+  return prisma.user.update({ where: { id: user.id }, data: { role } });
 }

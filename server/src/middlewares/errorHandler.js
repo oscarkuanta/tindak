@@ -11,10 +11,14 @@ function fromZodError(error) {
     400,
     ERROR_CODES.VALIDATION_ERROR,
     'Data yang dikirim tidak valid',
-    error.issues.map((issue) => ({
-      field: issue.path.join('.'),
-      message: issue.message,
-    })),
+    error.issues.flatMap((issue) =>
+      issue.code === 'unrecognized_keys'
+        ? issue.keys.map((key) => ({
+            field: [...issue.path, key].join('.'),
+            message: 'Field ini tidak boleh dikirim',
+          }))
+        : [{ field: issue.path.join('.'), message: issue.message }],
+    ),
   );
 }
 

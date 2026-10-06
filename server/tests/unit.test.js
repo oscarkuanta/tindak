@@ -5,8 +5,8 @@ import { PrismaSessionStore } from '../src/lib/PrismaSessionStore.js';
 import { prisma } from '../src/lib/prisma.js';
 import { createUser, resetDatabase } from './helpers/db.js';
 import { assertTestDatabase } from './helpers/assertTestDatabase.js';
-import { requireAdmin, requireAuth } from '../src/middlewares/auth.js';
-import { promoteToAdmin } from '../src/modules/auth/auth.service.js';
+import { requireAdmin, requireAuth, requireBoardAdmin } from '../src/middlewares/auth.js';
+import { promoteUser } from '../src/modules/auth/auth.service.js';
 
 function runMiddleware(middleware, user) {
   let result;
@@ -29,6 +29,18 @@ describe('middleware hak akses', () => {
     });
     expect(runMiddleware(requireAdmin, null)).toMatchObject({ status: 401 });
     expect(runMiddleware(requireAdmin, { id: 2, role: 'ADMIN' })).toBe('next');
+  });
+
+  it('requireBoardAdmin hanya meneruskan BOARD_ADMIN, ADMIN dan USER ditolak', () => {
+    expect(runMiddleware(requireBoardAdmin, { id: 1, role: 'USER' })).toMatchObject({
+      status: 403,
+      code: 'FORBIDDEN',
+    });
+    expect(runMiddleware(requireBoardAdmin, { id: 2, role: 'ADMIN' })).toMatchObject({
+      status: 403,
+    });
+    expect(runMiddleware(requireBoardAdmin, null)).toMatchObject({ status: 401 });
+    expect(runMiddleware(requireBoardAdmin, { id: 3, role: 'BOARD_ADMIN' })).toBe('next');
   });
 });
 
@@ -91,19 +103,21 @@ describe('assertTestDatabase', () => {
   });
 });
 
-describe('promoteToAdmin', () => {
+describe('promoteUser', () => {
   beforeEach(async () => {
     await resetDatabase();
   });
 
   it('menjadikan user ADMIN berdasarkan email tanpa memedulikan huruf besar kecil', async () => {
     await createUser();
-    const user = await promoteToAdmin('  BUDI@example.com ');
+    const user = await promoteUser('  BUDI@example.com ', 'ADMIN');
     expect(user.role).toBe('ADMIN');
   });
 
   it('gagal jika email tidak terdaftar', async () => {
-    await expect(promoteToAdmin('tidakada@example.com')).rejects.toMatchObject({ status: 404 });
+    await expect(promoteUser('tidakada@example.com', 'ADMIN')).rejects.toMatchObject({
+      status: 404,
+    });
   });
 });
 

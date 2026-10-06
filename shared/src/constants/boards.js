@@ -102,3 +102,21 @@ export const BOARD_DEFAULT_CATEGORIES = Object.freeze({
 
 export const BOARD_CREATION_LIMIT = 3;
 export const DEFAULT_DANGEROUS_TARGET_HOURS = 48;
+
+export const BOARD_STATUSES = Object.freeze(['ACTIVE', 'INACTIVE', 'FROZEN']);
+export const BOARD_STATUS_LABELS = Object.freeze({
+  ACTIVE: 'Aktif',
+  INACTIVE: 'Tidak Aktif',
+  FROZEN: 'Dibekukan',
+});
+
+export const BOARD_MAX_CATEGORIES = 20;
+export const BOARD_MAX_EXTRA_CATEGORIES = 10;
+export const BOARD_PROTECTED_CATEGORY = 'Lainnya';
+export const DANGEROUS_TARGET_HOURS_MIN = 1;
+export const DANGEROUS_TARGET_HOURS_MAX = 720;
+
+export const BOARD_SEARCH_PAGE_SIZE = 20;
+export const BOARD_SEARCH_MAX_PAGE_SIZE = 50;
+export const BOARD_SIMILAR_LIMIT = 5;
+export const CITY_SEARCH_LIMIT = 20;
