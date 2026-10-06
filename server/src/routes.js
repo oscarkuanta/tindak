@@ -6,13 +6,23 @@ import {
   createMeBoardsRouter,
   createMetaRouter,
 } from './modules/boards/boards.routes.js';
+import {
+  createBoardReportsRouter,
+  createMeReportsRouter,
+  createReportsRouter,
+  createTrackRouter,
+} from './modules/reports/reports.routes.js';
 
 export function createApiRouter() {
   const router = Router();
 
   router.use('/health', healthRouter);
   router.use('/auth', createAuthRouter());
+  router.use('/boards', createBoardReportsRouter());
   router.use('/boards', createBoardsRouter());
+  router.use('/reports', createReportsRouter());
+  router.use('/track', createTrackRouter());
+  router.use('/me', createMeReportsRouter());
   router.use('/me', createMeBoardsRouter());
   router.use('/meta', createMetaRouter());
 
