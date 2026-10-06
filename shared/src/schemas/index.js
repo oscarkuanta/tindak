@@ -11,3 +11,4 @@ export * from './moderation.js';
 export const idParamSchema = z.object({
   id: z.coerce.number().int().positive({ error: 'ID tidak valid' }),
 });
+export * from './verification.js';

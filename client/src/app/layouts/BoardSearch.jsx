@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { useBoardSearch } from '../../features/boards/hooks.js';
 
 export function BoardSearch() {
@@ -122,6 +122,7 @@ export function BoardSearch() {
                 <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {board.name}
                   <VerificationBadge verification={board.verification} />
+                  <TrustBadge label={board.trustLabel} score={board.trustScore} />
                 </span>
                 <span className="text-xs text-text-muted">{board.city}</span>
               </button>

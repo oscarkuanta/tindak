@@ -20,6 +20,7 @@ import {
   withViewerEngagement,
 } from './reports.presenter.js';
 import { viewerEngagement } from '../engagement/engagement.service.js';
+import { recomputeBoardTrust } from '../trust/trust.service.js';
 
 const NEWEST_FIRST = [{ createdAt: 'desc' }, { id: 'desc' }];
 
@@ -230,6 +231,7 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
       },
     });
   }
+  await recomputeBoardTrust(report.boardId);
 
   return {
     report: await presentDetail(report, user, await viewerContext(report, user)),

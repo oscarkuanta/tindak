@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { recordAudit } from '../../lib/audit.js';
 import { AppError } from '../../utils/AppError.js';
 import { getBoardMembership } from '../boards/boards.service.js';
+import { recomputeBoardTrust } from '../trust/trust.service.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -123,6 +124,7 @@ export async function createFlag(user, { targetType, targetId, reason, note }, n
   }
 
   const hidden = targetType === 'REPORT' ? await maybeHideReport(target, user.id, weight) : null;
+  if (targetType === 'BOARD' && reason === 'FAKE_BOARD') await recomputeBoardTrust(target.id);
   return {
     id: flag.id,
     targetType,

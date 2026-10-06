@@ -10,6 +10,7 @@ import { saveFile } from '../src/lib/storage.js';
 import { hashIp, sha256 } from '../src/utils/crypto.js';
 import { generateTrackingCode } from '../src/utils/trackingCode.js';
 import { refreshReportScores } from '../src/modules/engagement/scores.service.js';
+import { recomputeAllBoardTrust } from '../src/modules/trust/trust.service.js';
 
 const DEMO_TRACKING = { code: 'DEMAK234', secret: 'rahasia-demo-tindak' };
 
@@ -97,6 +98,15 @@ async function seedBoards(users) {
           verification: 'OFFICIAL',
           verifiedAt: new Date(),
           verifiedById: users.boardAdmin.id,
+        },
+      });
+      await prisma.boardVerificationLog.create({
+        data: {
+          boardId: board.id,
+          action: 'GRANTED',
+          actorUserId: users.boardAdmin.id,
+          reason: 'Data demo: Board sekolah resmi',
+          snapshot: { ratingCount: 0, trustScore: null, responseRate: null, rejectedRate: 0 },
         },
       });
     }
@@ -454,12 +464,80 @@ async function seedEngagement(users) {
   for (const report of reports) await refreshReportScores(prisma, report.id);
 }
 
+const RATING_DEMO = [
+  {
+    board: ['Kampus ITS Sukolilo', 'Kota Surabaya'],
+    ageDays: 40,
+    stars: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4],
+    quickTag: 'RESPONSIVE',
+  },
+  {
+    board: ['SMKN 1 Surabaya', 'Kota Surabaya'],
+    stars: [5, 5, 4, 4, 5, 4, 5, 3],
+    quickTag: 'RESPONSIVE',
+  },
+  {
+    board: ['Alun-Alun Sidoarjo', 'Kabupaten Sidoarjo'],
+    stars: [1, 2, 1, 2, 1, 2],
+    quickTag: 'SLOW',
+  },
+];
+
+async function seedRaters(count) {
+  const passwordHash = await bcrypt.hash(SEED_PASSWORD, BCRYPT_COST);
+  const raters = [];
+  for (let index = 1; index <= count; index += 1) {
+    const number = String(index).padStart(2, '0');
+    raters.push(
+      await prisma.user.upsert({
+        where: { email: `warga${number}@tindak.test` },
+        create: {
+          name: `Warga Demo ${number}`,
+          email: `warga${number}@tindak.test`,
+          passwordHash,
+          onboardedAt: new Date(),
+        },
+        update: {},
+      }),
+    );
+  }
+  return raters;
+}
+
+async function seedRatings() {
+  const raters = await seedRaters(Math.max(...RATING_DEMO.map((item) => item.stars.length)));
+  for (const item of RATING_DEMO) {
+    const boardId = await boardIdFor(item.board);
+    if (item.ageDays) {
+      await prisma.board.update({
+        where: { id: boardId },
+        data: { createdAt: new Date(Date.now() - item.ageDays * 24 * 60 * 60 * 1000) },
+      });
+    }
+    for (const [index, stars] of item.stars.entries()) {
+      const userId = raters[index].id;
+      await prisma.boardFollower.upsert({
+        where: { boardId_userId: { boardId, userId } },
+        create: { boardId, userId },
+        update: {},
+      });
+      await prisma.boardRating.upsert({
+        where: { boardId_userId: { boardId, userId } },
+        create: { boardId, userId, stars, quickTag: index % 3 === 0 ? item.quickTag : null },
+        update: {},
+      });
+    }
+  }
+  return recomputeAllBoardTrust();
+}
+
 async function main() {
   const users = await seedUsers();
   const created = await seedBoards(users);
   await seedMembersAndFollows(users);
   const reports = await seedReports(users);
   await seedEngagement(users);
+  await seedRatings();
   logger.info(
     `Seed selesai: ${USERS.length} akun disiapkan, ${created} Board baru dari ${BOARDS.length}, ${reports} laporan baru dari ${REPORTS.length + WORKFLOW_REPORTS.length}`,
   );
