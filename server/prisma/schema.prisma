@@ -37,6 +37,8 @@ model User {
   assignedReports  Report[]        @relation("ReportAssignee")
   reportEvents     ReportEvent[]   @relation("ReportEventActor")
   infoRequests     InfoRequest[]   @relation("InfoRequestAsker")
+  supports         Support[]
+  reactions        Reaction[]
 
   @@map("users")
 }
@@ -192,6 +194,12 @@ enum ReportMediaKind {
   EXTRA
 }
 
+enum ReactionType {
+  DANGEROUS
+  LONG_STANDING
+  ANNOYING
+}
+
 enum RejectionReason {
   NOT_PHYSICAL
   OUT_OF_SCOPE
@@ -230,6 +238,12 @@ model Report {
   assigneeId           Int?           @map("assignee_id")
   assignee             User?          @relation("ReportAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
   priorityScore        Int            @default(0) @map("priority_score")
+  hotScore             Int            @default(0) @map("hot_score")
+  supportCount         Int            @default(1) @map("support_count")
+  dangerousCount       Int            @default(0) @map("dangerous_count")
+  longStandingCount    Int            @default(0) @map("long_standing_count")
+  annoyingCount        Int            @default(0) @map("annoying_count")
+  lastEngagementAt     DateTime?      @map("last_engagement_at")
   reopenCount          Int            @default(0) @map("reopen_count")
   reporterNotSatisfied Boolean        @default(false) @map("reporter_not_satisfied")
   isHidden             Boolean        @default(false) @map("is_hidden")
@@ -241,8 +255,13 @@ model Report {
   media                ReportMedia[]
   events               ReportEvent[]
   infoRequests         InfoRequest[]
+  supports             Support[]
+  reactions            Reaction[]
 
   @@index([boardId, isHidden, createdAt])
+  @@index([boardId, isHidden, hotScore])
+  @@index([boardId, isHidden, priorityScore])
+  @@index([isHidden, hotScore])
   @@index([boardId, status])
   @@index([userId, createdAt])
   @@index([guestTokenHash, createdAt])
@@ -296,4 +315,34 @@ model InfoRequest {
 
   @@index([reportId, createdAt])
   @@map("info_requests")
+}
+
+model Support {
+  id        Int      @id @default(autoincrement())
+  reportId  Int      @map("report_id")
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([reportId, userId])
+  @@index([reportId, createdAt])
+  @@index([userId])
+  @@map("supports")
+}
+
+model Reaction {
+  id        Int          @id @default(autoincrement())
+  reportId  Int          @map("report_id")
+  report    Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId    Int          @map("user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@unique([reportId, userId])
+  @@index([reportId, updatedAt])
+  @@index([userId])
+  @@map("reactions")
 }

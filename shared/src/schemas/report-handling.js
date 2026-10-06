@@ -175,6 +175,10 @@ export const reportQueueQuerySchema = z.object({
     (value) => (value === '' ? undefined : value),
     reportQueueFiltersSchema.shape.overdue,
   ),
+  sort: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.enum(['priority', 'hot', 'new'], { error: 'Urutan tidak dikenal' }).default('priority'),
+  ),
   page: reportQueueFiltersSchema.shape.page,
   pageSize: reportQueueFiltersSchema.shape.pageSize,
 });

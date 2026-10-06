@@ -13,7 +13,7 @@ import {
 const reportId = (req) => req.validated.params.id;
 
 export async function queue(req, res) {
-  const { data, meta } = await listQueue(req.board, req.validated.query);
+  const { data, meta } = await listQueue(req.board, req.validated.query, req.user);
   sendData(res, data, { meta });
 }
 

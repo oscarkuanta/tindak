@@ -14,7 +14,12 @@ import {
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
 import { boardBaseSlug, nextAvailableSlug } from '../../utils/slugify.js';
-import { compareSearchResults, rankSimilarBoards, similarTokens } from './boards.ranking.js';
+import {
+  comparePopularity,
+  compareSearchResults,
+  rankSimilarBoards,
+  similarTokens,
+} from './boards.ranking.js';
 import { toBoardCard, toBoardDetail, toCategory, toViewer } from './boards.presenter.js';
 
 const SLUG_RETRIES = 3;
@@ -215,16 +220,9 @@ export async function searchBoards({ q, city, type, verification, page, pageSize
     ...(verification && { verification }),
     ...(q && { name: { contains: q } }),
   };
-  const boards = await prisma.board.findMany({ where });
-  const reportCounts = await prisma.report.groupBy({
-    by: ['boardId'],
-    where: { boardId: { in: boards.map((board) => board.id) }, ...ACTIVE_REPORT_WHERE },
-    _count: { _all: true },
-  });
-  const reportsByBoard = new Map(reportCounts.map((row) => [row.boardId, row._count._all]));
-  const rows = boards
-    .map((board) => ({ ...board, activeReportCount: reportsByBoard.get(board.id) ?? 0 }))
-    .sort(compareSearchResults(q));
+  const rows = (await withActivity(await prisma.board.findMany({ where }))).sort(
+    compareSearchResults(q),
+  );
   const total = rows.length;
   const start = (page - 1) * pageSize;
 
@@ -232,6 +230,37 @@ export async function searchBoards({ q, city, type, verification, page, pageSize
     data: await decorateCards(rows.slice(start, start + pageSize), user),
     meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
+}
+
+async function withActivity(boards) {
+  const ids = boards.map((board) => board.id);
+  if (ids.length === 0) return [];
+  const [reportCounts, followerCounts] = await Promise.all([
+    prisma.report.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids }, ...ACTIVE_REPORT_WHERE },
+      _count: { _all: true },
+    }),
+    prisma.boardFollower.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids } },
+      _count: { _all: true },
+    }),
+  ]);
+  const reportsByBoard = new Map(reportCounts.map((row) => [row.boardId, row._count._all]));
+  const followersByBoard = new Map(followerCounts.map((row) => [row.boardId, row._count._all]));
+  return boards.map((board) => ({
+    ...board,
+    activeReportCount: reportsByBoard.get(board.id) ?? 0,
+    followerCount: followersByBoard.get(board.id) ?? 0,
+  }));
+}
+
+export async function listPopularBoards(limit, user) {
+  const boards = await withActivity(
+    await prisma.board.findMany({ where: { status: { not: 'FROZEN' } } }),
+  );
+  return decorateCards(boards.sort(comparePopularity).slice(0, limit), user);
 }
 
 export async function findSimilarBoards({ name, city }, user) {
