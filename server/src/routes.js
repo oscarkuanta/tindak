@@ -14,6 +14,8 @@ import {
   createTrackRouter,
 } from './modules/reports/reports.routes.js';
 
+import { createAdminRouter, createFlagsRouter } from './modules/moderation/moderation.routes.js';
+
 export function createApiRouter() {
   const router = Router();
 
@@ -24,6 +26,8 @@ export function createApiRouter() {
   router.use('/reports', createReportsRouter());
   router.use('/track', createTrackRouter());
   router.use('/feed', createFeedRouter());
+  router.use('/flags', createFlagsRouter());
+  router.use('/admin', createAdminRouter());
   router.use('/me', createMeReportsRouter());
   router.use('/me', createMeBoardsRouter());
   router.use('/meta', createMetaRouter());

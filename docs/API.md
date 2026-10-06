@@ -52,6 +52,7 @@ Parameter pagination standar: `page` (default 1, min 1) dan `pageSize` (default 
 | 403    | `FORBIDDEN`           | Sudah login tapi tidak punya hak akses                     |
 | 403    | `CSRF_REJECTED`       | Request dari situs lain (header Origin bukan `CLIENT_URL`) |
 | 404    | `NOT_FOUND`           | Endpoint atau data tidak ditemukan                         |
+| 403    | `ACCOUNT_BANNED`      | Akun, perangkat, atau IP sedang di-ban (Fase 7)            |
 | 409    | `CONFLICT`            | Data bentrok (misalnya nilai unik sudah ada)               |
 | 413    | `PAYLOAD_TOO_LARGE`   | Body melebihi 1 MB                                         |
 | 429    | `RATE_LIMITED`        | Terlalu banyak permintaan                                  |
@@ -110,7 +111,7 @@ Error: `503 SERVICE_UNAVAILABLE` jika database tidak dapat dihubungi.
 
 ### Catatan Ban
 
-Pengecekan ban akun (`403 ACCOUNT_BANNED`) ditunda ke Fase 7 Moderasi, bersama tabel ban akun, perangkat, dan IP.
+Mulai Fase 7, login email dan Google ditolak dengan `403 ACCOUNT_BANNED` jika akun sedang di-ban. Format lengkap ada di bagian Fase 7.
 
 ### Aturan Session dan Keamanan
 
@@ -800,7 +801,7 @@ Error:
 | Status | Code                  | Kapan                                                                                                                                                                              |
 | ------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 400    | `VALIDATION_ERROR`    | Field tidak valid, field asing, foto kosong, lebih dari 4, di atas 5 MB, bukan gambar, atau rusak (`details.field` = `photos`), captcha gagal (`details.field` = `turnstileToken`) |
-| 403    | `FORBIDDEN`           | Pengirim sedang di-ban (aktif di Fase 7)                                                                                                                                           |
+| 403    | `ACCOUNT_BANNED`      | Akun, perangkat, atau IP pengirim sedang di-ban (lihat Fase 7)                                                                                                                     |
 | 404    | `BOARD_NOT_FOUND`     | Board tidak ada atau `FROZEN`                                                                                                                                                      |
 | 404    | `CATEGORY_NOT_FOUND`  | Kategori bukan milik Board ini                                                                                                                                                     |
 | 422    | `IMAGE_REJECTED`      | Foto terdeteksi tidak pantas (skor NSFW di atas 0,7)                                                                                                                               |
@@ -830,7 +831,7 @@ Auth: opsional.
 
 Sukses `200`: `{ "data": <Report detail> }`.
 
-Laporan tersembunyi hanya terlihat oleh Penindak aktif Board itu, Admin, dan pelapornya sendiri (akun). Laporan di Board `FROZEN` hanya terlihat oleh Penindak, Admin, dan Admin Board.
+Laporan tersembunyi hanya terlihat utuh oleh Penindak aktif Board itu, Admin, dan pelapornya sendiri (akun). Orang lain mendapat data ringkas (lihat Fase 7). Laporan di Board `FROZEN` hanya terlihat oleh Penindak, Admin, dan Admin Board.
 
 Error: `404 REPORT_NOT_FOUND`.
 
@@ -1108,3 +1109,159 @@ Sukses `200`: `{ "data": [<BoardCard>] }`. Setiap item berisi `verification`, `f
 ### Perubahan pencarian Board
 
 `GET /api/boards/search` tanpa `q` sekarang diurutkan dengan urutan populer yang sama seperti `GET /api/boards/popular`, sehingga kotak cari bisa langsung menampilkan Board terpopuler sebelum user mengetik. Dengan `q`, urutan tetap seperti Fase 2.
+
+---
+
+## Fase 7: Moderasi dan Panel Admin
+
+Semua endpoint `/api/admin/*` hanya untuk `User.role` `ADMIN`. Tamu mendapat `401 UNAUTHENTICATED`, role lain termasuk `BOARD_ADMIN` mendapat `403 FORBIDDEN`. Admin tidak punya endpoint untuk mengubah `Board.verification`; status Official hanya diberikan Admin Board (Fase 8).
+
+### Alasan Tandai Pelanggaran
+
+Konstanta di `shared/src/constants/moderation.js` (`FLAG_REASON_META`).
+
+| Reason            | Label                             | Target        | Berat |
+| ----------------- | --------------------------------- | ------------- | ----- |
+| `SEXUAL`          | 🔞 Konten seksual                 | REPORT, BOARD | Berat |
+| `VIOLENCE`        | 🩸 Kekerasan                      | REPORT        | Berat |
+| `HATE`            | 🗯️ SARA/ujaran kebencian          | REPORT, BOARD | Biasa |
+| `PERSONAL_ATTACK` | 👤 Menyerang atau menyebut nama   | REPORT, BOARD | Biasa |
+| `SPAM`            | 📢 Spam/iklan                     | REPORT, BOARD | Biasa |
+| `NOT_COMPLAINT`   | 🚫 Bukan pengaduan masalah fisik  | REPORT        | Biasa |
+| `FAKE_BOARD`      | 🏚️ Board palsu                    | BOARD         | Biasa |
+| `SYSTEM_NSFW`     | 🤖 Deteksi otomatis foto (sistem) | REPORT        | -     |
+
+`SYSTEM_NSFW` tidak bisa dikirim user. Server membuatnya (bobot 0) saat laporan disimpan dengan foto yang diburamkan, supaya laporan itu masuk Antrean Moderasi.
+
+### Aturan sembunyi otomatis
+
+Laporan langsung disembunyikan (`isHidden: true`) jika salah satu terpenuhi. Hanya tanda `OPEN` yang dihitung, dan yang dijumlahkan adalah bobotnya.
+
+1. Total bobot alasan berat (`SEXUAL`, `VIOLENCE`) minimal 2. `hiddenReason: FLAGS`.
+2. Total bobot alasan lain minimal 3. `hiddenReason: FLAGS`.
+3. Satu tanda dari Penindak aktif Board itu (bobot di atas 0). `hiddenReason: HANDLER_FLAG`, `hiddenByHandler: true`.
+
+Bobot tanda 1, atau 0 jika user punya 5 tanda `REJECTED` dalam 30 hari terakhir (penyalahguna). Tanda bobot 0 tetap tersimpan dan terlihat Admin, tetapi tidak ikut dihitung. Board tidak disembunyikan otomatis; tanda Board hanya masuk antrean.
+
+### Objek Report (tambahan)
+
+- `isHidden` (boolean) ikut di objek Report.
+- Laporan tersembunyi yang dibuka orang selain Penindak Board itu, Admin, atau pelapornya mendapat `200` dengan data ringkas: `{ "id", "board": { "slug", "name" }, "isHidden": true, "moderationNotice": "Laporan ini sedang ditinjau moderator" }`. Judul, deskripsi, foto, dan lokasi tidak dikirim. Sebelumnya `404`.
+- Laporan yang dihapus Admin (`removedAt` terisi) mendapat `404 REPORT_NOT_FOUND` untuk semua orang kecuali Admin, dan tidak muncul di `GET /api/me/reports`.
+- Detail Board menambah `restoredByAdminCount`: jumlah laporan yang disembunyikan Penindak Board itu tetapi dipulihkan Admin.
+
+### Ban
+
+| Target        | Nilai yang disimpan        | Durasi                         |
+| ------------- | -------------------------- | ------------------------------ |
+| `USER`        | id user                    | `1d`, `7d`, `30d`, `permanent` |
+| `GUEST_TOKEN` | hash cookie perangkat tamu | `1d`, `7d`, `30d`, `permanent` |
+| `IP`          | `ipHash` laporan           | `1d`, `7d` saja                |
+
+Admin tidak pernah melihat hash mentah. Ban perangkat dan IP dibuat dari `reportId`, server mengambil nilainya dari laporan itu. Di respons hash ditampilkan tersamar (`a1b2c3…beef`). Admin tidak bisa di-ban.
+
+Ban aktif (belum dicabut dan belum kedaluwarsa) menolak: login email dan Google, membuat laporan, Dukung dan reaksi, membuat Board, dan Tandai Pelanggaran. Ban `USER` juga menghapus semua session user itu.
+
+Error ban:
+
+```json
+{
+  "error": {
+    "code": "ACCOUNT_BANNED",
+    "message": "Kamu sedang diblokir. Blokir berakhir dalam 6 hari 23 jam.",
+    "details": [{ "field": "bannedUntil", "message": "2026-10-13T08:00:00.000Z" }]
+  }
+}
+```
+
+Untuk ban permanen `message` berbunyi "Kamu diblokir permanen karena melanggar aturan komunitas." dan `details[0].message` bernilai `permanen`. Login Google yang ditolak karena ban diarahkan ke `/masuk?error=account_banned`.
+
+### POST /api/flags
+
+Auth: login, tidak sedang di-ban. Rate limit 20 per menit, dan maksimal 20 tanda per 24 jam per user.
+
+Body: `{ "targetType": "REPORT", "targetId": 7, "reason": "SPAM", "note": "opsional, maks 500" }`.
+
+Sukses `201`: `{ "data": { "id", "targetType", "targetId", "reason", "status": "OPEN", "hidden": false } }`. `hidden` bernilai `true` jika tanda ini membuat laporan tersembunyi.
+
+| Status | Code                    | Kapan                                                                   |
+| ------ | ----------------------- | ----------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`      | Alasan tidak berlaku untuk target (misalnya `FAKE_BOARD` untuk laporan) |
+| 401    | `UNAUTHENTICATED`       | Belum login                                                             |
+| 403    | `ACCOUNT_BANNED`        | Sedang di-ban                                                           |
+| 404    | `FLAG_TARGET_NOT_FOUND` | Laporan atau Board tidak ada, dihapus, atau Board beku                  |
+| 409    | `ALREADY_FLAGGED`       | User sudah pernah menandai target ini                                   |
+| 429    | `RATE_LIMITED`          | Batas 20 tanda per hari tercapai                                        |
+
+### GET /api/admin/stats
+
+Sukses `200`: `{ "data": { "users": { "total" }, "boards": { "total", "active", "inactive", "frozen", "official" }, "reports": { "total", "active", "resolved", "hidden", "removed" }, "moderation": { "openFlags", "openTargets" }, "bans": { "active" } } }`.
+
+### GET /api/admin/moderation
+
+Query: `status` (default `OPEN`), `reason`, `targetType`, `page`, `pageSize` (default 20, maks 50).
+
+Tanda dikelompokkan per target. Urutan: alasan terberat (`SEXUAL`, `VIOLENCE`, `SYSTEM_NSFW`, `HATE`, `PERSONAL_ATTACK`, `FAKE_BOARD`, `SPAM`, `NOT_COMPLAINT`), lalu jumlah tanda terbanyak, lalu tanda pertama paling lama.
+
+Setiap item: `targetType`, `targetId`, `worstReason`, `reasons`, `flagCount`, `totalWeight`, `firstFlaggedAt`, `flags` (`id`, `reason`, `note`, `weight`, `status`, `createdAt`, `flagger` { id, name } atau null untuk sistem), dan salah satu dari:
+
+- `report`: id, title, description, locationDetail, status, severity, isHidden, hiddenReason, hiddenByHandler, removedAt, createdAt, board { id, slug, name }, media (id, url, kind, isBlurred, nsfwScore), reporterType (`ACCOUNT` atau `GUEST`), reporter { id, name, email } atau null, isAnonymous, ipHashMasked, guestTokenMasked, history { totalReports, removedReports, hiddenReports, bans [{ id, targetType, expiresAt, revokedAt, createdAt, isActive }] }. Riwayat dihitung dari akun, perangkat, dan IP yang sama.
+- `board`: id, slug, name, city, status, verification, managerTitle, restoredByAdminCount, owner { id, name, email }.
+
+### POST /api/admin/reports/:id/restore
+
+Body opsional: `{ "note": "..." }`. Membuka sembunyi, mengosongkan `removedAt`, menandai semua tanda `OPEN` menjadi `REJECTED` (menambah hitungan penyalahguna pemberi tanda). Jika laporan disembunyikan Penindak, `restoredByAdminCount` Board bertambah 1. Sukses `200`: objek `report` seperti di antrean.
+
+### POST /api/admin/reports/:id/remove
+
+Body: `{ "note": "opsional", "ban": { "targetType", "duration", "reason" } }`. `ban` opsional (tombol Hapus + Ban). Laporan dihapus lunak: `isHidden: true`, `hiddenReason: ADMIN_REMOVED`, `removedAt` terisi. Tanda `OPEN` menjadi `ACCEPTED`. Sukses `200`: `{ "data": { "report", "ban": <Ban> | null } }`.
+
+### GET /api/admin/bans
+
+Query: `active` (`true` default, `false` untuk semua), `page`, `pageSize`.
+
+Objek Ban: `id`, `targetType`, `target` (nama dan email untuk akun, hash tersamar untuk perangkat dan IP), `reason`, `expiresAt` (null = permanen), `createdAt`, `revokedAt`, `createdBy` { id, name }, `isActive`.
+
+### POST /api/admin/bans
+
+Body: `{ "targetType": "USER" | "GUEST_TOKEN" | "IP", "duration": "1d" | "7d" | "30d" | "permanent", "reason": "min 3", "reportId"?, "userId"? }`. `GUEST_TOKEN` dan `IP` wajib `reportId`. `USER` memakai `userId` atau `reportId` dari laporan akun. Sukses `201`: `<Ban>`.
+
+| Status | Code               | Kapan                                                                           |
+| ------ | ------------------ | ------------------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR` | Ban IP selain 1d/7d, `reportId` tidak ada, atau laporan tidak punya data target |
+| 403    | `FORBIDDEN`        | Mencoba mem-ban Admin                                                           |
+| 404    | `NOT_FOUND`        | User atau laporan tidak ditemukan                                               |
+
+### DELETE /api/admin/bans/:id
+
+Mencabut ban (`revokedAt` diisi). Sukses `200`: `<Ban>` dengan `isActive: false`.
+
+### GET /api/admin/boards
+
+Query: `q` (nama), `status`, `page`, `pageSize`. Setiap item: id, slug, name, city, type, status, verification, verifiedAt, restoredByAdminCount, owner, reportCount, openFlagCount, fakeBoardFlagCount, createdAt.
+
+### POST /api/admin/boards/:slug/freeze
+
+Body: `{ "reason": "min 3" }`. Field lain ditolak. Board menjadi `FROZEN`, tanda Board `OPEN` menjadi `ACCEPTED`. Jika Board `OFFICIAL`, dalam transaksi yang sama `verification` menjadi `COMMUNITY` dan `verifiedAt`, `verifiedById` dikosongkan, lalu tercatat audit `BOARD_VERIFICATION_REVOKED_BY_FREEZE` (berisi tanggal dan pemberi verifikasi sebelumnya). Sukses `200`: `{ "data": { "slug", "status": "FROZEN", "verification": "COMMUNITY", "verificationRevoked": true } }`. `409 CONFLICT` jika sudah beku.
+
+### POST /api/admin/boards/:slug/unfreeze
+
+Board kembali `ACTIVE`. Status Official tidak dikembalikan; harus diajukan ulang ke Admin Board. Sukses `200`: `{ "data": { "slug", "status": "ACTIVE", "verification" } }`. `409 CONFLICT` jika tidak sedang beku.
+
+### POST /api/admin/boards/:slug/dismiss-flags
+
+Body opsional `{ "note" }`. Semua tanda Board `OPEN` menjadi `REJECTED`. Sukses `200`: `{ "data": { "slug", "dismissed": true } }`.
+
+### GET /api/admin/users
+
+Query: `q` (nama atau email), `page`, `pageSize`. Setiap item: id, name, email, role, createdAt, lastLoginAt, reportCount, flagCount, activeBan { id, expiresAt } atau null.
+
+### GET /api/admin/audit-logs
+
+Query: `action`, `actorUserId`, `targetType` (`REPORT`, `BOARD`, `BAN`, `USER`), `page`, `pageSize`. Setiap item: id, action, actor { id, name } atau null (sistem), targetType, targetId, data, createdAt. Terbaru lebih dulu.
+
+Aksi yang dicatat: `REPORT_AUTO_HIDDEN`, `REPORT_RESTORED`, `REPORT_REMOVED`, `BAN_CREATED`, `BAN_REVOKED`, `BOARD_FROZEN`, `BOARD_UNFROZEN`, `BOARD_VERIFICATION_REVOKED_BY_FREEZE`, `BOARD_FLAGS_DISMISSED`, aksi Penindak (`REPORT_PROCESSED`, `REPORT_INFO_REQUESTED`, `REPORT_REJECTED`, `REPORT_MARKED_DUPLICATE`, `REPORT_MARKED_RESOLVED`), `REPORT_CONFIRMED_BY_REPORTER`, `REPORT_AUTO_CONFIRMED`, dan aksi anggota Board (`BOARD_HANDLER_INVITED`, `BOARD_INVITATION_ACCEPTED`, `BOARD_INVITATION_DECLINED`, `BOARD_INVITATION_CANCELLED`, `BOARD_HANDLER_REMOVED`, `BOARD_OWNER_CHANGED`).
+
+### Job harian
+
+Job harian (Fase 5) sekarang juga mengosongkan `Report.ipHash` yang lebih tua dari 90 hari, kecuali hash yang sedang dipakai ban IP aktif.

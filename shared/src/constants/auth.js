@@ -13,6 +13,7 @@ export const EMAIL_MAX_LENGTH = 191;
 export const GOOGLE_LOGIN_ERRORS = Object.freeze({
   FAILED: 'google',
   UNAVAILABLE: 'google_unavailable',
+  BANNED: 'account_banned',
 });
 
 export const AUTH_PATHS = Object.freeze({

@@ -21,6 +21,7 @@ import { validate } from '../../middlewares/validate.js';
 import { optionalAuth, requireAuth } from '../../middlewares/auth.js';
 import { requireBoardRole } from '../../middlewares/boardAccess.js';
 import { createRateLimiter } from '../../middlewares/rateLimit.js';
+import { rejectBanned } from '../../middlewares/rejectBanned.js';
 import {
   cities,
   create,
@@ -59,7 +60,14 @@ export function createBoardsRouter() {
     message: 'Terlalu banyak membuat Board. Coba lagi dalam 1 jam.',
   });
 
-  router.post('/', requireAuth, createLimiter, validate(createBoardRequestSchema), create);
+  router.post(
+    '/',
+    requireAuth,
+    createLimiter,
+    rejectBanned,
+    validate(createBoardRequestSchema),
+    create,
+  );
   router.get('/search', optionalAuth, validate(boardSearchQuerySchema, 'query'), search);
   router.get('/similar', optionalAuth, validate(similarBoardQuerySchema, 'query'), similar);
   router.get('/popular', optionalAuth, validate(popularBoardsQuerySchema, 'query'), popular);

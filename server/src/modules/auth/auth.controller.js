@@ -81,6 +81,9 @@ export function googleCallback(req, res, next) {
   const returnTo = safeRedirectPath(req.session?.returnTo);
 
   passport.authenticate('google', (error, user) => {
+    if (error?.code === ERROR_CODES.ACCOUNT_BANNED) {
+      return res.redirect(loginErrorUrl(GOOGLE_LOGIN_ERRORS.BANNED));
+    }
     if (error || !user) {
       if (error) req.log?.warn({ err: error }, 'Login Google gagal');
       return res.redirect(loginErrorUrl(GOOGLE_LOGIN_ERRORS.FAILED));

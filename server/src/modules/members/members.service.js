@@ -82,7 +82,7 @@ export async function inviteHandler(board, owner, { email }) {
     });
   });
 
-  recordAudit('BOARD_HANDLER_INVITED', {
+  await recordAudit('BOARD_HANDLER_INVITED', {
     boardId: board.id,
     actorId: owner.id,
     targetUserId: invitee.id,
@@ -107,7 +107,7 @@ export async function removeHandler(board, owner, userId) {
   }
 
   await prisma.boardMember.delete({ where: { id: member.id } });
-  recordAudit(
+  await recordAudit(
     member.status === 'INVITED' ? 'BOARD_INVITATION_CANCELLED' : 'BOARD_HANDLER_REMOVED',
     { boardId: board.id, actorId: owner.id, targetUserId: userId },
   );
@@ -158,7 +158,7 @@ export async function acceptInvitation(user, invitationId) {
       include: { user: { select: MEMBER_USER_SELECT } },
     });
   });
-  recordAudit('BOARD_INVITATION_ACCEPTED', { boardId: member.boardId, actorId: user.id });
+  await recordAudit('BOARD_INVITATION_ACCEPTED', { boardId: member.boardId, actorId: user.id });
   return toBoardMember(member);
 }
 
@@ -168,7 +168,7 @@ export async function declineInvitation(user, invitationId) {
     await tx.boardMember.delete({ where: { id: pending.id } });
     return pending;
   });
-  recordAudit('BOARD_INVITATION_DECLINED', { boardId: invitation.boardId, actorId: user.id });
+  await recordAudit('BOARD_INVITATION_DECLINED', { boardId: invitation.boardId, actorId: user.id });
 }
 
 export async function transferOwnership(board, owner, { userId }) {
@@ -203,7 +203,7 @@ export async function transferOwnership(board, owner, { userId }) {
     previousOwnerId: owner.id,
     newOwnerId: userId,
   };
-  recordAudit('BOARD_OWNER_CHANGED', { ...event, actorId: owner.id });
+  await recordAudit('BOARD_OWNER_CHANGED', { ...event, actorId: owner.id });
   notifyBoardAdmins(NOTIFICATION_TYPES.BOARD_OWNER_CHANGED, event);
 
   return getBoardDetail(board.slug, owner);
