@@ -13,7 +13,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
 import { boardBaseSlug, nextAvailableSlug } from '../../utils/slugify.js';
 import { compareSearchResults, rankSimilarBoards, similarTokens } from './boards.ranking.js';
-import { toBoardCard, toBoardDetail, toCategory } from './boards.presenter.js';
+import { toBoardCard, toBoardDetail, toCategory, toViewer } from './boards.presenter.js';
 
 const SLUG_RETRIES = 3;
 const SIMILAR_CANDIDATES = 50;
@@ -60,6 +60,37 @@ export async function getBoardMembership(boardId, userId) {
   });
 }
 
+export async function decorateCards(boards, user) {
+  if (boards.length === 0) return [];
+  const ids = boards.map((board) => board.id);
+  const [counts, follows, memberships] = await Promise.all([
+    prisma.boardFollower.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids } },
+      _count: { _all: true },
+    }),
+    user ? prisma.boardFollower.findMany({ where: { userId: user.id, boardId: { in: ids } } }) : [],
+    user
+      ? prisma.boardMember.findMany({
+          where: { userId: user.id, status: 'ACTIVE', boardId: { in: ids } },
+        })
+      : [],
+  ]);
+  const countByBoard = new Map(counts.map((row) => [row.boardId, row._count._all]));
+  const followByBoard = new Map(follows.map((follow) => [follow.boardId, follow]));
+  const memberByBoard = new Map(memberships.map((member) => [member.boardId, member]));
+
+  return boards.map((board) =>
+    toBoardCard(board, {
+      followerCount: countByBoard.get(board.id) ?? 0,
+      viewer: toViewer(user, {
+        follow: followByBoard.get(board.id),
+        membership: memberByBoard.get(board.id),
+      }),
+    }),
+  );
+}
+
 export async function findVisibleBoard(slug, user) {
   const board = await prisma.board.findUnique({ where: { slug } });
   if (!board) throw boardNotFound();
@@ -78,12 +109,22 @@ export async function getBoardDetail(slug, user) {
   if (!board) throw boardNotFound();
   if (board.status === 'FROZEN' && !canSeeFrozenBoards(user)) throw boardNotFound();
 
-  const [handlerCount, membership] = await Promise.all([
+  const [handlerCount, followerCount, membership, follow] = await Promise.all([
     prisma.boardMember.count({ where: { boardId: board.id, status: 'ACTIVE' } }),
+    prisma.boardFollower.count({ where: { boardId: board.id } }),
     getBoardMembership(board.id, user?.id),
+    user
+      ? prisma.boardFollower.findUnique({
+          where: { boardId_userId: { boardId: board.id, userId: user.id } },
+        })
+      : null,
   ]);
 
-  return toBoardDetail(board, { handlerCount, membership, viewerLoggedIn: Boolean(user) });
+  return toBoardDetail(board, {
+    handlerCount,
+    followerCount,
+    viewer: toViewer(user, { follow, membership }),
+  });
 }
 
 async function pickSlug(tx, name, city) {
@@ -154,7 +195,7 @@ export async function updateBoard(board, user, input) {
   return getBoardDetail(board.slug, user);
 }
 
-export async function searchBoards({ q, city, type, verification, page, pageSize }) {
+export async function searchBoards({ q, city, type, verification, page, pageSize }, user) {
   const where = {
     status: { not: 'FROZEN' },
     ...(city && { city }),
@@ -163,17 +204,17 @@ export async function searchBoards({ q, city, type, verification, page, pageSize
     ...(q && { name: { contains: q } }),
   };
   const rows = await prisma.board.findMany({ where });
-  const cards = rows.map(toBoardCard).sort(compareSearchResults(q));
-  const total = cards.length;
+  rows.sort(compareSearchResults(q));
+  const total = rows.length;
   const start = (page - 1) * pageSize;
 
   return {
-    data: cards.slice(start, start + pageSize),
+    data: await decorateCards(rows.slice(start, start + pageSize), user),
     meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
 
-export async function findSimilarBoards({ name, city }) {
+export async function findSimilarBoards({ name, city }, user) {
   const tokens = similarTokens(name);
   if (tokens.length === 0) return [];
   const candidates = await prisma.board.findMany({
@@ -184,7 +225,7 @@ export async function findSimilarBoards({ name, city }) {
     },
     take: SIMILAR_CANDIDATES,
   });
-  return rankSimilarBoards(candidates, name, BOARD_SIMILAR_LIMIT).map(toBoardCard);
+  return decorateCards(rankSimilarBoards(candidates, name, BOARD_SIMILAR_LIMIT), user);
 }
 
 export async function listMyBoards(user) {
@@ -192,8 +233,12 @@ export async function listMyBoards(user) {
     where: { userId: user.id, status: 'ACTIVE' },
     include: { board: true },
   });
+  const cards = await decorateCards(
+    memberships.map((membership) => membership.board),
+    user,
+  );
   return memberships
-    .map((membership) => ({ board: toBoardCard(membership.board), role: membership.role }))
+    .map((membership, index) => ({ board: cards[index], role: membership.role }))
     .sort(
       (a, b) =>
         (a.role === 'OWNER' ? 0 : 1) - (b.role === 'OWNER' ? 0 : 1) ||
