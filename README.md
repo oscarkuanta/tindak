@@ -126,6 +126,7 @@ File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saa
 | `VITE_TURNSTILE_SITE_KEY` | Ya         | Site key publik Turnstile untuk widget di frontend. Development: kunci test `1x00000000000000000000AA`                                                                                                               |
 | `NSFW_ENABLED`            | Tidak      | `true` untuk mengaktifkan scan foto tidak pantas (nsfwjs). Default `false`. Aktifkan di production                                                                                                                   |
 | `UPLOAD_DIR`              | Tidak      | Folder penyimpanan foto laporan. Default `server/uploads` (diabaikan git)                                                                                                                                            |
+| `JOBS_ENABLED`            | Tidak      | `false` untuk mematikan job terjadwal (konfirmasi otomatis 3 hari dan Board Tidak Aktif 30 hari). Default aktif                                                                                                      |
 | `LOG_LEVEL`               | Tidak      | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                                                                                                                         |
 
 Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
@@ -138,7 +139,7 @@ Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
 
 ## Akun Demo
 
-Jalankan `npm run db:seed` untuk membuat akun, Board, pengikut, dan 5 laporan contoh dengan foto. Laporan tamu contoh bisa dilacak di `http://localhost:5173/lacak/DEMAK234?secret=rahasia-demo-tindak`. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
+Jalankan `npm run db:seed` untuk membuat akun, Board, pengikut, dan 5 laporan contoh dengan foto. Board SMKN 1 Surabaya berisi satu laporan di setiap status untuk mencoba antrean dan kanban. Laporan tamu contoh bisa dilacak di `http://localhost:5173/lacak/DEMAK234?secret=rahasia-demo-tindak`. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
 
 | Email                    | Role        | Keterangan                                                                             |
 | ------------------------ | ----------- | -------------------------------------------------------------------------------------- |

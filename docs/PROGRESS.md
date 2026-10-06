@@ -13,9 +13,9 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 2B   | Board frontend                               | B      | Review      | Akmal   | [#14](https://github.com/oscarkuanta/tindak/pull/14)                                                   | 2026-10-04 |
 | 3A   | Ikuti Board dan Penindak                     | A      | Selesai     | Oscar   | [#20](https://github.com/oscarkuanta/tindak/pull/20)                                                   | 2026-10-06 |
 | 3B   | Ikuti Board dan Penindak                     | B      | Review      | Akmal   | [#15](https://github.com/oscarkuanta/tindak/pull/15)                                                   | 2026-10-04 |
-| 4A   | Laporan dan tamu                             | A      | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
+| 4A   | Laporan dan tamu                             | A      | Selesai     | Oscar   | [#21](https://github.com/oscarkuanta/tindak/pull/21)                                                   | 2026-10-06 |
 | 4B   | Laporan dan tamu                             | B      | Review      | Akmal   | [#16](https://github.com/oscarkuanta/tindak/pull/16)                                                   | 2026-10-05 |
-| 5A   | Penindakan dan status                        | A      | Belum Mulai | -       | -                                                                                                      | -          |
+| 5A   | Penindakan dan status                        | A      | Review      | Oscar   | -                                                                                                      | 2026-10-06 |
 | 5B   | Penindakan dan status                        | B      | Review      | Akmal   | -                                                                                                      | 2026-10-05 |
 | 6    | Dukungan, reaksi, prioritas, beranda         | A+B    | Belum Mulai | -       | -                                                                                                      | -          |
 | 7    | Moderasi dan Admin                           | A+B    | Belum Mulai | -       | -                                                                                                      | -          |
