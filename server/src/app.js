@@ -5,13 +5,18 @@ import cookieParser from 'cookie-parser';
 import { pinoHttp } from 'pino-http';
 import { env, isProduction } from './config/env.js';
 import { logger } from './lib/logger.js';
-import { apiRouter } from './routes.js';
-import { apiLimiter } from './middlewares/rateLimit.js';
+import { getSessionMiddleware } from './config/session.js';
+import { configurePassport } from './config/passport.js';
+import { createApiRouter } from './routes.js';
+import { createRateLimiter } from './middlewares/rateLimit.js';
+import { attachUser } from './middlewares/auth.js';
+import { createVerifyOrigin } from './middlewares/verifyOrigin.js';
 import { notFound } from './middlewares/notFound.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 export function createApp() {
   const app = express();
+  const passport = configurePassport();
 
   if (isProduction) app.set('trust proxy', 1);
 
@@ -27,10 +32,15 @@ export function createApp() {
       },
     }),
   );
+  app.use(createVerifyOrigin(env.CLIENT_URL));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
 
-  app.use('/api', apiLimiter, apiRouter);
+  app.use(getSessionMiddleware());
+  app.use(passport.initialize());
+  app.use(attachUser);
+
+  app.use('/api', createRateLimiter({ windowMs: 60_000, limit: 300 }), createApiRouter());
 
   app.use(notFound);
   app.use(errorHandler);
