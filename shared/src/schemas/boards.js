@@ -226,3 +226,7 @@ export const reorderCategoriesRequestSchema = z.strictObject({
     .min(1, 'Daftar kategori tidak boleh kosong')
     .refine((ids) => new Set(ids).size === ids.length, 'ID kategori tidak boleh duplikat'),
 });
+
+export const popularBoardsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(20).default(6),
+});

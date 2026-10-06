@@ -49,7 +49,18 @@ export function nameMatchRank(name, query) {
   return 3;
 }
 
+export function comparePopularity(a, b) {
+  return (
+    (b.followerCount ?? 0) - (a.followerCount ?? 0) ||
+    (b.activeReportCount ?? 0) - (a.activeReportCount ?? 0) ||
+    VERIFICATION_RANK[a.verification] - VERIFICATION_RANK[b.verification] ||
+    new Date(b.createdAt) - new Date(a.createdAt) ||
+    b.id - a.id
+  );
+}
+
 export function compareSearchResults(query) {
+  if (!query) return comparePopularity;
   return (a, b) =>
     nameMatchRank(a.name, query) - nameMatchRank(b.name, query) ||
     VERIFICATION_RANK[a.verification] - VERIFICATION_RANK[b.verification] ||

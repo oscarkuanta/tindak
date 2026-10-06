@@ -4,6 +4,7 @@ import {
   getReportDetail,
   getTrackedReport,
   listBoardReports,
+  listHomeFeed,
   listMyReports,
 } from './reports.service.js';
 
@@ -38,5 +39,10 @@ export async function track(req, res) {
 
 export async function mine(req, res) {
   const { data, meta } = await listMyReports(req.user, req.validated.query);
+  sendData(res, data, { meta });
+}
+
+export async function homeFeed(req, res) {
+  const { data, meta } = await listHomeFeed(req.user, req.validated.query);
   sendData(res, data, { meta });
 }
