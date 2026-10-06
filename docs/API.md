@@ -249,8 +249,9 @@ Dipakai di hasil pencarian dan daftar.
   "verifiedAt": null,
   "coverImageUrl": null,
   "status": "ACTIVE",
-  "trustScore": null,
+  "trustScore": 3.0,
   "trustLabel": "NEW",
+  "ratingCount": 0,
   "followerCount": 0,
   "activeReportCount": 0,
   "createdAt": "2026-10-03T08:14:00.000Z"
@@ -266,9 +267,10 @@ Semua field BoardCard ditambah:
   "managerTitle": "Ketua RT 05",
   "description": "Melayani laporan kerusakan sepanjang Jalan Rungkut Madya.",
   "dangerousTargetHours": 48,
-  "ratingCount": 0,
-  "responseRate": 0,
+  "averageStars": null,
+  "responseRate": null,
   "rejectedPercentage": 0,
+  "verificationHistory": [],
   "handlerCount": 1,
   "isInactive": false,
   "owner": { "id": 5, "name": "Budi Santoso", "avatarUrl": null },
@@ -281,7 +283,7 @@ Semua field BoardCard ditambah:
 ```
 
 - `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
-- `trustScore` bernilai `null` sampai Fase 8 menghitungnya dengan rumus di PRODUCT.md. Sampai Fase 8, `trustLabel` bernilai `NEW`, atau `INACTIVE` jika `status` `INACTIVE`. `followerCount` adalah jumlah pengikut sebenarnya. `activeReportCount` bernilai `0` sampai Fase 4. `ratingCount`, `responseRate`, dan `rejectedPercentage` bernilai `0` sampai Fase 5 dan 8.
+- `trustScore`, `trustLabel`, `ratingCount`, `averageStars`, `responseRate`, `rejectedPercentage`, dan `verificationHistory` dijelaskan di bagian Fase 8. `followerCount` adalah jumlah pengikut sebenarnya.
 - `handlerCount` adalah jumlah anggota Board berstatus aktif, termasuk Penindak Utama.
 - `owner` adalah Penindak Utama saat ini.
 - Board `FROZEN` tidak muncul di pencarian dan detailnya membalas `404 BOARD_NOT_FOUND`, kecuali untuk user dengan role website `ADMIN` atau `BOARD_ADMIN`.
@@ -345,7 +347,7 @@ Query:
 
 Board `FROZEN` tidak pernah muncul. Parameter kosong (`q=`) dianggap tidak dikirim.
 
-Urutan: nama paling cocok (sama persis, lalu diawali `q`, lalu mengandung `q`), lalu board `OFFICIAL`, lalu `trustScore` tertinggi (mulai Fase 8), lalu `activeReportCount` terbanyak, lalu yang paling baru dibuat. Seluruh urutan ada di satu fungsi `compareSearchResults` di `server/src/modules/boards/boards.ranking.js`.
+Urutan: nama paling cocok (sama persis, lalu diawali `q`, lalu mengandung `q`), lalu board `OFFICIAL`, lalu `trustScore` tertinggi (`null` paling bawah), lalu `activeReportCount` terbanyak, lalu aktivitas Penindak terbaru, lalu yang paling baru dibuat. Seluruh urutan ada di satu fungsi `compareSearchResults` di `server/src/modules/boards/boards.ranking.js`.
 
 Sukses `200`:
 
@@ -1102,7 +1104,7 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`.
 
 Auth: opsional. Query: `limit` (default 6, maks 20).
 
-Board yang tidak beku, diurutkan dari pengikut terbanyak, lalu laporan aktif terbanyak, lalu Official, lalu terbaru. Fase 8 akan menyisipkan rating di fungsi `comparePopularity` (`server/src/modules/boards/boards.ranking.js`).
+Board yang tidak beku, diurutkan dari pengikut terbanyak, lalu laporan aktif terbanyak, lalu Official, lalu `trustScore` tertinggi, lalu terbaru. Urutan ada di fungsi `comparePopularity` (`server/src/modules/boards/boards.ranking.js`).
 
 Sukses `200`: `{ "data": [<BoardCard>] }`. Setiap item berisi `verification`, `followerCount`, `activeReportCount`, dan `viewer`.
 
@@ -1265,3 +1267,80 @@ Aksi yang dicatat: `REPORT_AUTO_HIDDEN`, `REPORT_RESTORED`, `REPORT_REMOVED`, `B
 ### Job harian
 
 Job harian (Fase 5) sekarang juga mengosongkan `Report.ipHash` yang lebih tua dari 90 hari, kecuali hash yang sedang dipakai ban IP aktif.
+
+---
+
+## Fase 8: Rating, Kepercayaan, dan Verifikasi Official
+
+Angka syarat ada di `shared/src/constants/verification.js` (`VERIFICATION_RULES`, `TRUST_RULES`) supaya mudah diubah tim. Rumus murni ada di `server/src/modules/trust/trustScore.js`.
+
+### Rumus Skor Kepercayaan
+
+```
+Rating Tertimbang = (5 × 3 + total bintang) ÷ (5 + jumlah rating)
+Tingkat Tanggap   = laporan yang keluar dari status NEW dalam 7 hari sejak dibuat
+                    ÷ laporan yang sudah berumur lebih dari 7 hari atau sudah disentuh
+Skor              = 0,6 × Rating Tertimbang + 0,4 × Tingkat Tanggap × 5
+```
+
+- Laporan yang dihapus Admin tidak dihitung. Jika belum ada laporan yang bisa dihitung, Tingkat Tanggap `null` dan Skor sama dengan Rating Tertimbang (Board baru tanpa rating: 3,0).
+- Persentase ditolak = laporan `REJECTED` ÷ semua laporan (yang tidak dihapus).
+- Label (`trustLabel`): kurang dari 5 rating `NEW`; skor (dibulatkan 1 desimal) 4,0 ke atas `TRUSTED`; 2,5 sampai 3,9 `NONE`; di bawah 2,5 `CAUTION`. Board berstatus `INACTIVE` selalu berlabel `INACTIVE`.
+- Contoh 1: 40 rating, total 180 bintang, tanggap 90%. Rating Tertimbang (15 + 180) ÷ 45 = 4,33. Skor 0,6 × 4,33 + 0,4 × 0,9 × 5 = **4,4** (`TRUSTED`).
+- Contoh 2: 10 rating, total 20 bintang, tanggap 45%. Rating Tertimbang 35 ÷ 15 = 2,33. Skor 1,4 + 0,9 = **2,3** (`CAUTION`).
+- Dihitung ulang saat rating berubah, laporan dibuat, status laporan berubah, laporan dipulihkan atau dihapus Admin, Board dibekukan atau dicairkan, tanda Board Palsu dibuat atau diabaikan, dan lewat job harian.
+- Skor dan label dihitung otomatis dan **tidak pernah** mengubah `verification`. Official hanya diberikan Admin Board.
+
+### Perubahan BoardCard dan detail Board
+
+- `trustScore` sekarang angka 1 desimal (contoh `4.4`), `null` hanya untuk data lama yang belum dihitung. `trustLabel` sesuai aturan di atas. BoardCard menambah `ratingCount`.
+- Detail Board: `ratingCount`, `averageStars` (1 desimal atau `null`), `responseRate` (persen bulat 0 sampai 100, atau `null` jika belum ada data), `rejectedPercentage` (persen bulat).
+- Detail Board menambah `verificationHistory`: `[{ id, action, reason, createdAt }]`, terbaru dulu. Publik hanya melihat `GRANTED` tanpa alasan. Penindak Utama melihat `GRANTED` dan `REVOKED` beserta alasan. Admin Board melihat semua termasuk `SKIPPED`.
+
+### Urutan pencarian final
+
+Dengan `q`: kecocokan nama → `OFFICIAL` di atas → `trustScore` tertinggi (`null` paling bawah) → `activeReportCount` terbanyak → aktivitas Penindak terbaru → terbaru dibuat. Tanpa `q` dan `GET /api/boards/popular`: pengikut → laporan aktif → Official → `trustScore` → terbaru.
+
+### PUT /api/boards/:slug/rating
+
+Auth: login, tidak sedang di-ban. Rate limit 20 per menit.
+
+Syarat: mengikuti Board, bukan Penindak (OWNER atau HANDLER) Board itu, Board tidak beku. Satu rating per user per Board. Rating boleh diubah kapan saja; mengubah tidak menambah jumlah rating. Jika user berhenti mengikuti, rating lama tetap dihitung.
+
+Body: `{ "stars": 1-5, "quickTag": "RESPONSIVE" | "SLOW" | "DOUBTFUL" | null }`.
+
+Sukses `200`: `{ "data": { "rating": { "stars", "quickTag", "createdAt", "updatedAt" }, "board": { "slug", "trustScore", "trustLabel", "ratingCount", "averageStars", "responseRate", "rejectedPercentage" } } }`.
+
+| Status | Code                 | Kapan                                                                     |
+| ------ | -------------------- | ------------------------------------------------------------------------- |
+| 400    | `VALIDATION_ERROR`   | Bintang di luar 1 sampai 5 atau pilihan cepat tidak dikenal               |
+| 401    | `UNAUTHENTICATED`    | Belum login                                                               |
+| 403    | `ACCOUNT_BANNED`     | Sedang di-ban                                                             |
+| 403    | `RATING_NOT_ALLOWED` | Belum mengikuti Board atau Penindak Board itu; `message` berisi alasannya |
+| 404    | `BOARD_NOT_FOUND`    | Board tidak ada atau beku                                                 |
+
+### GET /api/boards/:slug/rating/me
+
+Auth: opsional. Sukses `200`: `{ "data": { "rating": <rating> | null, "canRate": false, "reasonCode": "NOT_FOLLOWING", "reason": "Ikuti Board ini dulu untuk memberi rating" } }`. `reasonCode`: `LOGIN_REQUIRED`, `BOARD_STAFF`, `NOT_FOLLOWING`, `BANNED`, `BOARD_FROZEN`, atau `null` jika boleh.
+
+### GET /api/boards/:slug/ratings/summary
+
+Auth: publik. Sukses `200`: field kepercayaan seperti di respons rating, ditambah `distribution` (`{ "1": 0, ..., "5": 16 }`) dan `quickTags` (`{ "RESPONSIVE": 5, "SLOW": 0, "DOUBTFUL": 0 }`).
+
+### Antrean Kandidat Official
+
+Board menjadi kandidat jika semua terpenuhi: `COMMUNITY`, minimal 20 rating, skor minimal 4,0, umur minimal 30 hari, status `ACTIVE`, tidak ada tanda `FAKE_BOARD` berstatus `OPEN`, dan tidak dilewati dalam 30 hari terakhir. `Board.candidateSince` diisi saat Board pertama kali memenuhi syarat dan dikosongkan saat tidak lagi memenuhi. Saat berubah dari kosong ke terisi, server memanggil `notifyBoardAdminsNewCandidate` (isi notifikasi di Fase 9).
+
+### Endpoint Admin Board
+
+Semua `/api/board-admin/*` hanya untuk `User.role` `BOARD_ADMIN`. Tamu `401`, role lain termasuk `ADMIN` `403 FORBIDDEN`. Aksi verify, skip, dan revoke dicatat di `BoardVerificationLog` (dengan snapshot `ratingCount`, `trustScore`, `responseRate`, `rejectedRate` saat keputusan) dan di `AuditLog` (`BOARD_VERIFIED`, `BOARD_VERIFICATION_SKIPPED`, `BOARD_VERIFICATION_REVOKED`).
+
+- `GET /api/board-admin/stats`: `{ "candidates", "official", "revokedLast30Days", "needsReview" }`.
+- `GET /api/board-admin/candidates?page=&pageSize=`: urut `ratingCount` terbanyak, lalu `trustScore`. Item: id, slug, name, city, type, status, verification, verifiedAt, candidateSince, ageDays, dan field kepercayaan.
+- `GET /api/board-admin/official?q=&review=&page=`: Board `OFFICIAL`, terbaru diverifikasi dulu, ditambah `verifiedBy` { id, name } dan `needsReview`. `review=true` hanya menampilkan Perlu Ditinjau Ulang (skor di bawah 2,5 atau status `INACTIVE`).
+- `GET /api/board-admin/boards/:slug`: detail verifikasi. Field baris di atas ditambah description, managerTitle, createdAt, owner { id, name, email }, verifiedBy, followerCount, restoredByAdminCount, needsReview, distribution, quickTags, reports { total, resolved, rejected }, flags (`{ "<reason>": { "open", "total" } }` untuk tanda Board), checklist (`[{ key, label, passed, value }]` untuk 7 syarat), isCandidateEligible, dan history (`[{ id, action, actor, reason, snapshot, createdAt }]`). Board beku tetap bisa dibuka.
+- `POST /api/board-admin/boards/:slug/verify` body `{ "note": "min 5" }` (catatan wajib sesuai PRODUCT.md). Hanya Board `COMMUNITY` yang tidak beku; Board yang belum memenuhi syarat tetap boleh, tetapi respons berisi `warnings` (label syarat yang belum terpenuhi). Sukses `200`: `{ "data": { "slug", "verification": "OFFICIAL", "verifiedAt", "warnings": [] } }`. `409 CONFLICT` jika sudah Official atau beku.
+- `POST /api/board-admin/boards/:slug/skip` body `{ "note"? }`. Board keluar dari antrean selama 30 hari. Sukses `200`: `{ "data": { "slug", "skippedUntil" } }`. `409` jika bukan Komunitas.
+- `POST /api/board-admin/boards/:slug/revoke` body `{ "reason": "min 10" }`. Board kembali `COMMUNITY`, `verifiedAt` dan `verifiedById` dikosongkan. Sukses `200`: `{ "data": { "slug", "verification": "COMMUNITY" } }`. `409` jika bukan Official.
+
+Pembekuan Board Official oleh Admin (Fase 7) sekarang juga menulis `BoardVerificationLog` `REVOKED` dengan actor sistem (`null`) dan alasan "Board dibekukan moderator".

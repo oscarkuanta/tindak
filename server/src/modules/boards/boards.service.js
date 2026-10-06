@@ -21,6 +21,7 @@ import {
   similarTokens,
 } from './boards.ranking.js';
 import { toBoardCard, toBoardDetail, toCategory, toViewer } from './boards.presenter.js';
+import { computeTrustScore } from '../trust/trustScore.js';
 
 const SLUG_RETRIES = 3;
 const SIMILAR_CANDIDATES = 50;
@@ -106,6 +107,28 @@ export async function decorateCards(boards, user) {
   );
 }
 
+async function verificationHistoryFor(boardId, user, membership) {
+  const isBoardAdmin = user?.role === USER_ROLES.BOARD_ADMIN;
+  const isOwner = membership?.role === 'OWNER';
+  const actions = isBoardAdmin
+    ? ['GRANTED', 'REVOKED', 'SKIPPED']
+    : isOwner
+      ? ['GRANTED', 'REVOKED']
+      : ['GRANTED'];
+  const logs = await prisma.boardVerificationLog.findMany({
+    where: { boardId, action: { in: actions } },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    select: { id: true, action: true, reason: true, createdAt: true },
+  });
+  const withReason = isBoardAdmin || isOwner;
+  return logs.map((log) => ({
+    id: log.id,
+    action: log.action,
+    reason: withReason ? log.reason : null,
+    createdAt: log.createdAt,
+  }));
+}
+
 export async function findVisibleBoard(slug, user) {
   const board = await prisma.board.findUnique({ where: { slug } });
   if (!board) throw boardNotFound();
@@ -141,6 +164,7 @@ export async function getBoardDetail(slug, user) {
     followerCount,
     activeReportCount,
     viewer: toViewer(user, { follow, membership }),
+    verificationHistory: await verificationHistoryFor(board.id, user, membership),
   });
 }
 
@@ -185,6 +209,7 @@ export async function createBoard(user, input) {
             description: input.description,
             dangerousTargetHours: input.dangerousTargetHours,
             verification: 'COMMUNITY',
+            trustScore: computeTrustScore({ ratingCount: 0, ratingSum: 0, responseRate: null }),
             ownerId: user.id,
             members: { create: { userId: user.id, role: 'OWNER', status: 'ACTIVE' } },
             categories: { create: initialCategories(input.type, input.extraCategories) },

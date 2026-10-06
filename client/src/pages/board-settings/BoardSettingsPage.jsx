@@ -13,6 +13,7 @@ import {
   useReorderBoardCategories,
   useUpdateBoard,
 } from '../../features/boards/hooks.js';
+import { VerificationTimeline } from '../../components/trust/VerificationTimeline.jsx';
 
 function ForbiddenSettings() {
   return (
@@ -255,6 +256,8 @@ export function BoardSettingsPage() {
           Status Official diberikan oleh Admin Board berdasarkan rating dan kepercayaan pengguna.
           Tidak ada pengajuan yang perlu dilakukan.
         </p>
+        <h3 className="mt-4 mb-2 text-sm font-semibold">Riwayat verifikasi</h3>
+        <VerificationTimeline entries={board.verificationHistory ?? []} />
       </Card>
 
       <Card as="section">

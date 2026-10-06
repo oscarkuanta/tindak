@@ -9,6 +9,7 @@ import { prisma } from '../../lib/prisma.js';
 import { recordAudit } from '../../lib/audit.js';
 import { activeBanWhere } from '../../lib/bans.js';
 import { AppError } from '../../utils/AppError.js';
+import { recomputeBoardTrust, trustSnapshot } from '../trust/trust.service.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -277,6 +278,7 @@ export async function restoreReport(id, admin, { note } = {}) {
       });
     }
   });
+  await recomputeBoardTrust(report.boardId);
   await recordAudit('REPORT_RESTORED', {
     actorId: admin.id,
     reportId: id,
@@ -353,7 +355,10 @@ export async function createBan(admin, input, now = new Date()) {
 }
 
 export async function removeReport(id, admin, { note, ban }) {
-  const report = await prisma.report.findUnique({ where: { id }, select: { id: true } });
+  const report = await prisma.report.findUnique({
+    where: { id },
+    select: { id: true, boardId: true },
+  });
   if (!report) throw reportNotFound();
   const createdBan = ban ? await createBan(admin, { ...ban, reportId: id }) : null;
   await prisma.$transaction(async (tx) => {
@@ -368,6 +373,7 @@ export async function removeReport(id, admin, { note, ban }) {
       },
     });
   });
+  await recomputeBoardTrust(report.boardId);
   await recordAudit('REPORT_REMOVED', {
     actorId: admin.id,
     reportId: id,
@@ -500,7 +506,19 @@ export async function freezeBoard(slug, admin, { reason }) {
       },
     });
     await resolveFlags(tx, 'BOARD', board.id, 'ACCEPTED');
+    if (wasOfficial) {
+      await tx.boardVerificationLog.create({
+        data: {
+          boardId: board.id,
+          action: 'REVOKED',
+          actorUserId: null,
+          reason: 'Board dibekukan moderator',
+          snapshot: trustSnapshot(board),
+        },
+      });
+    }
   });
+  await recomputeBoardTrust(board.id);
   await recordAudit('BOARD_FROZEN', { actorId: admin.id, boardId: board.id, reason });
   if (wasOfficial) {
     await recordAudit('BOARD_VERIFICATION_REVOKED_BY_FREEZE', {
@@ -525,12 +543,14 @@ export async function unfreezeBoard(slug, admin) {
   }
   await prisma.board.update({ where: { id: board.id }, data: { status: 'ACTIVE' } });
   await recordAudit('BOARD_UNFROZEN', { actorId: admin.id, boardId: board.id });
+  await recomputeBoardTrust(board.id);
   return { slug: board.slug, status: 'ACTIVE', verification: board.verification };
 }
 
 export async function dismissBoardFlags(slug, admin, { note } = {}) {
   const board = await findBoardBySlug(slug);
   await prisma.$transaction((tx) => resolveFlags(tx, 'BOARD', board.id, 'REJECTED'));
+  await recomputeBoardTrust(board.id);
   await recordAudit('BOARD_FLAGS_DISMISSED', {
     actorId: admin.id,
     boardId: board.id,

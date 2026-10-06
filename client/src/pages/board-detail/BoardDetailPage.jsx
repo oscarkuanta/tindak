@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
-import { ScopeBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { ScopeBadge, TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { TrustPanel } from '../../components/trust/TrustPanel.jsx';
 import { FollowButton } from '../../components/boards/FollowButton.jsx';
 import { useBoard } from '../../features/boards/hooks.js';
 import { useBoardReports } from '../../features/reports/hooks.js';
@@ -57,6 +58,7 @@ function BoardInformation({ board }) {
   return (
     <aside className="flex flex-col gap-4" aria-label="Informasi Board">
       <VerificationPanel board={board} />
+      <TrustPanel board={board} />
       <Card>
         <h2 className="font-semibold">Tentang Board</h2>
         <p className="mt-2 whitespace-pre-wrap text-sm text-text-muted">
@@ -80,10 +82,6 @@ function BoardInformation({ board }) {
             <dd>{board.activeReportCount ?? 'Belum ada data'}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-text-muted">Tingkat tanggap</dt>
-            <dd>{board.responseRate ? `${board.responseRate}%` : 'Belum ada data'}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
             <dt className="text-text-muted">Pemilik</dt>
             <dd>{board.owner?.name || 'Belum ada data'}</dd>
           </div>
@@ -91,12 +89,6 @@ function BoardInformation({ board }) {
             <dt className="text-text-muted">Penindak</dt>
             <dd>{board.handlerCount ?? 'Belum ada data'}</dd>
           </div>
-          {board.restoredByAdminCount > 0 && (
-            <div className="flex justify-between gap-3">
-              <dt className="text-text-muted">Laporan dipulihkan moderator</dt>
-              <dd>{board.restoredByAdminCount}</dd>
-            </div>
-          )}
         </dl>
       </Card>
       <Card>
@@ -199,6 +191,7 @@ export function BoardDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{board.name}</h1>
               <VerificationBadge verification={board.verification} />
+              <TrustBadge label={board.trustLabel} score={board.trustScore} />
               <div className="ml-auto">
                 <FlagButton targetType="BOARD" targetId={board.id} label="Opsi Board" />
               </div>

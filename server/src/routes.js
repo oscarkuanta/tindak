@@ -15,6 +15,7 @@ import {
 } from './modules/reports/reports.routes.js';
 
 import { createAdminRouter, createFlagsRouter } from './modules/moderation/moderation.routes.js';
+import { createBoardAdminRouter, createBoardRatingsRouter } from './modules/trust/trust.routes.js';
 
 export function createApiRouter() {
   const router = Router();
@@ -22,12 +23,14 @@ export function createApiRouter() {
   router.use('/health', healthRouter);
   router.use('/auth', createAuthRouter());
   router.use('/boards', createBoardReportsRouter());
+  router.use('/boards', createBoardRatingsRouter());
   router.use('/boards', createBoardsRouter());
   router.use('/reports', createReportsRouter());
   router.use('/track', createTrackRouter());
   router.use('/feed', createFeedRouter());
   router.use('/flags', createFlagsRouter());
   router.use('/admin', createAdminRouter());
+  router.use('/board-admin', createBoardAdminRouter());
   router.use('/me', createMeReportsRouter());
   router.use('/me', createMeBoardsRouter());
   router.use('/meta', createMetaRouter());
