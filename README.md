@@ -109,23 +109,36 @@ npm test
 
 File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saat `npm test`.
 
-| Variabel               | Wajib  | Penjelasan                                                                                                       |
-| ---------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`             | Tidak  | `development`, `test`, atau `production`. Default `development`                                                  |
-| `PORT`                 | Tidak  | Port server Express. Default `3000`                                                                              |
-| `CLIENT_URL`           | Tidak  | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`           |
-| `DATABASE_URL`         | Ya     | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`         |
-| `SESSION_SECRET`       | Ya     | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                                      |
-| `IP_HASH_SECRET`       | Ya     | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter           |
-| `GOOGLE_CLIENT_ID`     | Tidak  | Client ID OAuth dari Google Cloud Console. Kosongkan bersama `GOOGLE_CLIENT_SECRET` untuk mematikan login Google |
-| `GOOGLE_CLIENT_SECRET` | Tidak  | Client secret OAuth dari Google Cloud Console. Wajib diisi jika `GOOGLE_CLIENT_ID` diisi                         |
-| `GOOGLE_CALLBACK_URL`  | Tidak  | URL callback yang didaftarkan di Google. Default `CLIENT_URL` + `/api/auth/google/callback`                      |
-| `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                              |
-| `BOARD_ADMIN_EMAILS`   | Fase 8 | Daftar email Admin Board (pemberi status Official), dipisah koma                                                 |
-| `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                       |
-| `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                     |
+| Variabel               | Wajib  | Penjelasan                                                                                                                  |
+| ---------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`             | Tidak  | `development`, `test`, atau `production`. Default `development`                                                             |
+| `PORT`                 | Tidak  | Port server Express. Default `3000`                                                                                         |
+| `CLIENT_URL`           | Tidak  | Alamat frontend, dipakai untuk CORS dan redirect setelah login Google. Default `http://localhost:5173`                      |
+| `DATABASE_URL`         | Ya     | Koneksi MySQL, format `mysql://USER:PASSWORD@HOST:PORT/NAMA_DB`. Di `.env.test` arahkan ke `tindak_test`                    |
+| `SESSION_SECRET`       | Ya     | Kunci rahasia untuk menandatangani cookie session. Minimal 32 karakter acak                                                 |
+| `IP_HASH_SECRET`       | Ya     | Kunci rahasia untuk meng-hash IP sebelum disimpan (IP asli tidak pernah disimpan). Minimal 16 karakter                      |
+| `GOOGLE_CLIENT_ID`     | Tidak  | Client ID OAuth dari Google Cloud Console. Kosongkan bersama `GOOGLE_CLIENT_SECRET` untuk mematikan login Google            |
+| `GOOGLE_CLIENT_SECRET` | Tidak  | Client secret OAuth dari Google Cloud Console. Wajib diisi jika `GOOGLE_CLIENT_ID` diisi                                    |
+| `GOOGLE_CALLBACK_URL`  | Tidak  | URL callback yang didaftarkan di Google. Default `CLIENT_URL` + `/api/auth/google/callback`                                 |
+| `ADMIN_EMAILS`         | Tidak  | Daftar email Admin platform, dipisah koma. Contoh `a@x.com,b@y.com`                                                         |
+| `BOARD_ADMIN_EMAILS`   | Tidak  | Daftar email Admin Board (pemberi status Official), dipisah koma. Jika email juga ada di `ADMIN_EMAILS`, yang dipakai ADMIN |
+| `TURNSTILE_SECRET_KEY` | Fase 4 | Secret key Cloudflare Turnstile untuk captcha form laporan                                                                  |
+| `LOG_LEVEL`            | Tidak  | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                                |
 
 Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
+
+## Akun Demo
+
+Jalankan `npm run db:seed` untuk membuat akun dan Board contoh. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
+
+| Email                    | Role        | Keterangan                                                  |
+| ------------------------ | ----------- | ----------------------------------------------------------- |
+| `admin@tindak.test`      | ADMIN       | Moderator                                                   |
+| `boardadmin@tindak.test` | BOARD_ADMIN | Pemberi status Official                                     |
+| `budi@tindak.test`       | USER        | Penindak Utama 3 Board, termasuk SMKN 1 Surabaya (Official) |
+| `siti@tindak.test`       | USER        | Penindak Utama 2 Board                                      |
+
+Akun demo hanya untuk development. Jangan jalankan seed di server production.
 
 ## Mengaktifkan Login Google
 
@@ -143,21 +156,22 @@ Callback sengaja lewat port 5173 (proxy Vite) agar cookie login tetap satu situs
 
 Semua dijalankan dari folder root.
 
-| Script                                   | Fungsi                                                                       |
-| ---------------------------------------- | ---------------------------------------------------------------------------- |
-| `npm run dev`                            | Menjalankan server (3000) dan client (5173) bersamaan                        |
-| `npm run build`                          | Build client untuk production ke `client/dist`                               |
-| `npm run lint`                           | ESLint dan cek format Prettier                                               |
-| `npm run format`                         | Merapikan semua file dengan Prettier                                         |
-| `npm test`                               | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`        |
-| `npm run db:generate`                    | Membuat ulang Prisma Client setelah `schema.prisma` berubah                  |
-| `npm run db:migrate`                     | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev        |
-| `npm run db:deploy`                      | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production) |
-| `npm run db:seed`                        | Mengisi data awal dari `server/prisma/seed.js`                               |
-| `npm run db:studio`                      | Membuka Prisma Studio untuk melihat isi database                             |
-| `npm run db:reset`                       | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                |
-| `npm run db:test:deploy -w server`       | Menjalankan migrasi ke database `tindak_test`                                |
-| `npm run make-admin -- email@contoh.com` | Menjadikan user dengan email itu sebagai Admin                               |
+| Script                                         | Fungsi                                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run dev`                                  | Menjalankan server (3000) dan client (5173) bersamaan                        |
+| `npm run build`                                | Build client untuk production ke `client/dist`                               |
+| `npm run lint`                                 | ESLint dan cek format Prettier                                               |
+| `npm run format`                               | Merapikan semua file dengan Prettier                                         |
+| `npm test`                                     | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`        |
+| `npm run db:generate`                          | Membuat ulang Prisma Client setelah `schema.prisma` berubah                  |
+| `npm run db:migrate`                           | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev        |
+| `npm run db:deploy`                            | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production) |
+| `npm run db:seed`                              | Mengisi data awal dari `server/prisma/seed.js`                               |
+| `npm run db:studio`                            | Membuka Prisma Studio untuk melihat isi database                             |
+| `npm run db:reset`                             | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                |
+| `npm run db:test:deploy -w server`             | Menjalankan migrasi ke database `tindak_test`                                |
+| `npm run make-admin -- email@contoh.com`       | Menjadikan user dengan email itu sebagai Admin                               |
+| `npm run make-board-admin -- email@contoh.com` | Menjadikan user dengan email itu sebagai Admin Board                         |
 
 ## Kontribusi
 

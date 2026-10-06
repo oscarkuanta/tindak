@@ -222,6 +222,44 @@ describe('POST /api/auth/login', () => {
   });
 });
 
+describe('Role dari daftar email', () => {
+  it('memberi BOARD_ADMIN untuk email di BOARD_ADMIN_EMAILS saat daftar', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...validRegister, email: 'BoardAdmin@tindak.test' });
+
+    expect(res.body.data.role).toBe('BOARD_ADMIN');
+  });
+
+  it('mendahulukan ADMIN jika email ada di kedua daftar', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...validRegister, email: 'dobel@tindak.test' });
+
+    expect(res.body.data.role).toBe('ADMIN');
+  });
+
+  it('menyamakan role BOARD_ADMIN saat login', async () => {
+    await createUser({ email: 'boardadmin@tindak.test' });
+
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'boardadmin@tindak.test', password: 'rahasia123' });
+
+    expect(res.body.data.role).toBe('BOARD_ADMIN');
+  });
+
+  it('tidak menurunkan ADMIN menjadi BOARD_ADMIN', async () => {
+    await createUser({ email: 'boardadmin@tindak.test', role: 'ADMIN' });
+
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'boardadmin@tindak.test', password: 'rahasia123' });
+
+    expect(res.body.data.role).toBe('ADMIN');
+  });
+});
+
 describe('POST /api/auth/logout', () => {
   it('menolak jika belum login', async () => {
     const res = await request(app).post('/api/auth/logout');
