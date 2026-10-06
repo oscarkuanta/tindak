@@ -21,8 +21,13 @@ import { FollowedBoardsPage } from '../pages/followed-boards/FollowedBoardsPage.
 import { InvitationsPage } from '../pages/invitations/InvitationsPage.jsx';
 import { RolePlaceholderPage } from '../pages/placeholders/RolePlaceholderPage.jsx';
 import { BoardQueuePage } from '../pages/board-queue/BoardQueuePage.jsx';
+import { ReportBoardPickerPage } from '../pages/create-report/ReportBoardPickerPage.jsx';
+import { DeviceReportsPage } from '../pages/device-reports/DeviceReportsPage.jsx';
+import { MyReportsPage } from '../pages/my-reports/MyReportsPage.jsx';
 import { ReportDetailPage } from '../pages/report-detail/ReportDetailPage.jsx';
+import { ReportSuccessPage } from '../pages/report-success/ReportSuccessPage.jsx';
 import { TrackReportPage } from '../pages/track-report/TrackReportPage.jsx';
+import { ReportFormPage } from '../pages/create-report/ReportFormPage.jsx';
 
 export const routes = [
   {
@@ -48,9 +53,12 @@ export const routes = [
             children: [
               { index: true, element: <HomePage /> },
               { path: '/cari', element: <SearchBoardsPage /> },
-              { path: '/laporan/:id', element: <ReportDetailPage /> },
+              { path: '/lapor', element: <ReportBoardPickerPage /> },
+              { path: '/laporan-terkirim', element: <ReportSuccessPage /> },
+              { path: '/laporan-perangkat-ini', element: <DeviceReportsPage /> },
               { path: '/lacak', element: <TrackReportPage /> },
               { path: '/lacak/:code', element: <TrackReportPage /> },
+              { path: '/laporan/:id', element: <ReportDetailPage /> },
               {
                 element: <RequireAuth />,
                 children: [
@@ -58,6 +66,7 @@ export const routes = [
                   { path: '/board-saya', element: <MyBoardsPage /> },
                   { path: '/board-diikuti', element: <FollowedBoardsPage /> },
                   { path: '/undangan', element: <InvitationsPage /> },
+                  { path: '/laporan-saya', element: <MyReportsPage /> },
                   { path: '/buat-board', element: <CreateBoardPage /> },
                   {
                     path: '/verifikasi-board',
@@ -86,6 +95,7 @@ export const routes = [
                   </RequireAuth>
                 ),
               },
+              { path: '/b/:slug/lapor', element: <ReportFormPage /> },
               { path: '/b/:slug/pengaturan', element: <BoardSettingsPage /> },
             ],
           },

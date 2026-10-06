@@ -84,3 +84,27 @@ Kontrak ditambahkan ke docs/API.md. Pencarian duplikat menggunakan parameter q p
 
 - Pertahankan allowedActions sebagai sumber kebenaran UI dan pastikan respons detail serta antrean mengirim field yang didefinisikan di docs/API.md.
 - Pastikan mutasi tamu memeriksa trackingCode dan secret pada server, serta backend membatasi jawaban Perlu Info dan buka ulang sesuai aturan.
+
+## Catatan Penyelesaian Konflik Merge dengan Fase 4B
+
+Branch ini dibuat sebelum Fase 4B masuk `dev`, sehingga 4B dan 5B sama-sama membuat beberapa file dengan isi berbeda. Konflik diselesaikan oleh Oscar dengan menggabungkan fitur keduanya:
+
+| File                      | Hasil                                                                                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ReportStatusBadge.jsx`   | Memakai komponen `Badge` (versi 5B) dan tetap mengekspor `ReportSeverityBadge` dari 4B yang dipakai `ReportCard`                                                                     |
+| `ReportTimeline.jsx`      | Versi 5B (prop `entries`, mengikuti kontrak timeline Fase 5)                                                                                                                         |
+| `ReportDetailPage.jsx`    | Versi 5B (`ReportDetailContent` dengan panel aksi)                                                                                                                                   |
+| `ReportDetailContent.jsx` | Ditambah nama pelapor dan tanggal dibuat, yang sebelumnya hanya ada di versi 4B, serta memakai `ReportSeverityBadge`                                                                 |
+| `TrackReportPage.jsx`     | Versi 5B, ditambah fitur 4B: kode dan secret yang tersimpan di perangkat dipakai otomatis, kode dinormalisasi (`TND-` dan spasi dibuang), dan ada link ke "Laporan di Perangkat Ini" |
+| `router.jsx`              | Semua route 4B (`/lapor`, `/b/:slug/lapor`, `/laporan-terkirim`, `/laporan-perangkat-ini`, `/laporan-saya`) dan route antrean 5B tetap ada                                           |
+| `docs/API.md`             | Bagian Fase 4 lalu Fase 5, berurutan                                                                                                                                                 |
+| `shared`                  | Ekspor `reports.js` (4B) dan `report-handling.js` (5B) dipakai keduanya                                                                                                              |
+
+`useReport` dan `useTrackedReport` di `features/reports` dihapus karena identik dengan versi di `features/handling` (endpoint dan query key sama), dan tidak dipakai lagi setelah merge.
+
+Hal yang tercatat untuk dibereskan nanti, tidak diubah di merge ini:
+
+- `REPORT_STATUS_LABELS` (4B) dan `REPORT_HANDLING_STATUS_LABELS` (5B) di `shared` berisi label yang sama persis. Sebaiknya disatukan.
+- Build memberi peringatan ukuran bundle di atas 500 KB. Bisa diatasi dengan lazy loading halaman.
+
+Hasil setelah merge: lint lolos, 79 tes server dan 40 tes client lolos, build berhasil.
