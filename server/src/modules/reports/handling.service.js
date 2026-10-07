@@ -22,6 +22,7 @@ import {
 } from './reports.service.js';
 import { refreshReportScores } from '../engagement/scores.service.js';
 import { recomputeBoardTrust } from '../trust/trust.service.js';
+import { notifyStatusChanged, publishReportUpdated } from '../notifications/notify.service.js';
 import {
   REPORT_LIST_INCLUDE,
   STATUSES_WITHOUT_DEADLINE,
@@ -120,7 +121,17 @@ async function detailFor(id, user, override) {
   return json;
 }
 
-async function handlerAction(id, user, action, run) {
+async function announceTransition(id, fromStatus, actorUserId, extra = {}) {
+  const current = await prisma.report.findUnique({ where: { id }, select: { status: true } });
+  if (!current) return;
+  if (current.status === fromStatus) {
+    await publishReportUpdated(id);
+    return;
+  }
+  await notifyStatusChanged(id, { fromStatus, toStatus: current.status, actorUserId, ...extra });
+}
+
+async function handlerAction(id, user, action, run, extra) {
   const report = await loadForHandler(id, user);
   await prisma.$transaction(async (tx) => {
     await run(tx, report);
@@ -128,6 +139,7 @@ async function handlerAction(id, user, action, run) {
   });
   await recordAudit(action, { actorId: user.id, reportId: id, fromStatus: report.status });
   await recomputeBoardTrust(report.boardId);
+  await announceTransition(id, report.status, user.id, extra);
   return detailFor(id, user);
 }
 
@@ -154,15 +166,21 @@ export async function processReport(id, user, { assigneeId }) {
 }
 
 export async function requestInfo(id, user, { question }) {
-  return handlerAction(id, user, 'REPORT_INFO_REQUESTED', async (tx, report) => {
-    await applyTransition(tx, report, {
-      to: 'NEED_INFO',
-      actorType: 'HANDLER',
-      actorId: user.id,
-      note: question,
-    });
-    await tx.infoRequest.create({ data: { reportId: report.id, question, askedById: user.id } });
-  });
+  return handlerAction(
+    id,
+    user,
+    'REPORT_INFO_REQUESTED',
+    async (tx, report) => {
+      await applyTransition(tx, report, {
+        to: 'NEED_INFO',
+        actorType: 'HANDLER',
+        actorId: user.id,
+        note: question,
+      });
+      await tx.infoRequest.create({ data: { reportId: report.id, question, askedById: user.id } });
+    },
+    { question },
+  );
 }
 
 export async function rejectReport(id, user, { reason, note }) {
@@ -249,6 +267,7 @@ export async function resolveReport(id, user, { note }, files) {
     fromStatus: report.status,
   });
   await recomputeBoardTrust(report.boardId);
+  await announceTransition(id, report.status, user.id);
   return detailFor(id, user);
 }
 
@@ -279,6 +298,7 @@ export async function answerInfo(id, user, { answer, trackingCode, secret }) {
     });
   });
   await recomputeBoardTrust(report.boardId);
+  await announceTransition(id, report.status, actorId);
   return detailFor(id, user, { isReporter: true });
 }
 
@@ -326,6 +346,7 @@ export async function confirmReport(id, user, input, files) {
     toStatus: change.to,
   });
   await recomputeBoardTrust(report.boardId);
+  await announceTransition(id, report.status, actorId);
   return detailFor(id, user, { isReporter: true });
 }
 
@@ -359,6 +380,7 @@ export async function autoConfirmReports(now = new Date(), olderThanDays = 3) {
       resolved += 1;
       await recordAudit('REPORT_AUTO_CONFIRMED', { reportId: report.id });
       await recomputeBoardTrust(report.boardId);
+      await announceTransition(report.id, report.status, null);
     } catch (error) {
       if (error?.code !== ERROR_CODES.INVALID_TRANSITION) throw error;
     }

@@ -10,6 +10,12 @@ import { recordAudit } from '../../lib/audit.js';
 import { activeBanWhere } from '../../lib/bans.js';
 import { AppError } from '../../utils/AppError.js';
 import { recomputeBoardTrust, trustSnapshot } from '../trust/trust.service.js';
+import {
+  notifyReportModerated,
+  publishBoardUpdated,
+  publishReportUpdated,
+} from '../notifications/notify.service.js';
+import { notifyBoardVerificationRevoked } from '../notifications/notifications.service.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -279,6 +285,7 @@ export async function restoreReport(id, admin, { note } = {}) {
     }
   });
   await recomputeBoardTrust(report.boardId);
+  await publishReportUpdated(id);
   await recordAudit('REPORT_RESTORED', {
     actorId: admin.id,
     reportId: id,
@@ -374,6 +381,7 @@ export async function removeReport(id, admin, { note, ban }) {
     });
   });
   await recomputeBoardTrust(report.boardId);
+  await notifyReportModerated(id, { removed: true, actorUserId: admin.id });
   await recordAudit('REPORT_REMOVED', {
     actorId: admin.id,
     reportId: id,
@@ -520,6 +528,9 @@ export async function freezeBoard(slug, admin, { reason }) {
   });
   await recomputeBoardTrust(board.id);
   await recordAudit('BOARD_FROZEN', { actorId: admin.id, boardId: board.id, reason });
+  const frozen = await prisma.board.findUnique({ where: { id: board.id } });
+  if (wasOfficial) await notifyBoardVerificationRevoked(frozen, 'Board dibekukan moderator');
+  else publishBoardUpdated(frozen);
   if (wasOfficial) {
     await recordAudit('BOARD_VERIFICATION_REVOKED_BY_FREEZE', {
       actorId: admin.id,
@@ -543,7 +554,7 @@ export async function unfreezeBoard(slug, admin) {
   }
   await prisma.board.update({ where: { id: board.id }, data: { status: 'ACTIVE' } });
   await recordAudit('BOARD_UNFROZEN', { actorId: admin.id, boardId: board.id });
-  await recomputeBoardTrust(board.id);
+  publishBoardUpdated(await recomputeBoardTrust(board.id));
   return { slug: board.slug, status: 'ACTIVE', verification: board.verification };
 }
 

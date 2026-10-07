@@ -9,6 +9,7 @@ import { useBoard } from '../../features/boards/hooks.js';
 import { useBoardReports } from '../../features/reports/hooks.js';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
 import { FlagButton } from '../../components/moderation/FlagButton.jsx';
+import { useBoardChannel } from '../../features/realtime/socketContext.js';
 
 const FEED_TABS = [
   { label: 'Ramai', sort: 'hot' },
@@ -115,6 +116,7 @@ function BoardInformation({ board }) {
 export function BoardDetailPage() {
   const { slug } = useParams();
   const boardQuery = useBoard(slug);
+  useBoardChannel(slug);
   const [selectedTab, setSelectedTab] = useState(null);
   const viewerRole = boardQuery.data?.data?.viewer?.role;
   const defaultTab = viewerRole ? FEED_TABS[1] : FEED_TABS[0];

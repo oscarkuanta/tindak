@@ -43,6 +43,7 @@ model User {
   bansCreated      Ban[]
   auditLogs        AuditLog[]
   boardRatings     BoardRating[]
+  notifications    Notification[]
   verificationLogs BoardVerificationLog[]
 
   @@map("users")
@@ -302,6 +303,7 @@ model Report {
   hiddenByHandler      Boolean             @default(false) @map("hidden_by_handler")
   removedAt            DateTime?           @map("removed_at")
   needsModeration      Boolean             @default(false) @map("needs_moderation")
+  dueWarningSentAt     DateTime?           @map("due_warning_sent_at")
   dueAt                DateTime?           @map("due_at")
   resolvedAt           DateTime?           @map("resolved_at")
   createdAt            DateTime            @default(now()) @map("created_at")
@@ -501,4 +503,18 @@ model BoardVerificationLog {
   @@index([boardId, createdAt])
   @@index([action, createdAt])
   @@map("board_verification_logs")
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String    @db.VarChar(50)
+  data      Json
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }
