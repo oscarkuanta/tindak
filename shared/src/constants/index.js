@@ -4,6 +4,7 @@ export * from './cities.js';
 export * from './notifications.js';
 export * from './moderation.js';
 export * from './verification.js';
+export * from './stats.js';
 export * from './reports.js';
 export * from './report-handling.js';
 
