@@ -18,6 +18,7 @@ Fase ini menambahkan halaman Dashboard Statistik Board untuk OWNER dan HANDLER, 
 - Menambahkan tautan Dashboard di halaman Board untuk OWNER dan HANDLER.
 - Menambahkan tes untuk kartu dan rating, data HANDLER tanpa tabel kinerja, pemuatan rentang baru, tampilan 403, serta tautan dari halaman Board.
 - Memastikan referensi desain `docs/design/ui-reference.html` tetap lolos pemeriksaan format.
+- Merapikan format `ui-reference.html` di root repo setelah mendapat persetujuan, agar pemeriksaan Prettier CI tidak gagal.
 
 ## File Penting
 
@@ -55,7 +56,7 @@ Tidak ada. Dashboard memakai `GET /api/boards/:slug/stats` dan kontrak di bagian
 - `npm run test -w client -- --maxWorkers=1`: lolos, 23 file dan 85 tes.
 - Tes terarah `BoardStatsPage` dan `BoardDetailPage`: lolos, 6 tes.
 - `npm test`: belum dapat menjalankan tes server karena `.env.test` tidak tersedia dan MySQL lokal pada port 3306 tidak aktif. Pemeriksaan keamanan tes menghentikan proses sebelum tes berjalan.
-- `npm run lint`: ESLint selesai, tetapi langkah Prettier gagal pada file tracked `ui-reference.html` di root repo. File tersebut berada di luar batas perubahan `client/` dan `docs/`; file `docs/design/ui-reference.html` lolos pemeriksaan format.
+- `npm run lint`: lolos dengan status keluar 0 setelah `ui-reference.html` di root repo dirapikan formatnya.
 
 ## Keputusan dan Alasan
 
@@ -66,7 +67,6 @@ Tidak ada. Dashboard memakai `GET /api/boards/:slug/stats` dan kontrak di bagian
 ## Hal yang Belum Selesai
 
 - Uji manual di browser belum dilakukan karena lingkungan lokal tidak menyediakan database tes/demo yang aktif.
-- Pemeriksaan `npm run lint` penuh masih gagal pada `ui-reference.html` root yang tidak termasuk folder perubahan yang diizinkan.
 - Tes server belum berjalan tanpa `.env.test` dan layanan MySQL untuk database tes.
 
 ## Catatan untuk Fase Berikutnya
