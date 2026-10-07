@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { BadgeCheck, Building2, ClipboardCheck, RotateCcw } from 'lucide-react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { BOARD_TYPE_LABELS } from '@tindak/shared';
-import { Button, Card, Input } from '../../components/ui/index.js';
+import { Button, Card, Input, StatCard, Tabs } from '../../components/ui/index.js';
 import { OfficialBadge, TrustBadge } from '../../components/boards/BoardBadges.jsx';
 import { formatPercent, formatScore } from '../../components/boards/trustFormat.js';
 import { RevokeModal } from '../../components/trust/VerificationModals.jsx';
@@ -21,24 +22,29 @@ const TABS = [
 const TH = 'px-3 py-2 text-left text-xs font-medium text-text-muted';
 const TD = 'px-3 py-2 text-sm';
 
-function Stat({ label, value }) {
-  return (
-    <Card>
-      <p className="text-sm text-text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value ?? '-'}</p>
-    </Card>
-  );
+function Stat({ label, value, icon, tone }) {
+  return <StatCard label={label} value={value ?? '-'} icon={icon} tone={tone} />;
 }
 
 function StatsRow() {
   const query = useBoardAdminStats();
   const stats = query.data?.data;
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
-      <Stat label="Kandidat Official" value={stats?.candidates} />
-      <Stat label="Board Official" value={stats?.official} />
-      <Stat label="Dicabut 30 hari" value={stats?.revokedLast30Days} />
-      <Stat label="Perlu Ditinjau Ulang" value={stats?.needsReview} />
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <Stat label="Kandidat Official" value={stats?.candidates} icon={BadgeCheck} tone="mint" />
+      <Stat label="Board Official" value={stats?.official} icon={Building2} tone="sky" />
+      <Stat
+        label="Dicabut 30 hari"
+        value={stats?.revokedLast30Days}
+        icon={RotateCcw}
+        tone="cream"
+      />
+      <Stat
+        label="Perlu Ditinjau Ulang"
+        value={stats?.needsReview}
+        icon={ClipboardCheck}
+        tone="mint"
+      />
     </div>
   );
 }
@@ -205,24 +211,12 @@ export function VerificationDashboardPage() {
         <OfficialBadge />
       </div>
       <StatsRow />
-      <nav
-        role="tablist"
-        aria-label="Daftar verifikasi"
-        className="flex gap-1 border-b border-border"
-      >
-        {TABS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.key}
-            onClick={() => setSearchParams(item.key === 'kandidat' ? {} : { tab: item.key })}
-            className={`border-b-2 px-4 py-2 text-sm font-medium ${tab === item.key ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text'}`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <Tabs
+        items={TABS.map((item) => ({ ...item, value: item.key }))}
+        value={tab}
+        label="Daftar verifikasi"
+        onChange={(value) => setSearchParams(value === 'kandidat' ? {} : { tab: value })}
+      />
       {tab === 'kandidat' ? <CandidatesTab /> : <OfficialTab />}
     </>
   );
