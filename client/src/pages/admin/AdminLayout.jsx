@@ -30,17 +30,14 @@ export function AdminLayout() {
   return (
     <section className="mx-auto flex max-w-5xl flex-col gap-5">
       <h1 className="text-2xl font-bold">Panel Admin</h1>
-      <nav
-        aria-label="Menu Panel Admin"
-        className="flex gap-1 overflow-x-auto border-b border-border"
-      >
+      <nav aria-label="Menu Panel Admin" className="tabs-pill">
         {NAV.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
             className={({ isActive }) =>
-              `whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium ${isActive ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text'}`
+              `whitespace-nowrap rounded-full px-3 py-2 text-sm font-medium ${isActive ? 'bg-brand-soft text-mint-700' : 'text-text-muted hover:bg-surface-muted hover:text-text'}`
             }
           >
             {item.label}
