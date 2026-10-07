@@ -12,6 +12,8 @@ const GOOGLE_ERROR_MESSAGES = {
   [GOOGLE_LOGIN_ERRORS.FAILED]: 'Login Google gagal atau dibatalkan.',
   [GOOGLE_LOGIN_ERRORS.UNAVAILABLE]:
     'Login Google belum tersedia saat ini. Silakan masuk dengan email.',
+  [GOOGLE_LOGIN_ERRORS.BANNED]:
+    'Akun ini sedang diblokir karena melanggar aturan komunitas. Masuk dengan email untuk melihat sisa waktunya.',
 };
 
 export function LoginPage() {

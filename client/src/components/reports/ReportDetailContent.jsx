@@ -8,6 +8,10 @@ import { HandlerActionPanel } from './HandlerActionPanel.jsx';
 import { ReporterResponsePanel } from './ReporterResponsePanel.jsx';
 import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
 import { ReportTimeline } from './ReportTimeline.jsx';
+import { EngagementBar } from './EngagementBar.jsx';
+import { BlurredImage } from './BlurredImage.jsx';
+import { FlagButton } from '../moderation/FlagButton.jsx';
+import { useReportChannel } from '../../features/realtime/socketContext.js';
 
 function formatCreatedAt(value) {
   if (!value) return null;
@@ -26,6 +30,7 @@ const HANDLER_ACTIONS = [
 
 export function ReportDetailContent({ report, credentials }) {
   const [searchParams] = useSearchParams();
+  useReportChannel(report.id, credentials);
   const allowed = useMemo(() => new Set(report.allowedActions ?? []), [report.allowedActions]);
   const canHandle = HANDLER_ACTIONS.some((action) => allowed.has(action));
   const boardSlug = report.board?.slug;
@@ -42,6 +47,12 @@ export function ReportDetailContent({ report, credentials }) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
+      {report.isHidden && (
+        <Alert tone="warning">
+          Laporan ini sedang ditinjau moderator dan disembunyikan dari publik. Kamu tetap dapat
+          melihatnya karena kamu pelapor atau pengelola Board.
+        </Alert>
+      )}
       {report.board?.status === 'INACTIVE' && (
         <Alert tone="warning">
           Board Tidak Aktif. Laporan tetap dapat dibaca, tetapi mungkin belum ditangani.
@@ -58,6 +69,11 @@ export function ReportDetailContent({ report, credentials }) {
           <ReportSeverityBadge severity={report.severity} />
           {report.isOverdue && <Badge tone="danger">⏰ Terlambat</Badge>}
           {report.reporterNotSatisfied && <Badge tone="warning">Pelapor tidak puas</Badge>}
+          {!credentials && (
+            <div className="ml-auto">
+              <FlagButton targetType="REPORT" targetId={report.id} label="Opsi laporan" />
+            </div>
+          )}
         </div>
         <h1 className="text-2xl font-bold">{report.title}</h1>
         <p className="text-sm text-text-muted">
@@ -74,6 +90,7 @@ export function ReportDetailContent({ report, credentials }) {
           )}
         </p>
         <p className="whitespace-pre-wrap text-sm leading-6">{report.description}</p>
+        {!credentials && <EngagementBar report={report} />}
         {report.parent && (
           <p className="rounded-base bg-surface-muted p-3 text-sm">
             Laporan ini ditandai sebagai duplikat dari{' '}
@@ -100,8 +117,10 @@ export function ReportDetailContent({ report, credentials }) {
           <div className="grid gap-4 sm:grid-cols-2">
             {[...beforeMedia, ...afterMedia, ...extraMedia].map((item) => (
               <figure key={item.id} className="space-y-1">
-                <img
+                <BlurredImage
                   src={item.url}
+                  isBlurred={item.isBlurred}
+                  wrapperClassName="rounded-base"
                   alt={
                     item.kind === 'AFTER'
                       ? 'Foto sesudah penindakan'
@@ -109,7 +128,7 @@ export function ReportDetailContent({ report, credentials }) {
                         ? 'Foto tambahan'
                         : 'Foto sebelum penindakan'
                   }
-                  className={`aspect-[4/3] w-full rounded-base object-cover ${item.isBlurred ? 'blur-md' : ''}`}
+                  className="aspect-[4/3] w-full rounded-base object-cover"
                 />
                 <figcaption className="text-xs text-text-muted">
                   {item.kind === 'AFTER'

@@ -54,3 +54,29 @@ describe('HandlerActionPanel', () => {
     });
   });
 });
+
+describe('HandlerActionPanel penanggung jawab', () => {
+  it('memuat Penindak Utama dan Penindak aktif tanpa duplikat', () => {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <HandlerActionPanel
+          report={{
+            id: 4,
+            allowedActions: ['PROCESS'],
+            board: { slug: 'b', owner: { id: 1, name: 'Budi' } },
+          }}
+          handlers={[
+            { userId: 1, status: 'ACTIVE', user: { name: 'Budi' } },
+            { userId: 2, status: 'ACTIVE', user: { name: 'Siti' } },
+            { userId: 3, status: 'INVITED', user: { name: 'Dewi' } },
+          ]}
+          onAction={vi.fn()}
+        />
+      </QueryClientProvider>,
+    );
+
+    const options = screen.getAllByRole('option').map((option) => option.textContent);
+    expect(options).toEqual(['Belum ditentukan', 'Budi (Penindak Utama)', 'Siti']);
+  });
+});

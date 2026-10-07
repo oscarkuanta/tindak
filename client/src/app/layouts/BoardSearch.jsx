@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { useBoardSearch } from '../../features/boards/hooks.js';
 
 export function BoardSearch() {
@@ -10,12 +10,15 @@ export function BoardSearch() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef(null);
   const navigate = useNavigate();
+  const searching = debouncedQuery.length >= 2;
   const searchQuery = useBoardSearch(
-    { q: debouncedQuery, page: 1, pageSize: 5 },
-    { enabled: open && debouncedQuery.length >= 2 },
+    { q: searching ? debouncedQuery : '', page: 1, pageSize: 5 },
+    { enabled: open },
   );
   const suggestions = (searchQuery.data?.data ?? []).slice(0, 5);
-  const optionCount = suggestions.length + (debouncedQuery.length >= 2 ? 1 : 0);
+  const optionCount = suggestions.length + 1;
+  const showPanel = open && (searching || searchQuery.isPending || suggestions.length > 0);
+  const viewAllPath = searching ? `/cari?q=${encodeURIComponent(query.trim())}` : '/cari';
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
@@ -32,7 +35,7 @@ export function BoardSearch() {
 
   function viewAll() {
     setOpen(false);
-    navigate(`/cari?q=${encodeURIComponent(query.trim())}`);
+    navigate(viewAllPath);
   }
 
   function handleKeyDown(event) {
@@ -73,7 +76,7 @@ export function BoardSearch() {
       <input
         id="header-board-search"
         role="combobox"
-        aria-expanded={open && debouncedQuery.length >= 2}
+        aria-expanded={showPanel}
         aria-controls="header-board-suggestions"
         aria-autocomplete="list"
         aria-activedescendant={activeIndex >= 0 ? `board-suggestion-${activeIndex}` : undefined}
@@ -88,12 +91,17 @@ export function BoardSearch() {
         placeholder="Cari Board..."
         className="h-10 w-full rounded-full border border-border bg-surface-muted px-4 text-sm outline-none transition focus:border-accent focus:bg-surface focus:ring-2 focus:ring-accent/20"
       />
-      {open && debouncedQuery.length >= 2 && (
+      {showPanel && (
         <div
           id="header-board-suggestions"
           role="listbox"
           className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-card border border-border bg-surface p-1 shadow-card"
         >
+          {!searching && suggestions.length > 0 && (
+            <p className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+              Board terpopuler
+            </p>
+          )}
           {searchQuery.isPending ? (
             <p className="px-3 py-3 text-sm text-text-muted">Mencari Board...</p>
           ) : (
@@ -114,6 +122,7 @@ export function BoardSearch() {
                 <span className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {board.name}
                   <VerificationBadge verification={board.verification} />
+                  <TrustBadge label={board.trustLabel} score={board.trustScore} />
                 </span>
                 <span className="text-xs text-text-muted">{board.city}</span>
               </button>
@@ -133,7 +142,7 @@ export function BoardSearch() {
             onClick={viewAll}
             className={`w-full border-t border-border px-3 py-3 text-left text-sm font-medium text-brand ${activeIndex === suggestions.length ? 'bg-brand-soft' : 'hover:bg-brand-soft'}`}
           >
-            Lihat semua hasil untuk “{debouncedQuery}”
+            {searching ? `Lihat semua hasil untuk “${debouncedQuery}”` : 'Lihat semua Board'}
           </button>
         </div>
       )}

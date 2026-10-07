@@ -80,3 +80,105 @@ export const confirmReportSchema = z
       });
     }
   });
+
+const strictGuestCredentials = {
+  trackingCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .transform((value) => value.replace(/^TND-/, '').replace(/[\s-]/g, ''))
+    .pipe(z.string().length(8, { error: 'Kode Lacak harus 8 karakter' }))
+    .optional(),
+  secret: z.string().trim().min(1, { error: 'Tautan lacak tidak valid' }).max(200).optional(),
+};
+
+function requireCredentialPair(value, context) {
+  if (Boolean(value.trackingCode) !== Boolean(value.secret)) {
+    context.addIssue({
+      code: 'custom',
+      path: ['secret'],
+      message: 'Kode Lacak dan tautan rahasia harus dikirim bersama',
+    });
+  }
+}
+
+export const processReportRequestSchema = z.strictObject({
+  assigneeId: processReportSchema.shape.assigneeId,
+});
+
+export const requestInfoRequestSchema = z.strictObject({
+  question: requestReportInfoSchema.shape.question,
+});
+
+export const answerInfoRequestSchema = z
+  .strictObject({ answer: answerReportInfoSchema.shape.answer, ...strictGuestCredentials })
+  .superRefine(requireCredentialPair);
+
+export const rejectReportRequestSchema = z
+  .strictObject({
+    reason: z.enum(Object.values(REPORT_REJECTION_REASONS), { error: 'Pilih alasan penolakan' }),
+    note: z.string().trim().max(2000).optional().default(''),
+  })
+  .superRefine((value, context) => {
+    if (value.reason === REPORT_REJECTION_REASONS.OTHER && !value.note) {
+      context.addIssue({
+        code: 'custom',
+        path: ['note'],
+        message: 'Catatan wajib diisi untuk alasan Lainnya',
+      });
+    }
+  });
+
+export const duplicateReportRequestSchema = z.strictObject({
+  parentId: duplicateReportSchema.shape.parentId,
+});
+
+export const resolveReportRequestSchema = z.strictObject({
+  note: resolveReportSchema.shape.note,
+});
+
+export const confirmReportRequestSchema = z
+  .strictObject({
+    result: z.enum(['resolved', 'not_resolved'], { error: 'Pilih Sudah Beres atau Belum Beres' }),
+    note: z.string().trim().max(2000).optional().default(''),
+    ...strictGuestCredentials,
+  })
+  .superRefine((value, context) => {
+    if (value.result === 'not_resolved' && !value.note) {
+      context.addIssue({
+        code: 'custom',
+        path: ['note'],
+        message: 'Jelaskan bagian yang belum beres',
+      });
+    }
+    requireCredentialPair(value, context);
+  });
+
+export const reportQueueQuerySchema = z.object({
+  status: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    reportQueueFiltersSchema.shape.status,
+  ),
+  categoryId: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    reportQueueFiltersSchema.shape.categoryId,
+  ),
+  severity: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    reportQueueFiltersSchema.shape.severity,
+  ),
+  assigneeId: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    reportQueueFiltersSchema.shape.assigneeId,
+  ),
+  overdue: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    reportQueueFiltersSchema.shape.overdue,
+  ),
+  sort: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.enum(['priority', 'hot', 'new'], { error: 'Urutan tidak dikenal' }).default('priority'),
+  ),
+  page: reportQueueFiltersSchema.shape.page,
+  pageSize: reportQueueFiltersSchema.shape.pageSize,
+});

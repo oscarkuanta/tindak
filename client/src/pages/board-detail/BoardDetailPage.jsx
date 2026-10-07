@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
-import { ScopeBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { ScopeBadge, TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+import { TrustPanel } from '../../components/trust/TrustPanel.jsx';
 import { FollowButton } from '../../components/boards/FollowButton.jsx';
 import { useBoard } from '../../features/boards/hooks.js';
 import { useBoardReports } from '../../features/reports/hooks.js';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
+import { FlagButton } from '../../components/moderation/FlagButton.jsx';
+import { useBoardChannel } from '../../features/realtime/socketContext.js';
 
 const FEED_TABS = [
   { label: 'Ramai', sort: 'hot' },
   { label: 'Prioritas', sort: 'priority' },
   { label: 'Terbaru', sort: 'new' },
-  { label: 'Selesai', sort: 'new', status: 'RESOLVED' },
+  { label: 'Selesai', sort: 'resolved' },
 ];
 
 function getInitials(name = '') {
@@ -56,6 +59,7 @@ function BoardInformation({ board }) {
   return (
     <aside className="flex flex-col gap-4" aria-label="Informasi Board">
       <VerificationPanel board={board} />
+      <TrustPanel board={board} />
       <Card>
         <h2 className="font-semibold">Tentang Board</h2>
         <p className="mt-2 whitespace-pre-wrap text-sm text-text-muted">
@@ -77,10 +81,6 @@ function BoardInformation({ board }) {
           <div className="flex justify-between gap-3">
             <dt className="text-text-muted">Laporan aktif</dt>
             <dd>{board.activeReportCount ?? 'Belum ada data'}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-text-muted">Tingkat tanggap</dt>
-            <dd>{board.responseRate ? `${board.responseRate}%` : 'Belum ada data'}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt className="text-text-muted">Pemilik</dt>
@@ -116,11 +116,15 @@ function BoardInformation({ board }) {
 export function BoardDetailPage() {
   const { slug } = useParams();
   const boardQuery = useBoard(slug);
-  const [activeTab, setActiveTab] = useState(FEED_TABS[0]);
+  useBoardChannel(slug);
+  const [selectedTab, setSelectedTab] = useState(null);
+  const viewerRole = boardQuery.data?.data?.viewer?.role;
+  const defaultTab = viewerRole ? FEED_TABS[1] : FEED_TABS[0];
+  const activeTab = selectedTab ?? defaultTab;
+  const setActiveTab = setSelectedTab;
   const [page, setPage] = useState(1);
   const reportsQuery = useBoardReports(slug, {
     sort: activeTab.sort,
-    ...(activeTab.status ? { status: activeTab.status } : {}),
     page,
     pageSize: 10,
   });
@@ -189,6 +193,10 @@ export function BoardDetailPage() {
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold">{board.name}</h1>
               <VerificationBadge verification={board.verification} />
+              <TrustBadge label={board.trustLabel} score={board.trustScore} />
+              <div className="ml-auto">
+                <FlagButton targetType="BOARD" targetId={board.id} label="Opsi Board" />
+              </div>
             </div>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-muted">
               <span>{board.city}</span>

@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router';
-import { Alert, Button, Spinner } from '../../components/ui/index.js';
+import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { ReportDetailContent } from '../../components/reports/ReportDetailContent.jsx';
 import { useReportDetail } from '../../features/handling/hooks.js';
@@ -39,5 +39,28 @@ export function ReportDetailPage() {
     );
   }
 
-  return <ReportDetailContent key={query.data.data.id} report={query.data.data} />;
+  const report = query.data.data;
+  if (report.isHidden && report.moderationNotice) {
+    return (
+      <Card className="mx-auto max-w-2xl bg-surface-muted text-center">
+        <p className="text-3xl" aria-hidden="true">
+          🛡️
+        </p>
+        <h1 className="mt-2 text-lg font-semibold">{report.moderationNotice}</h1>
+        <p className="mt-2 text-sm text-text-muted">
+          Laporan ini disembunyikan sementara karena ditandai melanggar aturan komunitas.
+        </p>
+        {report.board?.slug && (
+          <Link
+            to={`/b/${report.board.slug}`}
+            className="mt-4 inline-block text-sm font-semibold text-brand hover:underline"
+          >
+            Kembali ke {report.board.name}
+          </Link>
+        )}
+      </Card>
+    );
+  }
+
+  return <ReportDetailContent key={report.id} report={report} />;
 }

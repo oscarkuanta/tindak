@@ -1,0 +1,81 @@
+export const NOTIFICATION_TYPES = Object.freeze({
+  REPORT_STATUS_CHANGED: 'REPORT_STATUS_CHANGED',
+  REPORT_INFO_REQUESTED: 'REPORT_INFO_REQUESTED',
+  REPORT_MARKED_DUPLICATE: 'REPORT_MARKED_DUPLICATE',
+  REPORT_HIDDEN: 'REPORT_HIDDEN',
+  REPORT_REMOVED: 'REPORT_REMOVED',
+  REPORT_SUPPORT_MILESTONE: 'REPORT_SUPPORT_MILESTONE',
+  SUPPORTED_REPORT_RESOLVED: 'SUPPORTED_REPORT_RESOLVED',
+  BOARD_NEW_REPORT: 'BOARD_NEW_REPORT',
+  HANDLER_NEW_REPORT: 'HANDLER_NEW_REPORT',
+  HANDLER_DANGEROUS_REPORT: 'HANDLER_DANGEROUS_REPORT',
+  HANDLER_DEADLINE_SOON: 'HANDLER_DEADLINE_SOON',
+  HANDLER_REPORT_REOPENED: 'HANDLER_REPORT_REOPENED',
+  HANDLER_INFO_ANSWERED: 'HANDLER_INFO_ANSWERED',
+  BOARD_INVITATION: 'BOARD_INVITATION',
+  BOARD_RATING_DIGEST: 'BOARD_RATING_DIGEST',
+  BOARD_VERIFIED: 'BOARD_VERIFIED',
+  BOARD_VERIFICATION_REVOKED: 'BOARD_VERIFICATION_REVOKED',
+  BOARD_CANDIDATE_NEW: 'BOARD_CANDIDATE_NEW',
+  BOARD_OWNER_CHANGED: 'BOARD_OWNER_CHANGED',
+  BOARD_NEEDS_REVIEW: 'BOARD_NEEDS_REVIEW',
+});
+
+export const NOTIFICATION_ICONS = Object.freeze({
+  REPORT_STATUS_CHANGED: '🔄',
+  REPORT_INFO_REQUESTED: '❔',
+  REPORT_MARKED_DUPLICATE: '📎',
+  REPORT_HIDDEN: '🛡️',
+  REPORT_REMOVED: '🗑️',
+  REPORT_SUPPORT_MILESTONE: '🙌',
+  SUPPORTED_REPORT_RESOLVED: '✅',
+  BOARD_NEW_REPORT: '📝',
+  HANDLER_NEW_REPORT: '📥',
+  HANDLER_DANGEROUS_REPORT: '🚨',
+  HANDLER_DEADLINE_SOON: '⏰',
+  HANDLER_REPORT_REOPENED: '🔁',
+  HANDLER_INFO_ANSWERED: '💬',
+  BOARD_INVITATION: '✉️',
+  BOARD_RATING_DIGEST: '⭐',
+  BOARD_VERIFIED: '✔️',
+  BOARD_VERIFICATION_REVOKED: '⛔',
+  BOARD_CANDIDATE_NEW: '🏅',
+  BOARD_OWNER_CHANGED: '🔑',
+  BOARD_NEEDS_REVIEW: '🔍',
+});
+
+export const SUPPORT_MILESTONES = Object.freeze([10, 25, 50]);
+export const DUE_WARNING_HOURS = 6;
+export const NOTIFICATION_DROPDOWN_LIMIT = 10;
+
+const BOARD_ADMIN_TYPES = new Set([
+  'BOARD_CANDIDATE_NEW',
+  'BOARD_OWNER_CHANGED',
+  'BOARD_NEEDS_REVIEW',
+]);
+
+export function notificationLink(notification) {
+  const data = notification?.data ?? {};
+  if (notification?.type === 'BOARD_INVITATION') return '/undangan';
+  if (BOARD_ADMIN_TYPES.has(notification?.type) && data.boardSlug) {
+    return `/verifikasi/${data.boardSlug}`;
+  }
+  if (data.reportId) return `/laporan/${data.reportId}`;
+  if (notification?.type === 'BOARD_VERIFICATION_REVOKED' && data.boardSlug) {
+    return `/b/${data.boardSlug}/pengaturan`;
+  }
+  if (data.boardSlug) return `/b/${data.boardSlug}`;
+  return '/notifikasi';
+}
+
+export const SOCKET_EVENTS = Object.freeze({
+  NOTIFICATION_NEW: 'notification:new',
+  REPORT_UPDATED: 'report:updated',
+  REPORT_CREATED: 'report:created',
+  QUEUE_UPDATED: 'queue:updated',
+  BOARD_UPDATED: 'board:updated',
+  BOARD_SUBSCRIBE: 'board:subscribe',
+  BOARD_UNSUBSCRIBE: 'board:unsubscribe',
+  REPORT_SUBSCRIBE: 'report:subscribe',
+  REPORT_UNSUBSCRIBE: 'report:unsubscribe',
+});

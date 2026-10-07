@@ -48,3 +48,43 @@ describe('Pencarian Board di header', () => {
     expect(await screen.findByRole('heading', { name: 'Jalan Rungkut' })).toBeInTheDocument();
   });
 });
+
+describe('Board populer sebelum mengetik', () => {
+  it('header menampilkan Board terpopuler saat kotak cari difokuskan', async () => {
+    const searches = [];
+    mockApi({
+      'GET /auth/me': guestMe,
+      'GET /boards/search': () => {
+        searches.push('search');
+        return [200, { data: [board], meta: { page: 1, pageSize: 5, total: 1, totalPages: 1 } }];
+      },
+      'GET /feed/home': () => [
+        200,
+        { data: [], meta: { page: 1, pageSize: 10, total: 0, totalPages: 0 } },
+      ],
+      'GET /boards/popular': () => [200, { data: [] }],
+    });
+    renderApp('/');
+
+    await userEvent.click(await screen.findByRole('combobox', { name: 'Cari Board' }));
+
+    expect(await screen.findByText('Board terpopuler')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /Jalan Rungkut/ })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Lihat semua Board' })).toBeInTheDocument();
+  });
+
+  it('halaman Pilih Board langsung berisi Board terpopuler', async () => {
+    mockApi({
+      'GET /auth/me': guestMe,
+      'GET /boards/search': () => [
+        200,
+        { data: [board], meta: { page: 1, pageSize: 10, total: 1, totalPages: 1 } },
+      ],
+    });
+    renderApp('/lapor');
+
+    expect(await screen.findByText('Board terpopuler')).toBeInTheDocument();
+    expect(screen.getByText('Jalan Rungkut')).toBeInTheDocument();
+    expect(screen.queryByText('Cari Board terlebih dahulu')).not.toBeInTheDocument();
+  });
+});
