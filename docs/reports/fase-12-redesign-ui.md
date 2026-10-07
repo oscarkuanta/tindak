@@ -57,6 +57,7 @@ Tidak ada endpoint baru dan tidak ada perubahan kontrak di `docs/API.md`.
 - `npm run test -w client -- --pool=vmThreads --fileParallelism=false`: 23 file lulus, 85 tes lulus.
 - `npm run build`: lulus. Bundel JavaScript minified sekitar 1.49 MB memunculkan peringatan ukuran chunk dari Vite.
 - `npm test` root: setup tes backend tidak dapat menyambung ke MySQL lokal di `127.0.0.1:3306` untuk database `tindak_test`; tidak ada perubahan server atau database.
+- GitHub Actions untuk [PR #33](https://github.com/oscarkuanta/tindak/pull/33): lint, migrasi database tes, `npm test`, dan build lulus.
 - Pemeriksaan visual manual di Chrome, Firefox, Edge pada tiga ukuran belum dapat dilakukan. Browser yang tersedia tidak dapat menjangkau server lokal, dan Chrome, Firefox, serta Edge tidak tersedia di sesi browser ini.
 
 ## Keputusan dan Alasan
