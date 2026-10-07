@@ -29,9 +29,9 @@ export function Input({
           [message && messageId, describedBy].filter(Boolean).join(' ') || undefined
         }
         className={cn(
-          'h-10 w-full rounded-base border bg-surface px-3 text-sm text-text placeholder:text-text-muted',
+          'h-11 w-full rounded-full border-[1.5px] bg-surface px-4 text-sm text-text placeholder:text-text-muted',
           'focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20',
-          error ? 'border-danger' : 'border-border',
+          error ? 'border-danger focus:border-danger' : 'border-border',
           className,
         )}
         {...props}

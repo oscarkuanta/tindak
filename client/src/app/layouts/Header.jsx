@@ -16,12 +16,17 @@ function CreateBoardAction() {
   if (isPending) return null;
   if (user)
     return (
-      <ButtonLink to="/buat-board" size="sm">
+      <ButtonLink to="/buat-board" variant="white" size="sm" data-slot="create-board">
         + Buat Board
       </ButtonLink>
     );
   return (
-    <Button size="sm" onClick={() => openLoginPrompt({ title: 'Masuk untuk membuat Board' })}>
+    <Button
+      size="sm"
+      variant="white"
+      data-slot="create-board"
+      onClick={() => openLoginPrompt({ title: 'Masuk untuk membuat Board' })}
+    >
       + Buat Board
     </Button>
   );
@@ -48,10 +53,10 @@ function AuthActions() {
   const returnTo = location.pathname + location.search;
   return (
     <>
-      <ButtonLink to={loginPath(returnTo)} variant="ghost" size="sm">
+      <ButtonLink to={loginPath(returnTo)} variant="white" size="sm">
         Masuk
       </ButtonLink>
-      <ButtonLink to={AUTH_PATHS.REGISTER} size="sm">
+      <ButtonLink to={AUTH_PATHS.REGISTER} variant="white" size="sm">
         Daftar
       </ButtonLink>
     </>
@@ -64,14 +69,14 @@ export function Header() {
   const reportPath = boardMatch ? `/b/${boardMatch[1]}/lapor` : '/lapor';
 
   return (
-    <header className="sticky top-0 z-40 h-header border-b border-border bg-surface/90 backdrop-blur">
-      <div className="mx-auto flex h-full w-full max-w-layout items-center gap-4 px-4">
+    <header className="site-header">
+      <div className="site-header__inner">
         <Logo />
         <div className="flex min-w-0 flex-1 justify-center" data-slot="search">
           <BoardSearch />
         </div>
         <div className="flex shrink-0 items-center gap-2" data-slot="actions">
-          <ButtonLink to={reportPath} variant="secondary" size="sm">
+          <ButtonLink to={reportPath} variant="white" size="sm" data-slot="top-report">
             Laporkan Masalah
           </ButtonLink>
           <CreateBoardAction />
