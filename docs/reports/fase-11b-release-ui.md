@@ -16,18 +16,20 @@ Fase ini menyiapkan bagian UI rilis T!indak melalui pemeriksaan browser berbasis
 - Mengurangi lebar minimum tabel antrean kandidat verifikasi dari `44rem` menjadi `40rem` agar seluruh tabel muat pada desktop 1280px tanpa scroll horizontal.
 - Mengisi semua sel kolom Tampilan pada `docs/QA-CHECKLIST.md` dengan ✅ atau ❌. U4 mencatat bahwa uji realtime memakai dua tab dalam satu profil.
 - Menambahkan instruksi keamanan reset database demo ke naskah demo: `--reset` hanya boleh dijalankan pada database demo sekali pakai.
+- Memformat `ui-reference.html` di root repo sesuai permintaan terpisah sebelumnya. Commit ini dipisahkan dari perubahan Fase 11B karena file itu menyebabkan Prettier gagal pada branch `dev`; catatan hasil lint terkait juga diperbarui di laporan Fase 10B.
 - Menyimpan enam screenshot bernama sesuai README. Berkas PNG berukuran 1280 × 999; tangkapan sumber disesuaikan ke lebar 1280 dari viewport browser lokal yang lebih kecil, jadi belum menggantikan tangkapan langsung dengan viewport 1280px.
 - Database demo sebelumnya dijalankan pada database lokal terpisah `tindak_demo_f11b`, bukan database utama. Data seed mencakup 45 akun, 8 Board, dan 81 laporan; perubahan manual dibersihkan dengan seed ulang. Proses server dan database lokal sudah tidak aktif pada pemeriksaan akhir.
 
 ## File Penting
 
-| File                                                                                                      | Keterangan                                                                |
-| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `client/src/pages/verification/VerificationDashboardPage.jsx`                                             | Mengurangi lebar minimum tabel kandidat.                                  |
-| `docs/QA-CHECKLIST.md`                                                                                    | Mengisi semua hasil tampilan dan memberi catatan cakupan uji realtime U4. |
-| `docs/DEMO-SCRIPT.md`                                                                                     | Menjelaskan risiko `--reset` dan batasan database demo.                   |
-| `docs/screenshots/beranda.png`, `board.png`, `kanban.png`, `verifikasi.png`, `admin.png`, `statistik.png` | Enam screenshot untuk README.                                             |
-| `docs/PROGRESS.md`                                                                                        | Status Fase 11B.                                                          |
+| File                                                                                                      | Keterangan                                                                                                 |
+| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `client/src/pages/verification/VerificationDashboardPage.jsx`                                             | Mengurangi lebar minimum tabel kandidat.                                                                   |
+| `docs/QA-CHECKLIST.md`                                                                                    | Mengisi semua hasil tampilan dan memberi catatan cakupan uji realtime U4.                                  |
+| `docs/DEMO-SCRIPT.md`                                                                                     | Menjelaskan risiko `--reset` dan batasan database demo.                                                    |
+| `docs/screenshots/beranda.png`, `board.png`, `kanban.png`, `verifikasi.png`, `admin.png`, `statistik.png` | Enam screenshot untuk README.                                                                              |
+| `ui-reference.html`, `docs/reports/fase-10b-dashboard.md`                                                 | Cleanup format yang diminta sebelumnya dan catatan lint yang diperbarui; disimpan sebagai commit terpisah. |
+| `docs/PROGRESS.md`                                                                                        | Status Fase 11B.                                                                                           |
 
 ## Perubahan Database
 
@@ -56,6 +58,7 @@ Tidak ada. Tidak ada perubahan kontrak API.
 ## Keputusan dan Alasan
 
 - Perubahan visual dibatasi pada tabel kandidat verifikasi yang ditemukan terlalu lebar saat QA; tidak ada endpoint, backend, Prisma, atau shared yang diubah.
+- Commit terpisah merapikan `ui-reference.html`, sesuai permintaan yang sudah diberikan sebelumnya. File ini menjadi pengecualian dari batas folder Fase 11B karena pemeriksaan lint repo mencakupnya dan `dev` awal gagal pada formatnya.
 - Kolom checklist tetap memakai ✅/❌ untuk semua baris sesuai permintaan. Baris yang hanya diuji sebagian dijelaskan dalam sel atau bagian ini, agar tanda tersebut tidak menyatakan bahwa semua kombinasi sudah tercakup.
 - Screenshot PNG disiapkan dengan ukuran lebar 1280px, tetapi dicatat bahwa sumbernya bukan viewport browser langsung 1280px.
 
