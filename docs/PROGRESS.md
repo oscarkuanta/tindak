@@ -22,7 +22,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 8    | Rating, kepercayaan, dan verifikasi Official | A+B    | Selesai     | Oscar   | [#25](https://github.com/oscarkuanta/tindak/pull/25)                                                   | 2026-10-06 |
 | 9    | Notifikasi dan realtime                      | A+B    | Selesai     | Oscar   | [#26](https://github.com/oscarkuanta/tindak/pull/26)                                                   | 2026-10-06 |
 | 10A  | Dashboard statistik                          | A      | Selesai     | Oscar   | [#27](https://github.com/oscarkuanta/tindak/pull/27)                                                   | 2026-10-07 |
-| 10B  | Dashboard statistik                          | B      | Belum Mulai | -       | -                                                                                                      | -          |
+| 10B  | Dashboard statistik                          | B      | Dikerjakan  | Akmal   | -                                                                                                      | 2026-10-07 |
 | 11A  | Data demo, QA, deploy                        | A      | Review      | Oscar   | -                                                                                                      | 2026-10-07 |
 | 11B  | Data demo, QA, deploy                        | B      | Belum Mulai | -       | -                                                                                                      | -          |
 
