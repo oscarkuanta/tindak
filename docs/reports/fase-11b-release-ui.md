@@ -3,7 +3,7 @@
 - Branch: `chore/f11b-release-ui`
 - Pemilik: Akmal
 - Tanggal: 2026-10-07
-- PR: menunggu dibuat
+- PR: [#32 (draft)](https://github.com/oscarkuanta/tindak/pull/32)
 
 ## Ringkasan
 
