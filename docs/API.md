@@ -282,7 +282,7 @@ Semua field BoardCard ditambah:
 }
 ```
 
-- `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
+- `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Jika nama sudah diakhiri nama kota, kota tidak ditambahkan lagi (`SMAN 5 Surabaya` + `Kota Surabaya` menjadi `sman-5-surabaya`, mulai Fase 11). Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
 - `trustScore`, `trustLabel`, `ratingCount`, `averageStars`, `responseRate`, `rejectedPercentage`, dan `verificationHistory` dijelaskan di bagian Fase 8. `followerCount` adalah jumlah pengikut sebenarnya.
 - `handlerCount` adalah jumlah anggota Board berstatus aktif, termasuk Penindak Utama.
 - `owner` adalah Penindak Utama saat ini.
