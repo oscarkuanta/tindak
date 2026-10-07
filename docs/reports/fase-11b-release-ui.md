@@ -7,12 +7,14 @@
 
 ## Ringkasan
 
-Fase ini menyiapkan bagian UI rilis T!indak melalui pemeriksaan browser berbasis data demo, pengisian seluruh kolom Tampilan di checklist, penyediaan enam screenshot, dan penyempurnaan panduan demo. Pemeriksaan menemukan satu tabel kandidat verifikasi yang terlalu lebar; lebar minimumnya dikurangi. Pemeriksaan visual sudah mencakup alur utama, tetapi uji mobile 375px, beberapa alur role, CAPTCHA/laporan tamu, dan pengulangan naskah demo belum selesai karena server lokal tidak aktif pada pemeriksaan akhir.
+Fase ini menyiapkan bagian UI rilis T!indak melalui pemeriksaan browser berbasis data demo, pengisian seluruh kolom Tampilan di checklist, penyediaan enam screenshot, dan penyempurnaan panduan demo. QA menemukan tabel kandidat verifikasi terlalu lebar di desktop dan header meluber di mobile; keduanya diperbaiki. Beranda, Board, Lapor, dan Lacak sudah diperiksa pada 375px tanpa overflow horizontal. Beberapa alur role, pengiriman laporan yang memerlukan CAPTCHA, uji realtime dua profil, tangkapan langsung 1280px, dan latihan penuh naskah demo masih tertunda.
 
 ## Yang Dikerjakan
 
 - Memeriksa halaman beranda, pencarian Board, Board dan laporan, antrean, Dashboard Penindak, Dashboard Verifikasi, Panel Admin, pengaturan akun, rating, notifikasi, follow, dukungan, reaksi, undangan, serta pembatasan hak akses.
 - Menguji pembaruan realtime dalam dua tab pada satu profil browser untuk status Kode Lacak, badge Official, dan angka dukungan. Dua profil browser terpisah belum diuji.
+- Memeriksa Beranda, Board, Lapor, dan Lacak pada lebar 375px; seluruh halaman tidak memiliki overflow horizontal dan widget Turnstile tampil pada form Lapor. Laporan tamu tidak dikirim.
+- Membuat header dua baris pada layar kecil, memendekkan label tindakan, dan menjaga susunan desktop pada layar lebar.
 - Mengurangi lebar minimum tabel antrean kandidat verifikasi dari `44rem` menjadi `40rem` agar seluruh tabel muat pada desktop 1280px tanpa scroll horizontal.
 - Mengisi semua sel kolom Tampilan pada `docs/QA-CHECKLIST.md` dengan ✅ atau ❌. U4 mencatat bahwa uji realtime memakai dua tab dalam satu profil.
 - Menambahkan instruksi keamanan reset database demo ke naskah demo: `--reset` hanya boleh dijalankan pada database demo sekali pakai.
@@ -24,6 +26,7 @@ Fase ini menyiapkan bagian UI rilis T!indak melalui pemeriksaan browser berbasis
 
 | File                                                                                                      | Keterangan                                                                                                 |
 | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `client/src/app/layouts/Header.jsx`                                                                       | Mengatur ulang header responsif agar kontrol tidak meluber pada 375px.                                     |
 | `client/src/pages/verification/VerificationDashboardPage.jsx`                                             | Mengurangi lebar minimum tabel kandidat.                                                                   |
 | `docs/QA-CHECKLIST.md`                                                                                    | Mengisi semua hasil tampilan dan memberi catatan cakupan uji realtime U4.                                  |
 | `docs/DEMO-SCRIPT.md`                                                                                     | Menjelaskan risiko `--reset` dan batasan database demo.                                                    |
@@ -44,32 +47,32 @@ Tidak ada. Tidak ada perubahan kontrak API.
 1. Siapkan database kosong khusus demo, lalu jalankan `npm run db:deploy` dan `npm run db:seed:demo`.
 2. Jalankan `npm run dev` dan masuk dengan akun dari `docs/DEMO.md`.
 3. Ikuti `docs/DEMO-SCRIPT.md` untuk memeriksa alur tamu, Penindak, Admin Board, dan Admin.
-4. Uji tampilan pada lebar 1280px dan 375px serta realtime memakai dua profil browser terpisah.
+4. Uji tampilan pada lebar 375px (sudah diperiksa pada fase ini), ambil screenshot dari viewport langsung 1280px, dan uji realtime memakai dua profil browser terpisah.
 5. Untuk laporan tamu, selesaikan CAPTCHA secara manual sebelum mengirim. Jangan gunakan `--reset` pada database utama.
 
 ## Hasil Tes
 
 - `npm run lint`: lolos, status keluar 0.
-- `npm run build`: lolos. Vite memberi peringatan bundle JavaScript utama sekitar 1,12 MB setelah minifikasi, di atas batas saran 500 kB.
+- `npm run build`: lolos. Vite memberi peringatan bundle JavaScript utama sekitar 1,48 MB setelah minifikasi dengan Turnstile test key di `.env`, di atas batas saran 500 kB.
 - `npm run test -w client`: 23 file dan 85 tes lolos saat dijalankan dengan izin membaca file sementara Windows.
-- `npm test`: belum lolos di lingkungan lokal. Tes server berhenti sebelum berjalan karena `.env.test` tidak tersedia; MySQL lokal tidak aktif pada port 3306. Percobaan `npm run test -w client` tanpa izin tambahan juga tidak dapat membuka file worker sementara sandbox, tetapi tes frontend berhasil pada percobaan dengan izin yang sesuai.
+- `npm test`: 23 file server dan 408 tes server lolos; 23 file frontend dan 85 tes frontend lolos. Tes lokal memakai database terpisah `tindak_test` di XAMPP MariaDB 10.4.32.
 - CI GitHub PR #32: semua job workflow lulus untuk commit `2ec61b3`, termasuk migrasi database tes, tes server/client, lint, dan build.
-- Uji browser tidak dapat dilanjutkan setelah server demo berhenti; halaman lokal mengembalikan koneksi API terputus dan port aplikasi tidak menerima koneksi.
+- Uji browser di 375px: Beranda, Board, Lapor, dan Lacak tidak meluber melewati lebar viewport; Turnstile tampil di Lapor.
 
 ## Keputusan dan Alasan
 
 - Perubahan visual dibatasi pada tabel kandidat verifikasi yang ditemukan terlalu lebar saat QA; tidak ada endpoint, backend, Prisma, atau shared yang diubah.
+- Header memakai susunan dua baris di mobile, label ringkas untuk tombol, dan tetap satu baris pada breakpoint desktop.
 - Commit terpisah merapikan `ui-reference.html`, sesuai permintaan yang sudah diberikan sebelumnya. File ini menjadi pengecualian dari batas folder Fase 11B karena pemeriksaan lint repo mencakupnya dan `dev` awal gagal pada formatnya.
 - Kolom checklist tetap memakai ✅/❌ untuk semua baris sesuai permintaan. Baris yang hanya diuji sebagian dijelaskan dalam sel atau bagian ini, agar tanda tersebut tidak menyatakan bahwa semua kombinasi sudah tercakup.
 - Screenshot PNG disiapkan dengan ukuran lebar 1280px, tetapi dicatat bahwa sumbernya bukan viewport browser langsung 1280px.
 
 ## Hal yang Belum Selesai
 
-- Jalankan ulang tes lengkap `npm test` dengan `.env.test` dan MySQL 8 khusus tes.
-- Uji halaman Beranda, Board, Lapor, dan Lacak pada viewport langsung 375px serta ambil ulang enam screenshot pada viewport 1280px.
+- Ambil ulang enam screenshot menggunakan viewport browser langsung 1280px; PNG saat ini berukuran 1280px tetapi sumbernya berasal dari viewport yang lebih kecil.
 - Uji realtime dengan dua profil browser, bukan hanya dua tab dalam satu profil.
 - Selesaikan uji laporan tamu dengan CAPTCHA secara manual, konfirmasi selesai oleh tamu, dan alur role lain yang bertanda ❌ di `docs/QA-CHECKLIST.md`.
-- Latih naskah demo secara penuh di browser setelah server demo tersedia.
+- Latih naskah demo secara penuh di browser.
 
 ## Catatan untuk Fase Berikutnya
 
