@@ -37,87 +37,95 @@ import { AuditLogPage } from '../pages/admin/AuditLogPage.jsx';
 import { VerificationLayout } from '../pages/verification/VerificationLayout.jsx';
 import { VerificationDashboardPage } from '../pages/verification/VerificationDashboardPage.jsx';
 import { VerificationDetailPage } from '../pages/verification/VerificationDetailPage.jsx';
+import { RealtimeProvider } from '../features/realtime/RealtimeProvider.jsx';
+import { NotificationsPage } from '../pages/notifications/NotificationsPage.jsx';
 
 export const routes = [
   {
     element: <ToastProvider />,
     children: [
       {
-        element: <LoginPromptProvider />,
+        element: <RealtimeProvider />,
         children: [
           {
-            element: <GuestOnly />,
+            element: <LoginPromptProvider />,
             children: [
               {
-                element: <AuthLayout />,
+                element: <GuestOnly />,
                 children: [
-                  { path: AUTH_PATHS.LOGIN, element: <LoginPage /> },
-                  { path: AUTH_PATHS.REGISTER, element: <RegisterPage /> },
-                ],
-              },
-            ],
-          },
-          {
-            element: <AppLayout />,
-            children: [
-              { index: true, element: <HomePage /> },
-              { path: '/cari', element: <SearchBoardsPage /> },
-              { path: '/lapor', element: <ReportBoardPickerPage /> },
-              { path: '/laporan-terkirim', element: <ReportSuccessPage /> },
-              { path: '/laporan-perangkat-ini', element: <DeviceReportsPage /> },
-              { path: '/lacak', element: <TrackReportPage /> },
-              { path: '/lacak/:code', element: <TrackReportPage /> },
-              { path: '/laporan/:id', element: <ReportDetailPage /> },
-              {
-                element: <RequireAuth />,
-                children: [
-                  { path: '/profil', element: <ProfilePage /> },
-                  { path: '/board-saya', element: <MyBoardsPage /> },
-                  { path: '/board-diikuti', element: <FollowedBoardsPage /> },
-                  { path: '/undangan', element: <InvitationsPage /> },
-                  { path: '/laporan-saya', element: <MyReportsPage /> },
-                  { path: '/buat-board', element: <CreateBoardPage /> },
-                  { path: '/verifikasi-board', element: <Navigate to="/verifikasi" replace /> },
                   {
-                    path: '/verifikasi',
-                    element: <VerificationLayout />,
+                    element: <AuthLayout />,
                     children: [
-                      { index: true, element: <VerificationDashboardPage /> },
-                      { path: ':slug', element: <VerificationDetailPage /> },
-                    ],
-                  },
-                  { path: '/panel-admin', element: <Navigate to="/admin" replace /> },
-                  {
-                    path: '/admin',
-                    element: <AdminLayout />,
-                    children: [
-                      { index: true, element: <AdminDashboardPage /> },
-                      { path: 'moderasi', element: <ModerationQueuePage /> },
-                      { path: 'ban', element: <BansPage /> },
-                      { path: 'board', element: <AdminBoardsPage /> },
-                      { path: 'user', element: <AdminUsersPage /> },
-                      { path: 'audit', element: <AuditLogPage /> },
+                      { path: AUTH_PATHS.LOGIN, element: <LoginPage /> },
+                      { path: AUTH_PATHS.REGISTER, element: <RegisterPage /> },
                     ],
                   },
                 ],
               },
-              { path: '*', element: <NotFoundPage /> },
-            ],
-          },
-          {
-            element: <BoardLayout />,
-            children: [
-              { path: '/b/:slug', element: <BoardDetailPage /> },
               {
-                path: '/b/:slug/antrean',
-                element: (
-                  <RequireAuth>
-                    <BoardQueuePage />
-                  </RequireAuth>
-                ),
+                element: <AppLayout />,
+                children: [
+                  { index: true, element: <HomePage /> },
+                  { path: '/cari', element: <SearchBoardsPage /> },
+                  { path: '/lapor', element: <ReportBoardPickerPage /> },
+                  { path: '/laporan-terkirim', element: <ReportSuccessPage /> },
+                  { path: '/laporan-perangkat-ini', element: <DeviceReportsPage /> },
+                  { path: '/lacak', element: <TrackReportPage /> },
+                  { path: '/lacak/:code', element: <TrackReportPage /> },
+                  { path: '/laporan/:id', element: <ReportDetailPage /> },
+                  {
+                    element: <RequireAuth />,
+                    children: [
+                      { path: '/profil', element: <ProfilePage /> },
+                      { path: '/notifikasi', element: <NotificationsPage /> },
+                      { path: '/board-saya', element: <MyBoardsPage /> },
+                      { path: '/board-diikuti', element: <FollowedBoardsPage /> },
+                      { path: '/undangan', element: <InvitationsPage /> },
+                      { path: '/laporan-saya', element: <MyReportsPage /> },
+                      { path: '/buat-board', element: <CreateBoardPage /> },
+                      { path: '/verifikasi-board', element: <Navigate to="/verifikasi" replace /> },
+                      {
+                        path: '/verifikasi',
+                        element: <VerificationLayout />,
+                        children: [
+                          { index: true, element: <VerificationDashboardPage /> },
+                          { path: ':slug', element: <VerificationDetailPage /> },
+                        ],
+                      },
+                      { path: '/panel-admin', element: <Navigate to="/admin" replace /> },
+                      {
+                        path: '/admin',
+                        element: <AdminLayout />,
+                        children: [
+                          { index: true, element: <AdminDashboardPage /> },
+                          { path: 'moderasi', element: <ModerationQueuePage /> },
+                          { path: 'ban', element: <BansPage /> },
+                          { path: 'board', element: <AdminBoardsPage /> },
+                          { path: 'user', element: <AdminUsersPage /> },
+                          { path: 'audit', element: <AuditLogPage /> },
+                        ],
+                      },
+                    ],
+                  },
+                  { path: '*', element: <NotFoundPage /> },
+                ],
               },
-              { path: '/b/:slug/lapor', element: <ReportFormPage /> },
-              { path: '/b/:slug/pengaturan', element: <BoardSettingsPage /> },
+              {
+                element: <BoardLayout />,
+                children: [
+                  { path: '/b/:slug', element: <BoardDetailPage /> },
+                  {
+                    path: '/b/:slug/antrean',
+                    element: (
+                      <RequireAuth>
+                        <BoardQueuePage />
+                      </RequireAuth>
+                    ),
+                  },
+                  { path: '/b/:slug/lapor', element: <ReportFormPage /> },
+                  { path: '/b/:slug/pengaturan', element: <BoardSettingsPage /> },
+                ],
+              },
             ],
           },
         ],

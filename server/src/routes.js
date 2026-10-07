@@ -16,6 +16,7 @@ import {
 
 import { createAdminRouter, createFlagsRouter } from './modules/moderation/moderation.routes.js';
 import { createBoardAdminRouter, createBoardRatingsRouter } from './modules/trust/trust.routes.js';
+import { createNotificationsRouter } from './modules/notifications/notifications.routes.js';
 
 export function createApiRouter() {
   const router = Router();
@@ -31,6 +32,7 @@ export function createApiRouter() {
   router.use('/flags', createFlagsRouter());
   router.use('/admin', createAdminRouter());
   router.use('/board-admin', createBoardAdminRouter());
+  router.use('/notifications', createNotificationsRouter());
   router.use('/me', createMeReportsRouter());
   router.use('/me', createMeBoardsRouter());
   router.use('/meta', createMetaRouter());
