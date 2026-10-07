@@ -6,17 +6,7 @@ import { EngagementBar } from './EngagementBar.jsx';
 import { VerificationBadge } from '../boards/BoardBadges.jsx';
 import { FlagButton } from '../moderation/FlagButton.jsx';
 import { BlurredImage } from './BlurredImage.jsx';
-
-function relativeTime(value) {
-  if (!value) return 'Waktu tidak tersedia';
-  const date = new Date(value);
-  const minutes = Math.round((date.getTime() - Date.now()) / 60_000);
-  const formatter = new Intl.RelativeTimeFormat('id-ID', { numeric: 'auto' });
-  if (Math.abs(minutes) < 60) return formatter.format(minutes, 'minute');
-  const hours = Math.round(minutes / 60);
-  if (Math.abs(hours) < 24) return formatter.format(hours, 'hour');
-  return formatter.format(Math.round(hours / 24), 'day');
-}
+import { relativeTime } from '../../lib/relativeTime.js';
 
 export function ReportCard({ report, showBoard = false }) {
   const photo = report.media?.[0] ?? report.photos?.[0];

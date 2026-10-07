@@ -559,10 +559,14 @@ describe('Job terjadwal', () => {
     expect(active.body.data.status).toBe('ACTIVE');
   });
 
-  it('runScheduledJobs menjalankan kedua job', async () => {
+  it('runScheduledJobs menjalankan job status dan peringatan batas waktu', async () => {
     const ctx = await setup();
     await awaitingSince(ctx, 5);
 
-    expect(await runScheduledJobs(new Date())).toEqual({ autoConfirmed: 1, inactiveBoards: 0 });
+    expect(await runScheduledJobs(new Date())).toEqual({
+      autoConfirmed: 1,
+      inactiveBoards: 0,
+      dueWarnings: 0,
+    });
   });
 });

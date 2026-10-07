@@ -1,10 +1,11 @@
 import cron from 'node-cron';
-import { AUTO_CONFIRM_AFTER_DAYS } from '@tindak/shared';
+import { AUTO_CONFIRM_AFTER_DAYS, DUE_WARNING_HOURS } from '@tindak/shared';
 import { logger } from '../lib/logger.js';
 import { autoConfirmReports } from '../modules/reports/handling.service.js';
 import { markInactiveBoards } from '../modules/boards/boards.service.js';
 import { purgeOldIpHashes } from '../modules/moderation/admin.service.js';
 import { recomputeAllBoardTrust } from '../modules/trust/trust.service.js';
+import { notifyDueSoon, sendRatingDigest } from '../modules/notifications/notify.service.js';
 import { refreshHotScores, refreshPriorityScores } from '../modules/engagement/scores.service.js';
 
 export const JOB_SCHEDULES = Object.freeze({
@@ -16,7 +17,8 @@ export const JOB_SCHEDULES = Object.freeze({
 export async function runScheduledJobs(now = new Date()) {
   const autoConfirmed = await autoConfirmReports(now, AUTO_CONFIRM_AFTER_DAYS);
   const inactiveBoards = await markInactiveBoards(now);
-  return { autoConfirmed, inactiveBoards };
+  const dueWarnings = await notifyDueSoon(now, DUE_WARNING_HOURS);
+  return { autoConfirmed, inactiveBoards, dueWarnings };
 }
 
 export async function runEngagementJobs(now = new Date()) {
@@ -43,6 +45,7 @@ export function startJobs() {
       priorityScores: await refreshPriorityScores(),
       purgedIpHashes: await purgeOldIpHashes(),
       trustScores: await recomputeAllBoardTrust(),
+      ratingDigests: await sendRatingDigest(),
     })),
   ];
   logger.info('Job terjadwal aktif');

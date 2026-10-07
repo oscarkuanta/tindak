@@ -8,6 +8,7 @@ import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
 import { Logo } from './Logo.jsx';
 import { BoardSearch } from './BoardSearch.jsx';
 import { UserMenu } from './UserMenu.jsx';
+import { NotificationBell } from '../../components/notifications/NotificationBell.jsx';
 
 function CreateBoardAction() {
   const { data: user, isPending } = useMe();
@@ -35,7 +36,14 @@ function AuthActions() {
       <span className="size-8 animate-pulse rounded-full bg-surface-muted" aria-hidden="true" />
     );
   }
-  if (user) return <UserMenu user={user} />;
+  if (user) {
+    return (
+      <>
+        <NotificationBell />
+        <UserMenu user={user} />
+      </>
+    );
+  }
 
   const returnTo = location.pathname + location.search;
   return (

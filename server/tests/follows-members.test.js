@@ -1,8 +1,7 @@
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/lib/prisma.js';
-import { logger } from '../src/lib/logger.js';
 import { createUser, resetDatabase } from './helpers/db.js';
 
 let app;
@@ -331,7 +330,11 @@ describe('Alih kepemilikan', () => {
       where: { id: board.id },
       data: { verification: 'OFFICIAL', verifiedAt: new Date('2026-05-01') },
     });
-    const notify = vi.spyOn(logger, 'info');
+    const verifier = await createUser({
+      email: 'boardadmin@tindak.test',
+      name: 'Admin Board',
+      role: 'BOARD_ADMIN',
+    });
 
     const res = await owner.agent.post(`${base}/transfer`).send({ userId: handler.user.id });
 
@@ -353,18 +356,15 @@ describe('Alih kepemilikan', () => {
       { userId: owner.user.id, role: 'HANDLER' },
       { userId: handler.user.id, role: 'OWNER' },
     ]);
-    expect(notify).toHaveBeenCalledWith(
+    const notifications = await prisma.notification.findMany({
+      where: { type: 'BOARD_OWNER_CHANGED' },
+    });
+    expect(notifications).toEqual([
       expect.objectContaining({
-        notification: expect.objectContaining({
-          type: 'BOARD_OWNER_CHANGED',
-          audience: 'BOARD_ADMIN',
-          boardId: board.id,
-          newOwnerId: handler.user.id,
-        }),
+        userId: verifier.id,
+        data: expect.objectContaining({ boardSlug: board.slug, newOwnerId: handler.user.id }),
       }),
-      expect.any(String),
-    );
-    notify.mockRestore();
+    ]);
 
     expect((await handler.agent.patch(base).send({ name: 'Nama Pemilik Baru' })).status).toBe(200);
     expect((await owner.agent.patch(base).send({ name: 'Nama Pemilik Lama' })).status).toBe(403);

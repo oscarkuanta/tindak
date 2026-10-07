@@ -1,14 +1,10 @@
-import {
-  BOARD_CREATION_LIMIT,
-  BOARD_MAX_HANDLERS,
-  ERROR_CODES,
-  NOTIFICATION_TYPES,
-} from '@tindak/shared';
+import { BOARD_CREATION_LIMIT, BOARD_MAX_HANDLERS, ERROR_CODES } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { recordAudit } from '../../lib/audit.js';
 import { AppError } from '../../utils/AppError.js';
 import { decorateCards, getBoardDetail, recordHandlerActivity } from '../boards/boards.service.js';
-import { notifyBoardAdmins } from '../notifications/notifications.service.js';
+import { notifyBoardOwnerChanged } from '../notifications/notifications.service.js';
+import { notifyBoardInvitation } from '../notifications/notify.service.js';
 
 const MEMBER_USER_SELECT = { id: true, name: true, email: true, avatarUrl: true };
 
@@ -87,6 +83,7 @@ export async function inviteHandler(board, owner, { email }) {
     actorId: owner.id,
     targetUserId: invitee.id,
   });
+  await notifyBoardInvitation(member, board, owner.id);
   return toBoardMember(member);
 }
 
@@ -204,7 +201,7 @@ export async function transferOwnership(board, owner, { userId }) {
     newOwnerId: userId,
   };
   await recordAudit('BOARD_OWNER_CHANGED', { ...event, actorId: owner.id });
-  notifyBoardAdmins(NOTIFICATION_TYPES.BOARD_OWNER_CHANGED, event);
+  await notifyBoardOwnerChanged(board, event);
 
   return getBoardDetail(board.slug, owner);
 }
