@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { Activity, BadgeCheck, Clock3, Gauge, ListChecks, Siren } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import {
   REPORT_SEVERITY_LABELS,
-  REPORT_STATUS_LABELS,
   STATS_DEFAULT_RANGE,
   STATS_RANGES,
   STATS_RANGE_LABELS,
@@ -18,21 +18,19 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { Alert, Badge, Button, ButtonLink, Card, Spinner } from '../../components/ui/index.js';
+import {
+  Alert,
+  Badge,
+  Button,
+  ButtonLink,
+  Card,
+  Spinner,
+  StatCard as BaseStatCard,
+} from '../../components/ui/index.js';
+import { ReportStatusBadge } from '../../components/reports/ReportStatusBadge.jsx';
 import { TrustBadge } from '../../components/boards/BoardBadges.jsx';
 import { StarDistribution } from '../../components/trust/StarDistribution.jsx';
 import { useBoardStats } from '../../features/stats/hooks.js';
-
-const statusTone = {
-  NEW: 'info',
-  NEED_INFO: 'warning',
-  IN_PROGRESS: 'brand',
-  AWAITING_CONFIRMATION: 'warning',
-  RESOLVED: 'success',
-  REOPENED: 'warning',
-  REJECTED: 'danger',
-  DUPLICATE: 'neutral',
-};
 
 function formatNumber(value) {
   return typeof value === 'number' ? value.toLocaleString('id-ID') : 'Belum ada data';
@@ -59,21 +57,31 @@ function formatWeekStart(value, options = { day: 'numeric', month: 'short' }) {
   return new Intl.DateTimeFormat('id-ID', { ...options, timeZone: 'Asia/Jakarta' }).format(date);
 }
 
+const STAT_ICONS = {
+  'Total laporan': ListChecks,
+  'Laporan aktif': Activity,
+  'Laporan selesai': BadgeCheck,
+  'Rata-rata waktu penanganan': Clock3,
+  'Tingkat tanggap': Gauge,
+  'Berbahaya tepat waktu': Siren,
+};
+
 function StatCard({ label, value, tone = 'brand' }) {
+  const colorTone = tone === 'success' ? 'sky' : tone === 'danger' ? 'cream' : 'mint';
   return (
-    <Card as="dl" className="min-w-0">
-      <dt className="text-sm text-text-muted">{label}</dt>
-      <dd className="mt-2 text-2xl font-bold tabular-nums" data-testid={`stat-${label}`}>
-        <span className={tone === 'danger' ? 'text-danger' : 'text-text'}>{value}</span>
-      </dd>
-    </Card>
+    <BaseStatCard
+      label={label}
+      value={value}
+      tone={colorTone}
+      icon={STAT_ICONS[label]}
+      valueTestId={`stat-${label}`}
+      className="min-w-0"
+    />
   );
 }
 
 function StatusBadge({ status }) {
-  return (
-    <Badge tone={statusTone[status] ?? 'neutral'}>{REPORT_STATUS_LABELS[status] ?? status}</Badge>
-  );
+  return <ReportStatusBadge status={status} />;
 }
 
 function ReportTable({ title, description, reports, columns, empty }) {
