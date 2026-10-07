@@ -2,22 +2,24 @@ import { Outlet } from 'react-router';
 import { Header } from './Header.jsx';
 import { LeftNav } from './LeftNav.jsx';
 import { RightSidebar } from './RightSidebar.jsx';
+import { BottomNav } from './BottomNav.jsx';
 
 export function AppLayout() {
   return (
     <div className="min-h-screen">
       <Header />
-      <div className="mx-auto flex w-full max-w-layout gap-6 px-4 py-6">
-        <aside className="hidden w-60 shrink-0 lg:block" aria-label="Navigasi utama">
+      <div className="app-grid">
+        <aside className="app-left-nav" aria-label="Navigasi utama">
           <LeftNav />
         </aside>
-        <main className="min-w-0 flex-1">
+        <main className="app-main min-w-0">
           <Outlet />
         </main>
-        <aside className="hidden w-80 shrink-0 xl:block" aria-label="Informasi samping">
+        <aside className="app-right-sidebar min-w-0" aria-label="Informasi samping">
           <RightSidebar />
         </aside>
       </div>
+      <BottomNav />
     </div>
   );
 }

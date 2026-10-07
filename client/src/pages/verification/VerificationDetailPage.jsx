@@ -26,7 +26,7 @@ function Checklist({ items }) {
         <li key={item.key} className="flex items-start gap-2">
           <span
             aria-hidden="true"
-            className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${item.passed ? 'bg-success' : 'bg-danger'}`}
+            className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-surface ${item.passed ? 'bg-success' : 'bg-danger'}`}
           >
             {item.passed ? '✓' : '✕'}
           </span>

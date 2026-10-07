@@ -6,7 +6,7 @@ import { useReportAction } from '../../features/handling/hooks.js';
 import { Alert, Badge, Card, Spinner } from '../ui/index.js';
 import { HandlerActionPanel } from './HandlerActionPanel.jsx';
 import { ReporterResponsePanel } from './ReporterResponsePanel.jsx';
-import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
+import { LateChip, ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
 import { ReportTimeline } from './ReportTimeline.jsx';
 import { EngagementBar } from './EngagementBar.jsx';
 import { BlurredImage } from './BlurredImage.jsx';
@@ -67,7 +67,7 @@ export function ReportDetailContent({ report, credentials }) {
           )}
           <ReportStatusBadge status={report.status} />
           <ReportSeverityBadge severity={report.severity} />
-          {report.isOverdue && <Badge tone="danger">⏰ Terlambat</Badge>}
+          {report.isOverdue && <LateChip />}
           {report.reporterNotSatisfied && <Badge tone="warning">Pelapor tidak puas</Badge>}
           {!credentials && (
             <div className="ml-auto">
