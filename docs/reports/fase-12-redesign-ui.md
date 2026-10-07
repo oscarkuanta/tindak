@@ -3,7 +3,7 @@
 - Branch: `feat/f12-redesign-ui`
 - Pemilik: Akmal
 - Tanggal: 2026-10-07
-- PR: Belum dibuat; GitHub menolak push dengan `Internal Server Error`.
+- PR: [#33](https://github.com/oscarkuanta/tindak/pull/33)
 
 ## Ringkasan
 
