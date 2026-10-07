@@ -25,7 +25,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 10B  | Dashboard statistik                          | B      | Review      | Akmal   | [#31](https://github.com/oscarkuanta/tindak/pull/31)                                                   | 2026-10-07 |
 | 11A  | Data demo, QA, deploy                        | A      | Review      | Oscar   | -                                                                                                      | 2026-10-07 |
 | 11B  | Data demo, QA, deploy                        | B      | Belum Mulai | -       | -                                                                                                      | -          |
-| 12   | Redesign UI                                  | B      | Review      | Akmal   | [#33](https://github.com/oscarkuanta/tindak/pull/33)                                                   | 2026-10-08 |
+| 12   | Redesign UI                                  | B      | Selesai     | Akmal   | [#33](https://github.com/oscarkuanta/tindak/pull/33)                                                   | 2026-10-08 |
 
 ## Cara Mengisi
 
