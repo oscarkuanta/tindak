@@ -160,7 +160,7 @@ export function CreateBoardPage() {
   const hasSummaryError = Boolean(errors.name || errors.city || errors.type || errors.description);
 
   return (
-    <section className="mx-auto flex max-w-3xl flex-col gap-6">
+    <section className="blobs mx-auto flex max-w-3xl flex-col gap-6">
       <header>
         <p className="text-sm font-semibold text-brand">Mulai ruang laporan baru</p>
         <h1 className="mt-1 text-2xl font-bold">Buat Board</h1>
