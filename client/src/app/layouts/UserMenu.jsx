@@ -99,7 +99,7 @@ export function UserMenu({ user }) {
             {user.role === USER_ROLES.BOARD_ADMIN && (
               <Link
                 role="menuitem"
-                to="/verifikasi-board"
+                to="/verifikasi"
                 className={`${ITEM_CLASS} text-text`}
                 onClick={() => setOpen(false)}
               >
@@ -109,7 +109,7 @@ export function UserMenu({ user }) {
             {user.role === USER_ROLES.ADMIN && (
               <Link
                 role="menuitem"
-                to="/panel-admin"
+                to="/admin"
                 className={`${ITEM_CLASS} text-text`}
                 onClick={() => setOpen(false)}
               >

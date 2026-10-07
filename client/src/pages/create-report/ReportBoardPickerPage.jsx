@@ -7,10 +7,8 @@ import { useBoardSearch } from '../../features/boards/hooks.js';
 
 export function ReportBoardPickerPage() {
   const [query, setQuery] = useState('');
-  const search = useBoardSearch(
-    { q: query.trim(), page: 1, pageSize: 10 },
-    { enabled: query.trim().length >= 2 },
-  );
+  const searching = query.trim().length >= 2;
+  const search = useBoardSearch({ q: searching ? query.trim() : '', page: 1, pageSize: 10 });
   const boards = search.data?.data ?? [];
 
   return (
@@ -27,7 +25,10 @@ export function ReportBoardPickerPage() {
         placeholder="Contoh: Jalan Rungkut"
       />
       {search.isError && <Alert>{search.error.message}</Alert>}
-      {search.isPending && query.trim().length >= 2 && <Spinner label="Mencari Board" />}
+      {search.isPending && <Spinner label="Mencari Board" />}
+      {!searching && boards.length > 0 && (
+        <h2 className="text-sm font-semibold text-text-muted">Board terpopuler</h2>
+      )}
       {boards.length > 0 && (
         <ul className="flex flex-col gap-3">
           {boards.map((board) => (
@@ -53,10 +54,10 @@ export function ReportBoardPickerPage() {
           description="Periksa ejaan atau cari dengan nama lain."
         />
       )}
-      {query.trim().length < 2 && (
+      {!searching && !search.isPending && !search.isError && boards.length === 0 && (
         <EmptyState
-          title="Cari Board terlebih dahulu"
-          description="Ketik minimal dua karakter untuk melihat Board yang tersedia."
+          title="Belum ada Board"
+          description="Buat Board baru untuk mulai menerima laporan."
         />
       )}
     </section>

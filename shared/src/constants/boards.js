@@ -120,3 +120,5 @@ export const BOARD_SEARCH_PAGE_SIZE = 20;
 export const BOARD_SEARCH_MAX_PAGE_SIZE = 50;
 export const BOARD_SIMILAR_LIMIT = 5;
 export const CITY_SEARCH_LIMIT = 20;
+
+export const BOARD_MAX_HANDLERS = 10;

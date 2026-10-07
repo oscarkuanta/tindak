@@ -15,6 +15,7 @@ export function BoardCard({ board, compact = false, showFollowButton = true }) {
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h2 className="truncate font-semibold text-text">{board.name}</h2>
               <VerificationBadge verification={board.verification} />
+              {compact && <TrustBadge label={board.trustLabel} score={board.trustScore} />}
             </div>
             <p className="mt-1 text-sm text-text-muted">{board.city}</p>
           </div>
@@ -26,7 +27,7 @@ export function BoardCard({ board, compact = false, showFollowButton = true }) {
       </div>
       {!compact && (
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-muted">
-          <TrustBadge label={board.trustLabel} />
+          <TrustBadge label={board.trustLabel} score={board.trustScore} />
           <span>{board.followerCount ?? 0} pengikut</span>
           <span>{board.activeReportCount ?? 0} laporan aktif</span>
         </div>

@@ -16,22 +16,35 @@ enum UserRole {
 }
 
 model User {
-  id               Int           @id @default(autoincrement())
-  name             String        @db.VarChar(50)
-  email            String        @unique @db.VarChar(191)
-  passwordHash     String?       @map("password_hash") @db.VarChar(255)
-  googleId         String?       @unique @map("google_id") @db.VarChar(64)
-  avatarUrl        String?       @map("avatar_url") @db.VarChar(500)
-  role             UserRole      @default(USER)
-  onboardedAt      DateTime?     @map("onboarded_at")
-  lastLoginAt      DateTime?     @map("last_login_at")
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+  id               Int                    @id @default(autoincrement())
+  name             String                 @db.VarChar(50)
+  email            String                 @unique @db.VarChar(191)
+  passwordHash     String?                @map("password_hash") @db.VarChar(255)
+  googleId         String?                @unique @map("google_id") @db.VarChar(64)
+  avatarUrl        String?                @map("avatar_url") @db.VarChar(500)
+  role             UserRole               @default(USER)
+  onboardedAt      DateTime?              @map("onboarded_at")
+  lastLoginAt      DateTime?              @map("last_login_at")
+  createdAt        DateTime               @default(now()) @map("created_at")
+  updatedAt        DateTime               @updatedAt @map("updated_at")
   sessions         Session[]
-  ownedBoards      Board[]       @relation("BoardOwner")
-  verifiedBoards   Board[]       @relation("BoardVerifiedBy")
-  boardMemberships BoardMember[] @relation("BoardMembership")
-  boardInvitations BoardMember[] @relation("BoardMemberInvitedBy")
+  ownedBoards      Board[]                @relation("BoardOwner")
+  verifiedBoards   Board[]                @relation("BoardVerifiedBy")
+  boardMemberships BoardMember[]          @relation("BoardMembership")
+  boardInvitations BoardMember[]          @relation("BoardMemberInvitedBy")
+  boardFollows     BoardFollower[]
+  reports          Report[]               @relation("ReportAuthor")
+  assignedReports  Report[]               @relation("ReportAssignee")
+  reportEvents     ReportEvent[]          @relation("ReportEventActor")
+  infoRequests     InfoRequest[]          @relation("InfoRequestAsker")
+  supports         Support[]
+  reactions        Reaction[]
+  flags            Flag[]
+  bansCreated      Ban[]
+  auditLogs        AuditLog[]
+  boardRatings     BoardRating[]
+  notifications    Notification[]
+  verificationLogs BoardVerificationLog[]
 
   @@map("users")
 }
@@ -80,29 +93,43 @@ enum BoardMemberStatus {
 }
 
 model Board {
-  id                    Int               @id @default(autoincrement())
-  slug                  String            @unique @db.VarChar(120)
-  name                  String            @db.VarChar(80)
-  city                  String            @db.VarChar(80)
+  id                    Int                    @id @default(autoincrement())
+  slug                  String                 @unique @db.VarChar(120)
+  name                  String                 @db.VarChar(80)
+  city                  String                 @db.VarChar(80)
   type                  BoardType
-  managerTitle          String?           @map("manager_title") @db.VarChar(80)
-  description           String            @db.VarChar(1000)
-  coverImageUrl         String?           @map("cover_image_url") @db.VarChar(500)
-  verification          BoardVerification @default(COMMUNITY)
-  verifiedAt            DateTime?         @map("verified_at")
-  verifiedById          Int?              @map("verified_by_id")
-  verifiedBy            User?             @relation("BoardVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
-  dangerousTargetHours  Int               @default(48) @map("dangerous_target_hours")
-  status                BoardStatus       @default(ACTIVE)
-  lastHandlerActivityAt DateTime          @default(now()) @map("last_handler_activity_at")
-  ownerId               Int               @map("owner_id")
-  owner                 User              @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  createdAt             DateTime          @default(now()) @map("created_at")
-  updatedAt             DateTime          @updatedAt @map("updated_at")
+  managerTitle          String?                @map("manager_title") @db.VarChar(80)
+  description           String                 @db.VarChar(1000)
+  coverImageUrl         String?                @map("cover_image_url") @db.VarChar(500)
+  verification          BoardVerification      @default(COMMUNITY)
+  verifiedAt            DateTime?              @map("verified_at")
+  verifiedById          Int?                   @map("verified_by_id")
+  verifiedBy            User?                  @relation("BoardVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  dangerousTargetHours  Int                    @default(48) @map("dangerous_target_hours")
+  status                BoardStatus            @default(ACTIVE)
+  lastHandlerActivityAt DateTime               @default(now()) @map("last_handler_activity_at")
+  restoredByAdminCount  Int                    @default(0) @map("restored_by_admin_count")
+  ratingCount           Int                    @default(0) @map("rating_count")
+  ratingSum             Int                    @default(0) @map("rating_sum")
+  responseRate          Float?                 @map("response_rate")
+  trustScore            Float?                 @map("trust_score")
+  trustLabel            TrustLabel             @default(NEW) @map("trust_label")
+  rejectedRate          Float                  @default(0) @map("rejected_rate")
+  candidateSince        DateTime?              @map("candidate_since")
+  ownerId               Int                    @map("owner_id")
+  owner                 User                   @relation("BoardOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
   members               BoardMember[]
   categories            Category[]
+  followers             BoardFollower[]
+  reports               Report[]
+  ratings               BoardRating[]
+  verificationLogs      BoardVerificationLog[]
 
   @@index([name])
+  @@index([candidateSince])
+  @@index([verification, trustScore])
   @@index([city])
   @@index([city, type])
   @@index([verification])
@@ -135,8 +162,359 @@ model Category {
   isDefault Boolean  @default(false) @map("is_default")
   sortOrder Int      @default(0) @map("sort_order")
   createdAt DateTime @default(now()) @map("created_at")
+  reports   Report[]
 
   @@unique([boardId, name])
   @@index([boardId, sortOrder])
   @@map("categories")
+}
+
+enum FollowNotifyLevel {
+  ALL
+  DANGEROUS_ONLY
+  OFF
+}
+
+model BoardFollower {
+  id          Int               @id @default(autoincrement())
+  boardId     Int               @map("board_id")
+  board       Board             @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId      Int               @map("user_id")
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifyLevel FollowNotifyLevel @default(ALL) @map("notify_level")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@unique([boardId, userId])
+  @@index([userId, createdAt])
+  @@map("board_followers")
+}
+
+enum ReportSeverity {
+  LOW
+  MEDIUM
+  DANGEROUS
+}
+
+enum ReportStatus {
+  NEW
+  NEED_INFO
+  IN_PROGRESS
+  AWAITING_CONFIRMATION
+  RESOLVED
+  REOPENED
+  REJECTED
+  DUPLICATE
+}
+
+enum ReportMediaKind {
+  BEFORE
+  AFTER
+  EXTRA
+}
+
+enum FlagTargetType {
+  REPORT
+  BOARD
+}
+
+enum FlagReason {
+  SEXUAL
+  VIOLENCE
+  HATE
+  PERSONAL_ATTACK
+  SPAM
+  NOT_COMPLAINT
+  FAKE_BOARD
+  SYSTEM_NSFW
+}
+
+enum FlagStatus {
+  OPEN
+  ACCEPTED
+  REJECTED
+}
+
+enum BanTargetType {
+  USER
+  GUEST_TOKEN
+  IP
+}
+
+enum ReportHiddenReason {
+  FLAGS
+  HANDLER_FLAG
+  ADMIN_REMOVED
+}
+
+enum ReactionType {
+  DANGEROUS
+  LONG_STANDING
+  ANNOYING
+}
+
+enum RejectionReason {
+  NOT_PHYSICAL
+  OUT_OF_SCOPE
+  INSUFFICIENT_INFORMATION
+  FALSE_REPORT
+  OTHER
+}
+
+enum ReportActorType {
+  REPORTER
+  HANDLER
+  SYSTEM
+}
+
+model Report {
+  id                   Int                 @id @default(autoincrement())
+  boardId              Int                 @map("board_id")
+  board                Board               @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  categoryId           Int                 @map("category_id")
+  category             Category            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  userId               Int?                @map("user_id")
+  user                 User?               @relation("ReportAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  isAnonymous          Boolean             @default(false) @map("is_anonymous")
+  guestTokenHash       String?             @map("guest_token_hash") @db.Char(64)
+  ipHash               String?             @map("ip_hash") @db.Char(64)
+  title                String              @db.VarChar(100)
+  description          String              @db.Text
+  locationDetail       String              @map("location_detail") @db.VarChar(200)
+  severity             ReportSeverity
+  status               ReportStatus        @default(NEW)
+  trackingCode         String              @unique @map("tracking_code") @db.Char(8)
+  trackingSecretHash   String              @map("tracking_secret_hash") @db.Char(64)
+  parentId             Int?                @map("parent_id")
+  parent               Report?             @relation("ReportDuplicates", fields: [parentId], references: [id], onDelete: SetNull)
+  duplicates           Report[]            @relation("ReportDuplicates")
+  assigneeId           Int?                @map("assignee_id")
+  assignee             User?               @relation("ReportAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  priorityScore        Int                 @default(0) @map("priority_score")
+  hotScore             Int                 @default(0) @map("hot_score")
+  supportCount         Int                 @default(1) @map("support_count")
+  dangerousCount       Int                 @default(0) @map("dangerous_count")
+  longStandingCount    Int                 @default(0) @map("long_standing_count")
+  annoyingCount        Int                 @default(0) @map("annoying_count")
+  lastEngagementAt     DateTime?           @map("last_engagement_at")
+  reopenCount          Int                 @default(0) @map("reopen_count")
+  reporterNotSatisfied Boolean             @default(false) @map("reporter_not_satisfied")
+  isHidden             Boolean             @default(false) @map("is_hidden")
+  hiddenReason         ReportHiddenReason? @map("hidden_reason")
+  hiddenByHandler      Boolean             @default(false) @map("hidden_by_handler")
+  removedAt            DateTime?           @map("removed_at")
+  needsModeration      Boolean             @default(false) @map("needs_moderation")
+  dueWarningSentAt     DateTime?           @map("due_warning_sent_at")
+  dueAt                DateTime?           @map("due_at")
+  resolvedAt           DateTime?           @map("resolved_at")
+  createdAt            DateTime            @default(now()) @map("created_at")
+  updatedAt            DateTime            @updatedAt @map("updated_at")
+  media                ReportMedia[]
+  events               ReportEvent[]
+  infoRequests         InfoRequest[]
+  supports             Support[]
+  reactions            Reaction[]
+
+  @@index([boardId, isHidden, createdAt])
+  @@index([boardId, isHidden, hotScore])
+  @@index([boardId, isHidden, priorityScore])
+  @@index([isHidden, hotScore])
+  @@index([boardId, status])
+  @@index([userId, createdAt])
+  @@index([guestTokenHash, createdAt])
+  @@index([ipHash, createdAt])
+  @@index([categoryId])
+  @@map("reports")
+}
+
+model ReportMedia {
+  id         Int             @id @default(autoincrement())
+  reportId   Int             @map("report_id")
+  report     Report          @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  url        String          @db.VarChar(500)
+  storageKey String          @map("storage_key") @db.VarChar(200)
+  kind       ReportMediaKind @default(BEFORE)
+  nsfwScore  Float?          @map("nsfw_score")
+  isBlurred  Boolean         @default(false) @map("is_blurred")
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  @@index([reportId])
+  @@map("report_media")
+}
+
+model ReportEvent {
+  id         Int              @id @default(autoincrement())
+  reportId   Int              @map("report_id")
+  report     Report           @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fromStatus ReportStatus?    @map("from_status")
+  toStatus   ReportStatus     @map("to_status")
+  actorType  ReportActorType  @map("actor_type")
+  actorId    Int?             @map("actor_id")
+  actor      User?            @relation("ReportEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  reason     RejectionReason?
+  note       String?          @db.VarChar(1000)
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  @@index([reportId, createdAt])
+  @@map("report_events")
+}
+
+model InfoRequest {
+  id         Int       @id @default(autoincrement())
+  reportId   Int       @map("report_id")
+  report     Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  question   String    @db.VarChar(1000)
+  answer     String?   @db.VarChar(2000)
+  askedById  Int?      @map("asked_by_id")
+  askedBy    User?     @relation("InfoRequestAsker", fields: [askedById], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  answeredAt DateTime? @map("answered_at")
+
+  @@index([reportId, createdAt])
+  @@map("info_requests")
+}
+
+model Support {
+  id        Int      @id @default(autoincrement())
+  reportId  Int      @map("report_id")
+  report    Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([reportId, userId])
+  @@index([reportId, createdAt])
+  @@index([userId])
+  @@map("supports")
+}
+
+model Reaction {
+  id        Int          @id @default(autoincrement())
+  reportId  Int          @map("report_id")
+  report    Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId    Int          @map("user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      ReactionType
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  @@unique([reportId, userId])
+  @@index([reportId, updatedAt])
+  @@index([userId])
+  @@map("reactions")
+}
+
+model Flag {
+  id         Int            @id @default(autoincrement())
+  targetType FlagTargetType @map("target_type")
+  targetId   Int            @map("target_id")
+  userId     Int?           @map("user_id")
+  user       User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  reason     FlagReason
+  note       String?        @db.VarChar(500)
+  status     FlagStatus     @default(OPEN)
+  weight     Float          @default(1)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  resolvedAt DateTime?      @map("resolved_at")
+
+  @@unique([targetType, targetId, userId])
+  @@index([targetType, targetId, status])
+  @@index([status, reason])
+  @@index([userId, createdAt])
+  @@map("flags")
+}
+
+model Ban {
+  id          Int           @id @default(autoincrement())
+  targetType  BanTargetType @map("target_type")
+  targetValue String        @map("target_value") @db.VarChar(64)
+  reason      String        @db.VarChar(500)
+  expiresAt   DateTime?     @map("expires_at")
+  createdById Int?          @map("created_by_id")
+  createdBy   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  revokedAt   DateTime?     @map("revoked_at")
+
+  @@index([targetType, targetValue])
+  @@map("bans")
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  actorUserId Int?     @map("actor_user_id")
+  actor       User?    @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  action      String   @db.VarChar(60)
+  targetType  String?  @map("target_type") @db.VarChar(30)
+  targetId    Int?     @map("target_id")
+  data        Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([action, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+enum TrustLabel {
+  NEW
+  TRUSTED
+  NONE
+  CAUTION
+}
+
+enum RatingQuickTag {
+  RESPONSIVE
+  SLOW
+  DOUBTFUL
+}
+
+enum VerificationAction {
+  GRANTED
+  REVOKED
+  SKIPPED
+}
+
+model BoardRating {
+  id        Int             @id @default(autoincrement())
+  boardId   Int             @map("board_id")
+  board     Board           @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  userId    Int             @map("user_id")
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stars     Int             @db.TinyInt
+  quickTag  RatingQuickTag? @map("quick_tag")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  @@unique([boardId, userId])
+  @@index([userId])
+  @@map("board_ratings")
+}
+
+model BoardVerificationLog {
+  id          Int                @id @default(autoincrement())
+  boardId     Int                @map("board_id")
+  board       Board              @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  action      VerificationAction
+  actorUserId Int?               @map("actor_user_id")
+  actor       User?              @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+  reason      String?            @db.VarChar(500)
+  snapshot    Json
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  @@index([boardId, createdAt])
+  @@index([action, createdAt])
+  @@map("board_verification_logs")
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String    @db.VarChar(50)
+  data      Json
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

@@ -67,6 +67,16 @@ export function HandlerActionPanel({
     () => new Set(report.allowedActions ?? []),
     [report.allowedActions],
   );
+  const assigneeOptions = useMemo(() => {
+    const owner = report.board?.owner;
+    const active = handlers
+      .filter((handler) => handler.status === 'ACTIVE' && handler.userId !== owner?.id)
+      .map((handler) => ({
+        id: handler.userId,
+        label: handler.user?.name ?? handler.user?.email ?? `Penindak ${handler.userId}`,
+      }));
+    return owner ? [{ id: owner.id, label: `${owner.name} (Penindak Utama)` }, ...active] : active;
+  }, [handlers, report.board?.owner]);
   const duplicateQuery = useQuery({
     queryKey: ['boards', report.board?.slug, 'duplicate-candidates', search.trim()],
     queryFn: () => searchBoardReports(report.board.slug, search.trim()),
@@ -183,7 +193,7 @@ export function HandlerActionPanel({
       <h2 id="handler-actions-title" className="text-lg font-semibold">
         Aksi Penindak
       </h2>
-      {handlers.length > 0 && (
+      {assigneeOptions.length > 0 && (
         <div className="mt-4 max-w-sm">
           <label htmlFor="report-assignee" className="mb-1 block text-sm font-medium">
             Penanggung jawab
@@ -195,13 +205,11 @@ export function HandlerActionPanel({
             className="h-10 w-full rounded-base border border-border bg-surface px-3 text-sm"
           >
             <option value="">Belum ditentukan</option>
-            {handlers
-              .filter((handler) => handler.status === 'ACTIVE')
-              .map((handler) => (
-                <option key={handler.userId} value={handler.userId}>
-                  {handler.user?.name ?? handler.user?.email ?? `Penindak ${handler.userId}`}
-                </option>
-              ))}
+            {assigneeOptions.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
           </select>
         </div>
       )}

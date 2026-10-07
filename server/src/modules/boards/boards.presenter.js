@@ -1,5 +1,11 @@
+function round(value, digits = 1) {
+  if (value === null || value === undefined) return null;
+  const factor = 10 ** digits;
+  return Math.round(value * factor) / factor;
+}
+
 export function trustLabelFor(board) {
-  return board.status === 'INACTIVE' ? 'INACTIVE' : 'NEW';
+  return board.status === 'INACTIVE' ? 'INACTIVE' : (board.trustLabel ?? 'NEW');
 }
 
 export function toCategory(category) {
@@ -11,7 +17,19 @@ export function toCategory(category) {
   };
 }
 
-export function toBoardCard(board) {
+export function toViewer(user, { follow, membership } = {}) {
+  if (!user) return null;
+  return {
+    isFollowing: Boolean(follow),
+    notifyLevel: follow?.notifyLevel ?? null,
+    role: membership?.role ?? null,
+  };
+}
+
+export function toBoardCard(
+  board,
+  { followerCount = 0, activeReportCount = 0, viewer = null } = {},
+) {
   return {
     id: board.id,
     slug: board.slug,
@@ -22,31 +40,38 @@ export function toBoardCard(board) {
     verifiedAt: board.verifiedAt,
     coverImageUrl: board.coverImageUrl,
     status: board.status,
-    trustScore: null,
+    trustScore: round(board.trustScore),
     trustLabel: trustLabelFor(board),
-    followerCount: 0,
-    activeReportCount: 0,
+    ratingCount: board.ratingCount ?? 0,
+    followerCount,
+    activeReportCount,
     createdAt: board.createdAt,
+    viewer,
   };
 }
 
-export function toBoardDetail(board, { handlerCount, membership, viewerLoggedIn }) {
+export function toBoardDetail(
+  board,
+  { handlerCount, followerCount, activeReportCount, viewer, verificationHistory = [] },
+) {
   return {
-    ...toBoardCard(board),
+    ...toBoardCard(board, { followerCount, activeReportCount, viewer }),
     managerTitle: board.managerTitle,
     description: board.description,
     dangerousTargetHours: board.dangerousTargetHours,
-    ratingCount: 0,
-    responseRate: 0,
-    rejectedPercentage: 0,
+    responseRate:
+      board.responseRate === null || board.responseRate === undefined
+        ? null
+        : Math.round(board.responseRate * 100),
+    rejectedPercentage: Math.round((board.rejectedRate ?? 0) * 100),
+    averageStars: board.ratingCount ? round(board.ratingSum / board.ratingCount) : null,
+    verificationHistory,
     handlerCount,
     isInactive: board.status === 'INACTIVE',
+    restoredByAdminCount: board.restoredByAdminCount ?? 0,
     owner: board.owner
       ? { id: board.owner.id, name: board.owner.name, avatarUrl: board.owner.avatarUrl }
       : null,
     categories: (board.categories ?? []).map(toCategory),
-    viewer: viewerLoggedIn
-      ? { isFollowing: false, notifyLevel: null, role: membership?.role ?? null }
-      : null,
   };
 }

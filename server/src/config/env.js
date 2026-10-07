@@ -16,6 +16,11 @@ const emailListSchema = z
       .filter(Boolean),
   );
 
+const booleanFlag = z
+  .enum(['true', 'false', '1', '0', ''])
+  .optional()
+  .transform((value) => value === 'true' || value === '1');
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -34,13 +39,34 @@ const envSchema = z.object({
   ADMIN_EMAILS: emailListSchema,
   BOARD_ADMIN_EMAILS: emailListSchema,
   TURNSTILE_SECRET_KEY: optionalString,
+  NSFW_ENABLED: booleanFlag,
+  JOBS_ENABLED: z
+    .enum(['true', 'false', '1', '0', ''])
+    .optional()
+    .transform((value) => value !== 'false' && value !== '0'),
+  UPLOAD_DIR: optionalString,
   IP_HASH_SECRET: z.string().min(16, 'minimal 16 karakter'),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
 });
 
 const GOOGLE_CREDENTIAL_KEYS = ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 
+export const TURNSTILE_TEST_SECRETS = Object.freeze({
+  PASS: '1x0000000000000000000000000000000AA',
+  FAIL: '2x0000000000000000000000000000000AA',
+});
+
 const envSchemaWithRules = envSchema.superRefine((value, ctx) => {
+  if (value.NODE_ENV === 'production') {
+    const secret = value.TURNSTILE_SECRET_KEY;
+    if (!secret || Object.values(TURNSTILE_TEST_SECRETS).includes(secret)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['TURNSTILE_SECRET_KEY'],
+        message: 'wajib diisi dengan secret key asli di production',
+      });
+    }
+  }
   const filled = GOOGLE_CREDENTIAL_KEYS.filter((key) => value[key]);
   if (filled.length === 1) {
     for (const key of GOOGLE_CREDENTIAL_KEYS.filter((item) => !value[item])) {
@@ -69,6 +95,7 @@ export function parseEnv(source) {
     GOOGLE_CALLBACK_URL:
       data.GOOGLE_CALLBACK_URL ?? new URL('/api/auth/google/callback', data.CLIENT_URL).toString(),
     GOOGLE_ENABLED: GOOGLE_CREDENTIAL_KEYS.every((key) => data[key]),
+    TURNSTILE_SECRET_KEY: data.TURNSTILE_SECRET_KEY ?? TURNSTILE_TEST_SECRETS.PASS,
   });
 }
 

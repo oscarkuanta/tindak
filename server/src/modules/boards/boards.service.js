@@ -7,18 +7,27 @@ import {
   CITIES,
   CITY_SEARCH_LIMIT,
   ERROR_CODES,
+  REPORT_ACTIVE_STATUSES,
   USER_ROLES,
+  BOARD_INACTIVE_AFTER_DAYS,
 } from '@tindak/shared';
 import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
 import { boardBaseSlug, nextAvailableSlug } from '../../utils/slugify.js';
-import { compareSearchResults, rankSimilarBoards, similarTokens } from './boards.ranking.js';
-import { toBoardCard, toBoardDetail, toCategory } from './boards.presenter.js';
+import {
+  comparePopularity,
+  compareSearchResults,
+  rankSimilarBoards,
+  similarTokens,
+} from './boards.ranking.js';
+import { toBoardCard, toBoardDetail, toCategory, toViewer } from './boards.presenter.js';
+import { computeTrustScore } from '../trust/trustScore.js';
 
 const SLUG_RETRIES = 3;
 const SIMILAR_CANDIDATES = 50;
 const CATEGORY_ORDER = [{ sortOrder: 'asc' }, { id: 'asc' }];
 const STAFF_ROLES = new Set([USER_ROLES.ADMIN, USER_ROLES.BOARD_ADMIN]);
+const ACTIVE_REPORT_WHERE = { isHidden: false, status: { in: [...REPORT_ACTIVE_STATUSES] } };
 
 function boardNotFound() {
   return new AppError(404, ERROR_CODES.BOARD_NOT_FOUND, 'Board tidak ditemukan');
@@ -60,6 +69,66 @@ export async function getBoardMembership(boardId, userId) {
   });
 }
 
+export async function decorateCards(boards, user) {
+  if (boards.length === 0) return [];
+  const ids = boards.map((board) => board.id);
+  const [counts, reportCounts, follows, memberships] = await Promise.all([
+    prisma.boardFollower.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids } },
+      _count: { _all: true },
+    }),
+    prisma.report.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids }, ...ACTIVE_REPORT_WHERE },
+      _count: { _all: true },
+    }),
+    user ? prisma.boardFollower.findMany({ where: { userId: user.id, boardId: { in: ids } } }) : [],
+    user
+      ? prisma.boardMember.findMany({
+          where: { userId: user.id, status: 'ACTIVE', boardId: { in: ids } },
+        })
+      : [],
+  ]);
+  const countByBoard = new Map(counts.map((row) => [row.boardId, row._count._all]));
+  const reportsByBoard = new Map(reportCounts.map((row) => [row.boardId, row._count._all]));
+  const followByBoard = new Map(follows.map((follow) => [follow.boardId, follow]));
+  const memberByBoard = new Map(memberships.map((member) => [member.boardId, member]));
+
+  return boards.map((board) =>
+    toBoardCard(board, {
+      followerCount: countByBoard.get(board.id) ?? 0,
+      activeReportCount: reportsByBoard.get(board.id) ?? 0,
+      viewer: toViewer(user, {
+        follow: followByBoard.get(board.id),
+        membership: memberByBoard.get(board.id),
+      }),
+    }),
+  );
+}
+
+async function verificationHistoryFor(boardId, user, membership) {
+  const isBoardAdmin = user?.role === USER_ROLES.BOARD_ADMIN;
+  const isOwner = membership?.role === 'OWNER';
+  const actions = isBoardAdmin
+    ? ['GRANTED', 'REVOKED', 'SKIPPED']
+    : isOwner
+      ? ['GRANTED', 'REVOKED']
+      : ['GRANTED'];
+  const logs = await prisma.boardVerificationLog.findMany({
+    where: { boardId, action: { in: actions } },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    select: { id: true, action: true, reason: true, createdAt: true },
+  });
+  const withReason = isBoardAdmin || isOwner;
+  return logs.map((log) => ({
+    id: log.id,
+    action: log.action,
+    reason: withReason ? log.reason : null,
+    createdAt: log.createdAt,
+  }));
+}
+
 export async function findVisibleBoard(slug, user) {
   const board = await prisma.board.findUnique({ where: { slug } });
   if (!board) throw boardNotFound();
@@ -78,12 +147,25 @@ export async function getBoardDetail(slug, user) {
   if (!board) throw boardNotFound();
   if (board.status === 'FROZEN' && !canSeeFrozenBoards(user)) throw boardNotFound();
 
-  const [handlerCount, membership] = await Promise.all([
+  const [handlerCount, followerCount, activeReportCount, membership, follow] = await Promise.all([
     prisma.boardMember.count({ where: { boardId: board.id, status: 'ACTIVE' } }),
+    prisma.boardFollower.count({ where: { boardId: board.id } }),
+    prisma.report.count({ where: { boardId: board.id, ...ACTIVE_REPORT_WHERE } }),
     getBoardMembership(board.id, user?.id),
+    user
+      ? prisma.boardFollower.findUnique({
+          where: { boardId_userId: { boardId: board.id, userId: user.id } },
+        })
+      : null,
   ]);
 
-  return toBoardDetail(board, { handlerCount, membership, viewerLoggedIn: Boolean(user) });
+  return toBoardDetail(board, {
+    handlerCount,
+    followerCount,
+    activeReportCount,
+    viewer: toViewer(user, { follow, membership }),
+    verificationHistory: await verificationHistoryFor(board.id, user, membership),
+  });
 }
 
 async function pickSlug(tx, name, city) {
@@ -127,6 +209,7 @@ export async function createBoard(user, input) {
             description: input.description,
             dangerousTargetHours: input.dangerousTargetHours,
             verification: 'COMMUNITY',
+            trustScore: computeTrustScore({ ratingCount: 0, ratingSum: 0, responseRate: null }),
             ownerId: user.id,
             members: { create: { userId: user.id, role: 'OWNER', status: 'ACTIVE' } },
             categories: { create: initialCategories(input.type, input.extraCategories) },
@@ -147,14 +230,14 @@ export async function updateBoard(board, user, input) {
   for (const key of ['name', 'managerTitle', 'description', 'dangerousTargetHours']) {
     if (input[key] !== undefined) data[key] = input[key];
   }
-  await prisma.board.update({
-    where: { id: board.id },
-    data: { ...data, lastHandlerActivityAt: new Date() },
+  await prisma.$transaction(async (tx) => {
+    await tx.board.update({ where: { id: board.id }, data });
+    await recordHandlerActivity(tx, board.id);
   });
   return getBoardDetail(board.slug, user);
 }
 
-export async function searchBoards({ q, city, type, verification, page, pageSize }) {
+export async function searchBoards({ q, city, type, verification, page, pageSize }, user) {
   const where = {
     status: { not: 'FROZEN' },
     ...(city && { city }),
@@ -162,18 +245,50 @@ export async function searchBoards({ q, city, type, verification, page, pageSize
     ...(verification && { verification }),
     ...(q && { name: { contains: q } }),
   };
-  const rows = await prisma.board.findMany({ where });
-  const cards = rows.map(toBoardCard).sort(compareSearchResults(q));
-  const total = cards.length;
+  const rows = (await withActivity(await prisma.board.findMany({ where }))).sort(
+    compareSearchResults(q),
+  );
+  const total = rows.length;
   const start = (page - 1) * pageSize;
 
   return {
-    data: cards.slice(start, start + pageSize),
+    data: await decorateCards(rows.slice(start, start + pageSize), user),
     meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
   };
 }
 
-export async function findSimilarBoards({ name, city }) {
+async function withActivity(boards) {
+  const ids = boards.map((board) => board.id);
+  if (ids.length === 0) return [];
+  const [reportCounts, followerCounts] = await Promise.all([
+    prisma.report.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids }, ...ACTIVE_REPORT_WHERE },
+      _count: { _all: true },
+    }),
+    prisma.boardFollower.groupBy({
+      by: ['boardId'],
+      where: { boardId: { in: ids } },
+      _count: { _all: true },
+    }),
+  ]);
+  const reportsByBoard = new Map(reportCounts.map((row) => [row.boardId, row._count._all]));
+  const followersByBoard = new Map(followerCounts.map((row) => [row.boardId, row._count._all]));
+  return boards.map((board) => ({
+    ...board,
+    activeReportCount: reportsByBoard.get(board.id) ?? 0,
+    followerCount: followersByBoard.get(board.id) ?? 0,
+  }));
+}
+
+export async function listPopularBoards(limit, user) {
+  const boards = await withActivity(
+    await prisma.board.findMany({ where: { status: { not: 'FROZEN' } } }),
+  );
+  return decorateCards(boards.sort(comparePopularity).slice(0, limit), user);
+}
+
+export async function findSimilarBoards({ name, city }, user) {
   const tokens = similarTokens(name);
   if (tokens.length === 0) return [];
   const candidates = await prisma.board.findMany({
@@ -184,7 +299,7 @@ export async function findSimilarBoards({ name, city }) {
     },
     take: SIMILAR_CANDIDATES,
   });
-  return rankSimilarBoards(candidates, name, BOARD_SIMILAR_LIMIT).map(toBoardCard);
+  return decorateCards(rankSimilarBoards(candidates, name, BOARD_SIMILAR_LIMIT), user);
 }
 
 export async function listMyBoards(user) {
@@ -192,8 +307,12 @@ export async function listMyBoards(user) {
     where: { userId: user.id, status: 'ACTIVE' },
     include: { board: true },
   });
+  const cards = await decorateCards(
+    memberships.map((membership) => membership.board),
+    user,
+  );
   return memberships
-    .map((membership) => ({ board: toBoardCard(membership.board), role: membership.role }))
+    .map((membership, index) => ({ board: cards[index], role: membership.role }))
     .sort(
       (a, b) =>
         (a.role === 'OWNER' ? 0 : 1) - (b.role === 'OWNER' ? 0 : 1) ||
@@ -215,8 +334,12 @@ export function searchCities(q) {
     .slice(0, CITY_SEARCH_LIMIT);
 }
 
-async function touchHandlerActivity(tx, boardId) {
-  await tx.board.update({ where: { id: boardId }, data: { lastHandlerActivityAt: new Date() } });
+export async function recordHandlerActivity(client, boardId, now = new Date()) {
+  await client.board.update({ where: { id: boardId }, data: { lastHandlerActivityAt: now } });
+  await client.board.updateMany({
+    where: { id: boardId, status: 'INACTIVE' },
+    data: { status: 'ACTIVE' },
+  });
 }
 
 async function assertCategoryNameFree(tx, boardId, name, exceptId) {
@@ -258,7 +381,7 @@ export async function addCategory(board, { name }) {
       const category = await tx.category.create({
         data: { boardId: board.id, name, sortOrder: (last?.sortOrder ?? -1) + 1 },
       });
-      await touchHandlerActivity(tx, board.id);
+      await recordHandlerActivity(tx, board.id);
       return toCategory(category);
     })
     .catch(mapCategoryClash);
@@ -278,7 +401,7 @@ export async function updateCategory(board, categoryId, { name, sortOrder }) {
           ...(sortOrder !== undefined && { sortOrder }),
         },
       });
-      await touchHandlerActivity(tx, board.id);
+      await recordHandlerActivity(tx, board.id);
       return toCategory(updated);
     })
     .catch(mapCategoryClash);
@@ -288,8 +411,16 @@ export async function deleteCategory(board, categoryId) {
   return prisma.$transaction(async (tx) => {
     const category = await findBoardCategory(tx, board.id, categoryId);
     if (isProtectedCategory(category)) throw categoryProtected();
+    const used = await tx.report.count({ where: { categoryId: category.id } });
+    if (used > 0) {
+      throw new AppError(
+        409,
+        ERROR_CODES.CATEGORY_IN_USE,
+        'Kategori sudah dipakai laporan sehingga tidak bisa dihapus. Ganti namanya jika perlu.',
+      );
+    }
     await tx.category.delete({ where: { id: category.id } });
-    await touchHandlerActivity(tx, board.id);
+    await recordHandlerActivity(tx, board.id);
     return { id: category.id, deleted: true };
   });
 }
@@ -310,11 +441,20 @@ export async function reorderCategories(board, { categoryIds }) {
     for (const [index, id] of categoryIds.entries()) {
       await tx.category.update({ where: { id }, data: { sortOrder: index } });
     }
-    await touchHandlerActivity(tx, board.id);
+    await recordHandlerActivity(tx, board.id);
     const categories = await tx.category.findMany({
       where: { boardId: board.id },
       orderBy: CATEGORY_ORDER,
     });
     return categories.map(toCategory);
   });
+}
+
+export async function markInactiveBoards(now = new Date(), afterDays = BOARD_INACTIVE_AFTER_DAYS) {
+  const cutoff = new Date(now.getTime() - afterDays * 24 * 60 * 60 * 1000);
+  const { count } = await prisma.board.updateMany({
+    where: { status: 'ACTIVE', lastHandlerActivityAt: { lt: cutoff } },
+    data: { status: 'INACTIVE' },
+  });
+  return count;
 }

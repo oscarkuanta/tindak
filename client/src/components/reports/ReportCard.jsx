@@ -1,39 +1,44 @@
 import { Link } from 'react-router';
 import { Card } from '../ui/Card.jsx';
+import { Badge } from '../ui/Badge.jsx';
 import { ReportSeverityBadge, ReportStatusBadge } from './ReportStatusBadge.jsx';
+import { EngagementBar } from './EngagementBar.jsx';
+import { VerificationBadge } from '../boards/BoardBadges.jsx';
+import { FlagButton } from '../moderation/FlagButton.jsx';
+import { BlurredImage } from './BlurredImage.jsx';
+import { relativeTime } from '../../lib/relativeTime.js';
 
-function relativeTime(value) {
-  if (!value) return 'Waktu tidak tersedia';
-  const date = new Date(value);
-  const minutes = Math.round((date.getTime() - Date.now()) / 60_000);
-  const formatter = new Intl.RelativeTimeFormat('id-ID', { numeric: 'auto' });
-  if (Math.abs(minutes) < 60) return formatter.format(minutes, 'minute');
-  const hours = Math.round(minutes / 60);
-  if (Math.abs(hours) < 24) return formatter.format(hours, 'hour');
-  return formatter.format(Math.round(hours / 24), 'day');
-}
-
-export function ReportCard({ report }) {
+export function ReportCard({ report, showBoard = false }) {
   const photo = report.media?.[0] ?? report.photos?.[0];
   const reportUrl = `/laporan/${report.id}`;
 
   return (
     <Card className="overflow-hidden p-0">
+      {showBoard && report.board && (
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs">
+          <Link to={`/b/${report.board.slug}`} className="font-semibold text-text hover:text-brand">
+            {report.board.name}
+          </Link>
+          <VerificationBadge verification={report.board.verification} size="sm" />
+        </div>
+      )}
       <Link
         to={reportUrl}
         className="block focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
       >
         {photo?.url && (
-          <img
+          <BlurredImage
             src={photo.url}
-            alt={photo.isBlurred ? 'Foto laporan diburamkan' : `Foto laporan: ${report.title}`}
-            className={`max-h-72 w-full object-cover ${photo.isBlurred ? 'blur-md' : ''}`}
+            alt={`Foto laporan: ${report.title}`}
+            isBlurred={photo.isBlurred}
+            className="max-h-72 w-full object-cover"
           />
         )}
         <div className="p-4 sm:p-5">
           <div className="flex flex-wrap items-center gap-2">
             <ReportSeverityBadge severity={report.severity} />
             <ReportStatusBadge status={report.status} />
+            {report.isHidden && <Badge>Ditinjau moderator</Badge>}
           </div>
           <h2 className="mt-3 text-lg font-semibold">{report.title}</h2>
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-text-muted">
@@ -43,23 +48,11 @@ export function ReportCard({ report }) {
           </div>
         </div>
       </Link>
-      <div className="flex gap-2 border-t border-border px-4 py-3">
-        <button
-          type="button"
-          disabled
-          title="Segera hadir"
-          className="rounded-base px-2 py-1 text-sm text-text-muted disabled:cursor-not-allowed"
-        >
-          Dukung
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Segera hadir"
-          className="rounded-base px-2 py-1 text-sm text-text-muted disabled:cursor-not-allowed"
-        >
-          Reaksi
-        </button>
+      <div className="flex items-start gap-2 border-t border-border px-4 py-3">
+        <div className="min-w-0 flex-1">
+          <EngagementBar report={report} />
+        </div>
+        <FlagButton targetType="REPORT" targetId={report.id} label="Opsi laporan" />
       </div>
     </Card>
   );
