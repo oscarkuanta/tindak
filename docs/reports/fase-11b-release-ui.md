@@ -53,6 +53,7 @@ Tidak ada. Tidak ada perubahan kontrak API.
 - `npm run build`: lolos. Vite memberi peringatan bundle JavaScript utama sekitar 1,12 MB setelah minifikasi, di atas batas saran 500 kB.
 - `npm run test -w client`: 23 file dan 85 tes lolos saat dijalankan dengan izin membaca file sementara Windows.
 - `npm test`: belum lolos di lingkungan lokal. Tes server berhenti sebelum berjalan karena `.env.test` tidak tersedia; MySQL lokal tidak aktif pada port 3306. Percobaan `npm run test -w client` tanpa izin tambahan juga tidak dapat membuka file worker sementara sandbox, tetapi tes frontend berhasil pada percobaan dengan izin yang sesuai.
+- CI GitHub PR #32: semua job workflow lulus untuk commit `2ec61b3`, termasuk migrasi database tes, tes server/client, lint, dan build.
 - Uji browser tidak dapat dilanjutkan setelah server demo berhenti; halaman lokal mengembalikan koneksi API terputus dan port aplikasi tidak menerima koneksi.
 
 ## Keputusan dan Alasan
