@@ -222,6 +222,14 @@ export function BoardDetailPage() {
                   Antrean Laporan
                 </Link>
               )}
+              {(isOwner || isHandler) && (
+                <Link
+                  className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
+                  to={`/b/${slug}/dashboard`}
+                >
+                  Dashboard
+                </Link>
+              )}
               {isOwner && (
                 <Link
                   className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
