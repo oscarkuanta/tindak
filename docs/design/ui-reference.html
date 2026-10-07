@@ -1,0 +1,2419 @@
+<title>T!indak Web UI Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Montserrat:wght@600;700&display=swap"
+/>
+<style>
+  /* Layout: web 3 kolom (nav kiri, konten, sidebar) di bawah header gradien mint; mobile jadi 1 kolom + bottom nav dengan FAB seperti Figma. Satu tema terang (gaya Figma). */
+  :root {
+    color-scheme: light;
+    --mint: #22e3a7; /* primer: tombol, splash */
+    --mint-600: #14c08b; /* hover, teks aksen */
+    --mint-700: #0e9a70;
+    --teal: #17b489; /* header gradien atas */
+    --mint-50: #e9fbf4; /* kartu pastel hijau */
+    --mint-100: #c9f5e5;
+    --cream: #fff8dd;
+    --yellow: #f6b91a;
+    --sky: #e7f0ff;
+    --blue: #2f5bea;
+    --red: #e5484d;
+    --red-50: #fdecec;
+    --amber: #d98a00;
+    --amber-50: #fff4db;
+    --violet: #7c5ce0;
+    --violet-50: #f0ebff;
+    --bg: #f1f5f3; /* latar abu kehijauan Figma */
+    --surface: #ffffff;
+    --ink: #16201c;
+    --ink-2: #4e5a55;
+    --ink-3: #8a9590;
+    --line: #e2e8e5;
+    --chip: #e6eae8;
+    --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-head: 'Montserrat', 'Poppins', system-ui, sans-serif;
+    --r-sm: 10px;
+    --r: 16px;
+    --r-lg: 22px;
+    --pill: 999px;
+    --shadow: 0 4px 14px rgba(20, 60, 45, 0.08);
+    --shadow-lg: 0 10px 30px rgba(20, 60, 45, 0.12);
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 14px;
+    line-height: 1.55;
+    margin: 0;
+  }
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+  button {
+    cursor: pointer;
+    border: 0;
+    background: none;
+  }
+  :focus-visible {
+    outline: 3px solid var(--mint-100);
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    text-wrap: balance;
+    line-height: 1.25;
+  }
+  svg.i {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  /* demo switcher */
+  .demo {
+    background: var(--ink);
+    color: #fff;
+    padding: 8px 16px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    overflow-x: auto;
+    font-size: 12px;
+  }
+  .demo b {
+    margin-right: 6px;
+    white-space: nowrap;
+    color: var(--mint);
+  }
+  .demo button {
+    color: #cfd8d4;
+    padding: 5px 12px;
+    border-radius: var(--pill);
+    white-space: nowrap;
+  }
+  .demo button[aria-pressed='true'] {
+    background: var(--mint);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* header */
+  .top {
+    background: linear-gradient(180deg, var(--teal), #2cc99b);
+    color: #fff;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+  }
+  .top-in {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .logo {
+    font-family: var(--font);
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: 0.06em;
+    display: flex;
+    align-items: center;
+    color: inherit;
+    text-decoration: none;
+  }
+  .logo .bang {
+    display: inline-block;
+    position: relative;
+    margin: 0 1px;
+  }
+  .logo .bang::before,
+  .logo .bang::after {
+    content: '';
+    position: absolute;
+    top: -5px;
+    width: 2px;
+    height: 6px;
+    background: currentColor;
+    border-radius: 2px;
+  }
+  .logo .bang::before {
+    left: -4px;
+    transform: rotate(-30deg);
+  }
+  .logo .bang::after {
+    right: -4px;
+    transform: rotate(30deg);
+  }
+  .search {
+    flex: 1;
+    max-width: 520px;
+    position: relative;
+  }
+  .search input {
+    width: 100%;
+    border: 0;
+    border-radius: var(--pill);
+    padding: 10px 16px 10px 42px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .search svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ink-3);
+  }
+  .top-act {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+  .icon-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    position: relative;
+  }
+  .icon-btn .dot {
+    position: absolute;
+    top: 6px;
+    right: 7px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--yellow);
+    border: 2px solid var(--teal);
+  }
+  .avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--mint-700);
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+  }
+
+  /* buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: var(--r-sm);
+    padding: 10px 18px;
+    font-weight: 600;
+    transition:
+      transform 0.15s,
+      background 0.15s;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn-pri {
+    background: var(--mint);
+    color: #fff;
+  }
+  .btn-pri:hover {
+    background: var(--mint-600);
+  }
+  .btn-white {
+    background: #fff;
+    color: var(--mint-700);
+  }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+  }
+  .btn-ghost:hover {
+    border-color: var(--mint);
+    color: var(--mint-700);
+  }
+  .btn-danger {
+    background: var(--red-50);
+    color: var(--red);
+  }
+  .btn-block {
+    width: 100%;
+    padding: 13px;
+  }
+  .btn-sm {
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  /* shell */
+  .shell {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 24px 96px;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr) 300px;
+    gap: 24px;
+    align-items: start;
+  }
+  .shell.two {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+  .nav {
+    position: sticky;
+    top: 88px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .nav a:hover {
+    background: var(--surface);
+  }
+  .nav a.on {
+    background: var(--surface);
+    color: var(--mint-700);
+    box-shadow: var(--shadow);
+    font-weight: 600;
+  }
+  .nav h4 {
+    margin: 18px 14px 6px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+  .nav .bd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    color: var(--ink-2);
+    font-size: 13px;
+    text-decoration: none;
+    border-radius: 10px;
+  }
+  .nav .bd:hover {
+    background: var(--surface);
+  }
+  .mini {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    flex: none;
+  }
+  main {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  aside {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+  .card {
+    background: var(--surface);
+    border-radius: var(--r);
+    box-shadow: var(--shadow);
+  }
+  .pad {
+    padding: 20px;
+  }
+  .sec-t {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .muted {
+    color: var(--ink-3);
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .between {
+    justify-content: space-between;
+  }
+
+  /* hero band beranda (meniru "Minggu Ini") */
+  .band {
+    position: relative;
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    background: linear-gradient(180deg, var(--teal), #3bd3a7 70%, var(--mint-50));
+    padding: 24px;
+    color: #fff;
+  }
+  .band::before,
+  .band::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .band::before {
+    width: 260px;
+    height: 260px;
+    right: -60px;
+    top: -110px;
+  }
+  .band::after {
+    width: 160px;
+    height: 160px;
+    right: 120px;
+    top: -90px;
+  }
+  .band h2 {
+    font-family: var(--font-head);
+    font-size: 20px;
+    position: relative;
+  }
+  .band p {
+    margin: 4px 0 18px;
+    opacity: 0.9;
+    position: relative;
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    position: relative;
+  }
+  .stat {
+    border-radius: var(--r);
+    padding: 16px;
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .stat .ic {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+  }
+  .stat strong {
+    font-size: 28px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .stat span {
+    font-size: 12px;
+    color: var(--ink-2);
+  }
+  .s1 {
+    background: var(--mint-50);
+  }
+  .s1 .ic {
+    background: var(--mint-600);
+  }
+  .s2 {
+    background: var(--cream);
+  }
+  .s2 .ic {
+    background: var(--yellow);
+  }
+  .s3 {
+    background: var(--sky);
+  }
+  .s3 .ic {
+    background: var(--blue);
+  }
+
+  /* tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    background: var(--surface);
+    padding: 5px;
+    border-radius: var(--pill);
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  .tabs button {
+    padding: 8px 16px;
+    border-radius: var(--pill);
+    color: var(--ink-2);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .tabs button.on {
+    background: var(--mint);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* chips & badges */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--chip);
+    color: var(--ink-2);
+    border-radius: var(--pill);
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .sev-d {
+    background: var(--red-50);
+    color: var(--red);
+  }
+  .sev-m {
+    background: var(--amber-50);
+    color: var(--amber);
+  }
+  .st-new {
+    background: var(--sky);
+    color: var(--blue);
+  }
+  .st-pro {
+    background: var(--amber-50);
+    color: var(--amber);
+  }
+  .st-wait {
+    background: var(--violet-50);
+    color: var(--violet);
+  }
+  .st-done {
+    background: var(--mint-50);
+    color: var(--mint-700);
+  }
+  .st-late {
+    background: var(--red);
+    color: #fff;
+  }
+  .official {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--blue);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .official .chk {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--blue);
+    display: grid;
+    place-items: center;
+    color: #fff;
+  }
+  .official .chk svg {
+    width: 11px;
+    height: 11px;
+    stroke-width: 3.5;
+  }
+  .community {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--line);
+    color: var(--ink-3);
+    border-radius: var(--pill);
+    padding: 2px 9px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .trust {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--mint-50);
+    color: var(--mint-700);
+    border-radius: var(--pill);
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .trust svg {
+    width: 13px;
+    height: 13px;
+    fill: var(--yellow);
+    stroke: var(--yellow);
+  }
+
+  /* report card */
+  .rep {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 160px;
+    gap: 16px;
+    padding: 18px;
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .rep:hover {
+    box-shadow: var(--shadow-lg);
+  }
+  .rep h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 8px 0 4px;
+  }
+  .rep .loc {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-3);
+    font-size: 12px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 8px 10px;
+    margin-top: 8px;
+  }
+  .rep .loc svg {
+    width: 14px;
+    height: 14px;
+  }
+  .thumb {
+    border-radius: 12px;
+    aspect-ratio: 4/3;
+    max-width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .ph-road {
+    background:
+      radial-gradient(ellipse at 50% 70%, #3b3f3d 0 22%, transparent 23%),
+      radial-gradient(ellipse at 30% 75%, #555b58 0 9%, transparent 10%),
+      linear-gradient(#9fb7c9 0 35%, #7d8580 35%);
+  }
+  .ph-lamp {
+    background:
+      linear-gradient(90deg, transparent 46%, #5d6662 46% 54%, transparent 54%),
+      radial-gradient(circle at 50% 18%, #e7e2c4 0 9%, transparent 10%),
+      linear-gradient(#1f3346, #435a6c);
+  }
+  .ph-trash {
+    background:
+      radial-gradient(circle at 35% 70%, #6c8f4e 0 14%, transparent 15%),
+      radial-gradient(circle at 60% 68%, #3d5a80 0 12%, transparent 13%),
+      radial-gradient(circle at 48% 60%, #b2875a 0 10%, transparent 11%),
+      linear-gradient(#cfe1d8 0 45%, #a9b8ad 45%);
+  }
+  .ph-wc {
+    background: linear-gradient(90deg, #dfe8ec 0 50%, #cdd9de 50%), #dfe8ec;
+  }
+  .board-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+  .engage {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .up {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--pill);
+    padding: 5px 12px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--ink-2);
+  }
+  .up.on {
+    border-color: var(--mint);
+    background: var(--mint-50);
+    color: var(--mint-700);
+  }
+  .up svg {
+    width: 16px;
+    height: 16px;
+  }
+  .rx {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg);
+    border-radius: var(--pill);
+    padding: 5px 10px;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rx.on {
+    background: var(--red-50);
+    outline: 1.5px solid var(--red);
+  }
+
+  /* sidebar board */
+  .bhead {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--r-lg);
+  }
+  .cover {
+    height: 150px;
+    background: linear-gradient(120deg, var(--teal), var(--mint));
+    position: relative;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    left: -40px;
+    top: -90px;
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    left: 120px;
+    top: -60px;
+  }
+  .bhead .info {
+    padding: 0 24px 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .bava {
+    width: 84px;
+    height: 84px;
+    border-radius: 22px;
+    background: #fff;
+    border: 4px solid #fff;
+    margin-top: -42px;
+    box-shadow: var(--shadow);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 26px;
+    color: var(--mint-700);
+    position: relative;
+  }
+  .bhead h1 {
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .kv {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .kv:last-child {
+    border: 0;
+  }
+  .kv b {
+    font-variant-numeric: tabular-nums;
+  }
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .bar {
+    display: grid;
+    grid-template-columns: 22px 1fr 32px;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .bar i {
+    height: 7px;
+    border-radius: 9px;
+    background: var(--bg);
+    overflow: hidden;
+    position: relative;
+  }
+  .bar i::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: var(--w);
+    background: var(--yellow);
+    border-radius: 9px;
+  }
+  .cat-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  /* detail */
+  .gallery {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+  }
+  .gallery .thumb {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 120px;
+  }
+  .gallery .side {
+    display: grid;
+    gap: 10px;
+  }
+  .compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .compare figure {
+    margin: 0;
+    position: relative;
+  }
+  .compare figcaption {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: var(--pill);
+  }
+  .ph-fixed {
+    background: linear-gradient(#9fb7c9 0 35%, #6f7874 35%);
+  }
+  .timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .timeline li {
+    display: grid;
+    grid-template-columns: 28px 1fr;
+    gap: 12px;
+    position: relative;
+    padding-bottom: 18px;
+  }
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 28px;
+    bottom: 0;
+    width: 2px;
+    background: var(--line);
+  }
+  .timeline li:last-child::before {
+    display: none;
+  }
+  .tdot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 12px;
+  }
+  .tdot svg {
+    width: 14px;
+    height: 14px;
+  }
+  .timeline small {
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .confirm {
+    border: 2px dashed var(--violet);
+    background: var(--violet-50);
+    border-radius: var(--r);
+    padding: 18px;
+  }
+
+  /* form */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    border-radius: var(--pill);
+    padding: 11px 18px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .textarea {
+    border-radius: var(--r);
+    min-height: 110px;
+    resize: vertical;
+  }
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    border-color: var(--mint);
+  }
+  .input::placeholder,
+  .textarea::placeholder {
+    color: var(--ink-3);
+  }
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .sev-pick {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .sev-pick label {
+    border: 1.5px solid var(--line);
+    border-radius: var(--r);
+    padding: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .sev-pick input {
+    position: absolute;
+    opacity: 0;
+  }
+  .sev-pick input:checked + span {
+    color: var(--red);
+  }
+  .sev-pick label:has(input:checked) {
+    border-color: var(--red);
+    background: var(--red-50);
+  }
+  .sev-pick small {
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .drop {
+    border: 2px dashed var(--mint-100);
+    background: var(--mint-50);
+    border-radius: var(--r);
+    padding: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .drop .thumb {
+    width: 84px;
+    aspect-ratio: 1;
+  }
+  .drop .add {
+    width: 84px;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    border: 2px dashed var(--mint);
+    display: grid;
+    place-items: center;
+    color: var(--mint-700);
+  }
+  .captcha {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px 16px;
+    background: #fafbfa;
+    max-width: 320px;
+  }
+  .captcha .box {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--mint);
+    display: grid;
+    place-items: center;
+    color: #fff;
+  }
+  .note {
+    display: flex;
+    gap: 10px;
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #6b5400;
+  }
+  .steps {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .steps span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .steps b {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--chip);
+    display: grid;
+    place-items: center;
+    font-size: 12px;
+  }
+  .steps .on {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .steps .on b {
+    background: var(--mint);
+    color: #fff;
+  }
+  .steps i {
+    width: 30px;
+    height: 2px;
+    background: var(--line);
+  }
+  .blobs {
+    position: relative;
+    overflow: hidden;
+  }
+  .blobs::before,
+  .blobs::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: var(--mint);
+    opacity: 0.45;
+    pointer-events: none;
+  }
+  .blobs::before {
+    width: 180px;
+    height: 180px;
+    left: -60px;
+    top: -80px;
+  }
+  .blobs::after {
+    width: 140px;
+    height: 140px;
+    left: 50px;
+    top: -90px;
+    opacity: 0.3;
+  }
+  .blobs > * {
+    position: relative;
+  }
+
+  /* kanban */
+  .kanban-wrap {
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(240px, 1fr));
+    gap: 14px;
+    min-width: 1000px;
+  }
+  .col {
+    background: #e7eeea;
+    border-radius: var(--r);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .col-h {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 2px 4px;
+  }
+  .col-h span {
+    background: var(--surface);
+    border-radius: var(--pill);
+    padding: 1px 9px;
+    font-size: 12px;
+  }
+  .kc {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-left: 4px solid var(--line);
+  }
+  .kc.d {
+    border-left-color: var(--red);
+  }
+  .kc.m {
+    border-left-color: var(--amber);
+  }
+  .kc h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .kc .meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .score {
+    font-weight: 700;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* table */
+  .tbl-wrap {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 640px;
+  }
+  th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--ink-3);
+    font-size: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  td {
+    padding: 12px;
+    border-bottom: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+  tr.sel td {
+    background: var(--mint-50);
+  }
+  .check {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .check li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .ok,
+  .no {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    flex: none;
+  }
+  .ok {
+    background: var(--mint-600);
+  }
+  .no {
+    background: var(--red);
+  }
+  .ok svg,
+  .no svg {
+    width: 12px;
+    height: 12px;
+    stroke-width: 3;
+  }
+
+  /* auth */
+  .auth {
+    min-height: calc(100vh - 120px);
+    display: grid;
+    place-items: center;
+    padding-inline: 16px;
+    padding-block: 32px;
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 960px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+  .auth-art {
+    background: var(--mint-50);
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+  }
+  .auth-art h2 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .auth-form {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .auth-form h1 {
+    font-size: 22px;
+    text-align: center;
+  }
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink-3);
+    font-size: 12px;
+  }
+  .divider::before,
+  .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+  .gbtn {
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    border-radius: var(--pill);
+    padding: 11px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+  }
+  .link {
+    color: var(--mint-600);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .hero-svg {
+    width: 100%;
+    max-width: 300px;
+    align-self: center;
+  }
+
+  /* bottom nav mobile (meniru Figma) */
+  .bnav {
+    display: none;
+  }
+  @media (max-width: 1100px) {
+    .shell {
+      grid-template-columns: 200px minmax(0, 1fr);
+    }
+    .shell > aside {
+      grid-column: 2;
+    }
+  }
+  @media (max-width: 760px) {
+    .shell,
+    .shell.two {
+      grid-template-columns: minmax(0, 1fr);
+      padding-block: 16px 110px;
+    }
+    .shell > aside {
+      grid-column: auto;
+    }
+    .nav {
+      display: none;
+    }
+    .search {
+      display: none;
+    }
+    .hide-m {
+      display: none;
+    }
+    .stats {
+      gap: 8px;
+    }
+    .stat {
+      padding: 12px 6px;
+    }
+    .stat strong {
+      font-size: 22px;
+    }
+    .rep {
+      grid-template-columns: minmax(0, 1fr) 96px;
+    }
+    .grid2,
+    .sev-pick,
+    .gallery,
+    .auth-card {
+      grid-template-columns: 1fr;
+    }
+    .auth-art {
+      display: none;
+    }
+    .bnav {
+      display: flex;
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, #22c796, var(--teal));
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      justify-content: space-around;
+      z-index: 30;
+      border-radius: 20px 20px 0 0;
+    }
+    .bnav a {
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 10px;
+      gap: 2px;
+      text-decoration: none;
+      opacity: 0.85;
+    }
+    .bnav a.on {
+      opacity: 1;
+      font-weight: 600;
+    }
+    .fab {
+      width: 62px;
+      height: 62px;
+      border-radius: 50%;
+      background: var(--mint-600);
+      border: 5px solid #fff;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      margin-top: -32px;
+      box-shadow: var(--shadow-lg);
+    }
+    .fab svg {
+      width: 28px;
+      height: 28px;
+      stroke-width: 2.6;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+    }
+  }
+</style>
+
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <symbol id="home" viewBox="0 0 24 24">
+    <path d="M3 11 12 4l9 7" />
+    <path d="M5 10v10h14V10" />
+  </symbol>
+  <symbol id="search" viewBox="0 0 24 24">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </symbol>
+  <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+  <symbol id="bell" viewBox="0 0 24 24">
+    <path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z" />
+    <path d="M10 20a2 2 0 0 0 4 0" />
+  </symbol>
+  <symbol id="mega" viewBox="0 0 24 24">
+    <path d="M3 11v2a1 1 0 0 0 1 1h3l6 4V6L7 10H4a1 1 0 0 0-1 1z" />
+    <path d="M17 9a4 4 0 0 1 0 6" />
+  </symbol>
+  <symbol id="worker" viewBox="0 0 24 24">
+    <path d="M6 11a6 6 0 0 1 12 0" />
+    <path d="M4 11h16" />
+    <circle cx="12" cy="15" r="3" />
+    <path d="M7 21a5 5 0 0 1 10 0" />
+  </symbol>
+  <symbol id="check" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10" /></symbol>
+  <symbol id="x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></symbol>
+  <symbol id="pin" viewBox="0 0 24 24">
+    <path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z" />
+    <circle cx="12" cy="9" r="2.5" />
+  </symbol>
+  <symbol id="up" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6" /></symbol>
+  <symbol id="star" viewBox="0 0 24 24">
+    <path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" />
+  </symbol>
+  <symbol id="clip" viewBox="0 0 24 24">
+    <rect x="5" y="4" width="14" height="17" rx="2" />
+    <path d="M9 4h6v3H9zM9 12h6M9 16h4" />
+  </symbol>
+  <symbol id="grid" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    <rect x="14" y="14" width="7" height="7" rx="1.5" />
+  </symbol>
+  <symbol id="shield" viewBox="0 0 24 24">
+    <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" />
+    <path d="m9 12 2 2 4-4" />
+  </symbol>
+  <symbol id="camera" viewBox="0 0 24 24">
+    <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </symbol>
+  <symbol id="flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></symbol>
+  <symbol id="clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </symbol>
+  <symbol id="cog" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" />
+    <path
+      d="M19 12a7 7 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7 7 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2 1.2L10 21h4l.5-2.6a7 7 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.1-.4.1-.8.1-1.2z"
+    />
+  </symbol>
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" /></symbol>
+</svg>
+
+<nav class="demo" aria-label="Pilih halaman demo">
+  <b>Halaman</b>
+  <button data-go="home" aria-pressed="true">Beranda</button>
+  <button data-go="board">Halaman Board</button>
+  <button data-go="detail">Detail Laporan</button>
+  <button data-go="form">Buat Laporan</button>
+  <button data-go="queue">Antrean Penindak</button>
+  <button data-go="verify">Verifikasi Admin Board</button>
+  <button data-go="auth">Masuk</button>
+</nav>
+
+<header class="top" id="topbar">
+  <div class="top-in">
+    <a class="logo" href="#" data-go="home">T<span class="bang">!</span>INDAK</a>
+    <label class="search"
+      ><span class="sr">Cari Board</span><svg class="i"><use href="#search" /></svg
+      ><input id="q" placeholder='Cari Board, misal "Rungkut"'
+    /></label>
+    <div class="top-act">
+      <button class="btn btn-white btn-sm hide-m" data-go="form">
+        <svg class="i"><use href="#plus" /></svg>Lapor
+      </button>
+      <button class="icon-btn" aria-label="Notifikasi, 3 belum dibaca">
+        <svg class="i"><use href="#bell" /></svg><span class="dot"></span>
+      </button>
+      <span class="avatar" aria-label="Akun Ascar">A</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ BERANDA ============ -->
+<section data-page="home" class="shell">
+  <nav class="nav" aria-label="Menu">
+    <a class="on" href="#"
+      ><svg class="i"><use href="#home" /></svg>Beranda</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#mega" /></svg>Ramai</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#clip" /></svg>Laporan Saya</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#grid" /></svg>Board Saya</a
+    >
+    <h4>Board diikuti</h4>
+    <a class="bd" href="#" data-go="board"
+      ><span class="mini" style="background: var(--teal)">JR</span>Jalan Rungkut Madya</a
+    >
+    <a class="bd" href="#"
+      ><span class="mini" style="background: var(--blue)">S1</span>SMKN 1 Surabaya</a
+    >
+    <a class="bd" href="#"
+      ><span class="mini" style="background: var(--yellow)">RW</span>RW 05 Gunung Anyar</a
+    >
+  </nav>
+  <main>
+    <div class="band">
+      <h2>Minggu ini di sekitarmu</h2>
+      <p>Ringkasan laporan dari Board yang kamu ikuti.</p>
+      <div class="stats">
+        <div class="stat s1">
+          <span class="ic"
+            ><svg class="i"><use href="#mega" /></svg></span
+          ><strong>176</strong><span>Laporan diterima</span>
+        </div>
+        <div class="stat s2">
+          <span class="ic"
+            ><svg class="i"><use href="#worker" /></svg></span
+          ><strong>92</strong><span>Sedang diproses</span>
+        </div>
+        <div class="stat s3">
+          <span class="ic"
+            ><svg class="i"><use href="#check" /></svg></span
+          ><strong>43</strong><span>Selesai</span>
+        </div>
+      </div>
+    </div>
+    <div class="row between">
+      <div class="tabs" role="tablist">
+        <button class="on">Diikuti</button><button>🔥 Ramai</button><button>🆕 Terbaru</button>
+      </div>
+    </div>
+    <article class="card rep" data-go="detail">
+      <div>
+        <div class="board-tag">
+          <span class="mini" style="background: var(--teal)">JR</span>Jalan Rungkut Madya
+          <span class="community">Komunitas</span> · 2 jam lalu
+        </div>
+        <h3>Lubang besar dekat SPBU, motor sering terjatuh</h3>
+        <div class="row">
+          <span class="chip sev-d">🚨 Berbahaya</span><span class="chip st-pro">🔧 Diproses</span
+          ><span class="chip">Jalan Berlubang</span>
+        </div>
+        <div class="loc">
+          <svg class="i"><use href="#pin" /></svg>Depan SPBU Rungkut Madya, lajur kiri arah MERR
+        </div>
+        <div class="engage">
+          <button class="up on">
+            <svg class="i"><use href="#up" /></svg>24</button
+          ><span class="rx on">🚨 12</span><span class="rx">⏳ 5</span><span class="rx">😤 8</span>
+        </div>
+      </div>
+      <div class="thumb ph-road"></div>
+    </article>
+    <article class="card rep">
+      <div>
+        <div class="board-tag">
+          <span class="mini" style="background: var(--blue)">S1</span>SMKN 1 Surabaya
+          <span class="official"
+            ><span class="chk"
+              ><svg class="i"><use href="#check" /></svg></span
+            >Official</span
+          >
+          · 5 jam lalu
+        </div>
+        <h3>Toilet putra lantai 2 gedung B tidak bisa disiram</h3>
+        <div class="row">
+          <span class="chip sev-m">Sedang</span><span class="chip st-new">🆕 Baru</span
+          ><span class="chip">Air dan Sanitasi</span>
+        </div>
+        <div class="loc">
+          <svg class="i"><use href="#pin" /></svg>Gedung B lantai 2, toilet putra sebelah lab RPL
+        </div>
+        <div class="engage">
+          <button class="up">
+            <svg class="i"><use href="#up" /></svg>17</button
+          ><span class="rx">🚨 0</span><span class="rx">⏳ 9</span><span class="rx">😤 14</span>
+        </div>
+      </div>
+      <div class="thumb ph-wc"></div>
+    </article>
+    <article class="card rep">
+      <div>
+        <div class="board-tag">
+          <span class="mini" style="background: var(--yellow)">RW</span>RW 05 Gunung Anyar
+          <span class="community">Komunitas</span> · Kemarin
+        </div>
+        <h3>Lampu jalan gang 3 mati sudah seminggu</h3>
+        <div class="row">
+          <span class="chip">Rendah</span><span class="chip st-done">✅ Selesai</span
+          ><span class="chip">Penerangan</span>
+        </div>
+        <div class="loc">
+          <svg class="i"><use href="#pin" /></svg>Gang 3, depan musala Al-Ikhlas
+        </div>
+        <div class="engage">
+          <button class="up">
+            <svg class="i"><use href="#up" /></svg>31</button
+          ><span class="rx">🚨 1</span><span class="rx">⏳ 11</span><span class="rx">😤 6</span>
+        </div>
+      </div>
+      <div class="thumb ph-lamp"></div>
+    </article>
+  </main>
+  <aside>
+    <div class="card pad">
+      <div class="sec-t">
+        Board populer <svg class="i" style="width: 16px"><use href="#chev" /></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px">
+        <div class="row">
+          <span class="mini" style="background: var(--blue)">S1</span>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-weight: 600; font-size: 13px">SMKN 1 Surabaya</div>
+            <span class="official"
+              ><span class="chk"
+                ><svg class="i"><use href="#check" /></svg></span
+              >Official</span
+            >
+          </div>
+          <span class="trust"
+            ><svg class="i"><use href="#star" /></svg>4,6</span
+          >
+        </div>
+        <div class="row">
+          <span class="mini" style="background: var(--teal)">JR</span>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-weight: 600; font-size: 13px">Jalan Rungkut Madya</div>
+            <span class="community">Komunitas</span>
+          </div>
+          <span class="trust"
+            ><svg class="i"><use href="#star" /></svg>4,4</span
+          >
+        </div>
+        <div class="row">
+          <span class="mini" style="background: #8e6cdb">UK</span>
+          <div style="flex: 1; min-width: 0">
+            <div style="font-weight: 600; font-size: 13px">Kampus UPN Jatim</div>
+            <span class="community">Komunitas</span>
+          </div>
+          <span class="trust"
+            ><svg class="i"><use href="#star" /></svg>3,8</span
+          >
+        </div>
+      </div>
+    </div>
+    <div class="card pad blobs" style="background: var(--mint-50)">
+      <div class="sec-t">Lingkunganmu belum punya Board?</div>
+      <p class="muted" style="margin: 6px 0 14px; font-size: 13px">
+        Buat Board untuk sekolah, kantor, jalan, atau RT kamu. Gratis.
+      </p>
+      <button class="btn btn-pri btn-block">
+        <svg class="i"><use href="#plus" /></svg>Buat Board
+      </button>
+    </div>
+  </aside>
+</section>
+
+<!-- ============ HALAMAN BOARD ============ -->
+<section data-page="board" class="shell" hidden>
+  <nav class="nav" aria-label="Menu">
+    <a href="#" data-go="home"
+      ><svg class="i"><use href="#home" /></svg>Beranda</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#mega" /></svg>Ramai</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#clip" /></svg>Laporan Saya</a
+    >
+    <h4>Board diikuti</h4>
+    <a
+      class="bd"
+      href="#"
+      style="background: var(--surface); color: var(--mint-700); font-weight: 600"
+      ><span class="mini" style="background: var(--blue)">S1</span>SMKN 1 Surabaya</a
+    >
+  </nav>
+  <main>
+    <div class="card bhead">
+      <div class="cover"></div>
+      <div class="info">
+        <div class="bava">S1</div>
+        <div style="flex: 1; min-width: 0; padding-top: 12px">
+          <h1>
+            SMKN 1 Surabaya
+            <span class="official"
+              ><span class="chk"
+                ><svg class="i"><use href="#check" /></svg></span
+              >Official</span
+            >
+          </h1>
+          <div class="row muted" style="font-size: 13px; margin-top: 4px">
+            <span>Kota Surabaya</span>·<span class="chip">Sekolah</span>·<span
+              >Dikelola Wakasek Sarpras</span
+            >
+          </div>
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost btn-sm">Beri rating</button
+          ><button class="btn btn-pri btn-sm">Ikuti</button>
+        </div>
+      </div>
+    </div>
+    <div class="row between">
+      <div class="tabs">
+        <button class="on">🔥 Ramai</button><button>🎯 Prioritas</button><button>🆕 Terbaru</button
+        ><button>✅ Selesai</button>
+      </div>
+      <button class="btn btn-pri" data-go="form">
+        <svg class="i"><use href="#plus" /></svg>Laporkan masalah
+      </button>
+    </div>
+    <article class="card rep" data-go="detail">
+      <div>
+        <div class="row" style="font-size: 12px; color: var(--ink-3)">Anonim · 5 jam lalu</div>
+        <h3>Toilet putra lantai 2 gedung B tidak bisa disiram</h3>
+        <div class="row">
+          <span class="chip sev-m">Sedang</span><span class="chip st-new">🆕 Baru</span
+          ><span class="chip">Air dan Sanitasi</span>
+        </div>
+        <div class="loc">
+          <svg class="i"><use href="#pin" /></svg>Gedung B lantai 2, toilet putra
+        </div>
+        <div class="engage">
+          <button class="up">
+            <svg class="i"><use href="#up" /></svg>17</button
+          ><span class="rx">🚨 0</span><span class="rx">⏳ 9</span><span class="rx">😤 14</span>
+        </div>
+      </div>
+      <div class="thumb ph-wc"></div>
+    </article>
+    <article class="card rep">
+      <div>
+        <div class="row" style="font-size: 12px; color: var(--ink-3)">Rizky A. · 2 hari lalu</div>
+        <h3>Kabel stop kontak lab RPL terkelupas</h3>
+        <div class="row">
+          <span class="chip sev-d">🚨 Berbahaya</span><span class="chip st-pro">🔧 Diproses</span
+          ><span class="chip st-late">⏰ Terlambat</span><span class="chip">Listrik</span>
+        </div>
+        <div class="loc">
+          <svg class="i"><use href="#pin" /></svg>Lab RPL 2, meja barisan belakang
+        </div>
+        <div class="engage">
+          <button class="up">
+            <svg class="i"><use href="#up" /></svg>9</button
+          ><span class="rx">🚨 7</span><span class="rx">⏳ 3</span><span class="rx">😤 1</span>
+        </div>
+      </div>
+      <div class="thumb ph-trash"></div>
+    </article>
+  </main>
+  <aside>
+    <div class="card pad">
+      <div class="sec-t">Status verifikasi</div>
+      <p style="margin: 8px 0 0; font-size: 13px">
+        <span class="official"
+          ><span class="chk"
+            ><svg class="i"><use href="#check" /></svg></span
+          >Official</span
+        >
+        sejak 12 Sep 2026. Diverifikasi manual oleh Admin Board.
+      </p>
+    </div>
+    <div class="card pad">
+      <div class="row between">
+        <div class="sec-t">Kepercayaan</div>
+        <span class="trust"
+          ><svg class="i"><use href="#star" /></svg>4,6 Terpercaya</span
+        >
+      </div>
+      <div class="bars">
+        <div class="bar">5★<i style="--w: 72%"></i><span>58</span></div>
+        <div class="bar">4★<i style="--w: 18%"></i><span>15</span></div>
+        <div class="bar">3★<i style="--w: 6%"></i><span>5</span></div>
+        <div class="bar">2★<i style="--w: 2%"></i><span>2</span></div>
+        <div class="bar">1★<i style="--w: 2%"></i><span>1</span></div>
+      </div>
+      <div style="margin-top: 12px">
+        <div class="kv"><span class="muted">Tingkat tanggap</span><b>91%</b></div>
+        <div class="kv"><span class="muted">Laporan ditolak</span><b>4%</b></div>
+        <div class="kv"><span class="muted">Pengikut</span><b>812</b></div>
+        <div class="kv"><span class="muted">Laporan aktif</span><b>23</b></div>
+        <div class="kv"><span class="muted">Penindak</span><b>4 orang</b></div>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="sec-t">Kategori</div>
+      <div class="cat-list">
+        <span class="chip">Kebersihan</span><span class="chip">Kerusakan Fasilitas</span
+        ><span class="chip">Listrik</span><span class="chip">Air dan Sanitasi</span
+        ><span class="chip">Keamanan</span><span class="chip">Lainnya</span>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<!-- ============ DETAIL LAPORAN ============ -->
+<section data-page="detail" class="shell" hidden>
+  <nav class="nav" aria-label="Menu">
+    <a href="#" data-go="home"
+      ><svg class="i"><use href="#home" /></svg>Beranda</a
+    >
+    <a href="#" data-go="board"
+      ><svg class="i"><use href="#grid" /></svg>Kembali ke Board</a
+    >
+  </nav>
+  <main>
+    <div class="card pad" style="display: flex; flex-direction: column; gap: 16px">
+      <div class="board-tag">
+        <span class="mini" style="background: var(--teal)">JR</span>Jalan Rungkut Madya
+        <span class="community">Komunitas</span> · Anonim (Tamu) · 2 Okt 08.14
+      </div>
+      <h1 style="font-size: 22px">Lubang besar dekat SPBU, motor sering terjatuh</h1>
+      <div class="row">
+        <span class="chip sev-d">🚨 Berbahaya</span
+        ><span class="chip st-wait">⏳ Menunggu konfirmasi</span
+        ><span class="chip">Jalan Berlubang</span>
+      </div>
+      <div class="gallery">
+        <div class="thumb ph-road"></div>
+        <div class="side">
+          <div class="thumb ph-road" style="filter: brightness(0.85)"></div>
+          <div class="thumb ph-road" style="filter: hue-rotate(20deg)"></div>
+        </div>
+      </div>
+      <div
+        class="loc"
+        style="
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          background: var(--bg);
+          border-radius: 12px;
+          padding: 10px 12px;
+          font-size: 13px;
+          color: var(--ink-2);
+        "
+      >
+        <svg class="i"><use href="#pin" /></svg>Depan SPBU Rungkut Madya, lajur kiri arah MERR
+      </div>
+      <p style="margin: 0">
+        Lubang diameter sekitar 1 meter, dalam kurang lebih 15 cm. Saat hujan tergenang dan tidak
+        terlihat. Sudah 3 pengendara motor terjatuh minggu ini.
+      </p>
+      <div class="engage" style="margin: 0">
+        <button class="up on">
+          <svg class="i"><use href="#up" /></svg>Dukung · 24
+        </button>
+        <span class="rx on" title="Bisa melukai orang">🚨 Berbahaya 12</span
+        ><span class="rx" title="Masalah dibiarkan lama">⏳ Sudah lama 5</span
+        ><span class="rx" title="Mengganggu aktivitas">😤 Mengganggu 8</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left: auto">
+          <svg class="i" style="width: 16px"><use href="#flag" /></svg>Tandai pelanggaran
+        </button>
+      </div>
+    </div>
+    <div class="confirm">
+      <div class="sec-t">Penindak menandai laporan ini selesai</div>
+      <p class="muted" style="margin: 4px 0 12px; font-size: 13px">
+        Bandingkan foto sebelum dan sesudah, lalu konfirmasi. Tanpa respons dalam 3 hari, laporan
+        dianggap selesai.
+      </p>
+      <div class="compare">
+        <figure>
+          <div class="thumb ph-road"></div>
+          <figcaption>Sebelum</figcaption>
+        </figure>
+        <figure>
+          <div class="thumb ph-fixed"></div>
+          <figcaption>Sesudah</figcaption>
+        </figure>
+      </div>
+      <p style="font-size: 13px; margin: 12px 0">
+        Catatan Penindak: "Lubang sudah ditambal aspal panas oleh tim relawan bersama Dinas PU, 3
+        Okt."
+      </p>
+      <div class="row">
+        <button class="btn btn-pri">
+          <svg class="i"><use href="#check" /></svg>Sudah beres</button
+        ><button class="btn btn-danger">Belum beres</button>
+      </div>
+    </div>
+  </main>
+  <aside>
+    <div class="card pad">
+      <div class="sec-t" style="margin-bottom: 14px">Riwayat laporan</div>
+      <ol class="timeline">
+        <li>
+          <span class="tdot" style="background: var(--blue)"
+            ><svg class="i"><use href="#plus" /></svg
+          ></span>
+          <div>
+            <b style="font-size: 13px">Laporan dibuat</b><br /><small
+              >Anonim (Tamu) · 2 Okt 08.14</small
+            >
+          </div>
+        </li>
+        <li>
+          <span class="tdot" style="background: var(--amber)"
+            ><svg class="i"><use href="#worker" /></svg
+          ></span>
+          <div>
+            <b style="font-size: 13px">Diproses</b><br /><small
+              >Pak Hadi (Penindak) · 2 Okt 10.30</small
+            >
+          </div>
+        </li>
+        <li>
+          <span class="tdot" style="background: var(--violet)"
+            ><svg class="i"><use href="#camera" /></svg
+          ></span>
+          <div>
+            <b style="font-size: 13px">Ditandai selesai + foto sesudah</b><br /><small
+              >Pak Hadi · 3 Okt 15.02</small
+            >
+          </div>
+        </li>
+        <li>
+          <span class="tdot" style="background: var(--chip); color: var(--ink-3)"
+            ><svg class="i"><use href="#clock" /></svg
+          ></span>
+          <div>
+            <b style="font-size: 13px; color: var(--ink-3)">Menunggu konfirmasi pelapor</b
+            ><br /><small>Batas otomatis 6 Okt 15.02</small>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <div class="card pad">
+      <div class="kv"><span class="muted">Skor prioritas</span><b>53</b></div>
+      <div class="kv"><span class="muted">Target Berbahaya</span><b>48 jam</b></div>
+      <div class="kv"><span class="muted">Penanggung jawab</span><b>Pak Hadi</b></div>
+    </div>
+  </aside>
+</section>
+
+<!-- ============ BUAT LAPORAN ============ -->
+<section data-page="form" class="shell two" hidden>
+  <nav class="nav" aria-label="Menu">
+    <a href="#" data-go="home"
+      ><svg class="i"><use href="#home" /></svg>Beranda</a
+    >
+    <a href="#" data-go="board"
+      ><svg class="i"><use href="#grid" /></svg>Kembali ke Board</a
+    >
+  </nav>
+  <main>
+    <form
+      class="card blobs"
+      style="padding: 28px; display: flex; flex-direction: column; gap: 18px; max-width: 780px"
+      onsubmit="event.preventDefault()"
+    >
+      <div style="text-align: center; padding-top: 20px">
+        <h1 style="font-size: 26px; font-weight: 700">Buat Laporan</h1>
+        <p class="muted" style="margin: 4px 0 0">
+          ke Board <b style="color: var(--ink)">Jalan Rungkut Madya</b> · tanpa login, kamu akan
+          dapat Kode Lacak
+        </p>
+      </div>
+      <div class="note">⚠️ Laporkan masalah fisik saja. Jangan menyebut nama orang.</div>
+      <div class="field">
+        <label for="f-title">Judul</label
+        ><input id="f-title" class="input" value="Lubang besar dekat SPBU" maxlength="100" />
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label for="f-cat">Kategori</label
+          ><select id="f-cat" class="select input">
+            <option>Jalan Berlubang</option>
+            <option>Lampu Jalan</option>
+            <option>Drainase dan Banjir</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-loc">Detail lokasi</label
+          ><input id="f-loc" class="input" placeholder="Contoh: Depan Indomaret Rungkut Madya" />
+        </div>
+      </div>
+      <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+        <legend style="font-size: 13px; font-weight: 500; color: var(--ink-2); margin-bottom: 6px">
+          Tingkat bahaya
+        </legend>
+        <div class="sev-pick">
+          <label
+            ><input type="radio" name="sev" id="sev-l" /><span><b>Rendah</b></span
+            ><small>Mengganggu, tidak berbahaya</small></label
+          >
+          <label
+            ><input type="radio" name="sev" id="sev-m" /><span><b>Sedang</b></span
+            ><small>Menghambat aktivitas</small></label
+          >
+          <label
+            ><input type="radio" name="sev" id="sev-d" checked /><span><b>🚨 Berbahaya</b></span
+            ><small>Bisa melukai orang</small></label
+          >
+        </div>
+      </fieldset>
+      <div class="field">
+        <label for="f-desc">Deskripsi</label
+        ><textarea id="f-desc" class="textarea">
+Lubang diameter sekitar 1 meter, tergenang saat hujan.</textarea>
+      </div>
+      <div class="field">
+        <label>Foto (1 sampai 4)</label>
+        <div class="drop">
+          <div class="thumb ph-road"></div>
+          <div class="thumb ph-road" style="filter: brightness(0.8)"></div>
+          <button type="button" class="add" aria-label="Tambah foto">
+            <svg class="i"><use href="#camera" /></svg></button
+          ><span class="muted" style="font-size: 12px"
+            >Seret foto ke sini. JPG, PNG, WEBP maks 5 MB.</span
+          >
+        </div>
+      </div>
+      <div class="captcha">
+        <span class="box"
+          ><svg class="i" style="width: 14px"><use href="#check" /></svg></span
+        ><span>Saya bukan robot</span
+        ><span class="muted" style="margin-left: auto; font-size: 11px">Turnstile</span>
+      </div>
+      <button class="btn btn-pri btn-block">Kirim laporan</button>
+    </form>
+  </main>
+</section>
+
+<!-- ============ ANTREAN PENINDAK ============ -->
+<section data-page="queue" class="shell two" hidden>
+  <nav class="nav" aria-label="Menu Penindak">
+    <a href="#"
+      ><svg class="i"><use href="#grid" /></svg>Dashboard</a
+    >
+    <a class="on" href="#"
+      ><svg class="i"><use href="#clip" /></svg>Antrean</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#cog" /></svg>Pengaturan Board</a
+    >
+    <h4>Board kamu</h4>
+    <a class="bd" href="#"
+      ><span class="mini" style="background: var(--blue)">S1</span>SMKN 1 Surabaya</a
+    >
+  </nav>
+  <main>
+    <div class="row between">
+      <div>
+        <h1 style="font-size: 22px">Antrean laporan</h1>
+        <p class="muted" style="margin: 2px 0 0">SMKN 1 Surabaya · urut skor prioritas</p>
+      </div>
+      <div class="row">
+        <div class="tabs"><button>Daftar</button><button class="on">Kanban</button></div>
+      </div>
+    </div>
+    <div class="stats" style="grid-template-columns: repeat(4, minmax(0, 1fr))">
+      <div class="stat s1"><strong>8</strong><span>Baru</span></div>
+      <div class="stat s2"><strong>11</strong><span>Diproses</span></div>
+      <div class="stat" style="background: var(--violet-50)">
+        <strong>4</strong><span>Menunggu konfirmasi</span>
+      </div>
+      <div class="stat" style="background: var(--red-50)">
+        <strong style="color: var(--red)">2</strong><span>Berbahaya terlambat</span>
+      </div>
+    </div>
+    <div class="kanban-wrap">
+      <div class="kanban">
+        <div class="col">
+          <div class="col-h">🆕 Baru <span>8</span></div>
+          <div class="kc d">
+            <h4>Kabel stop kontak terkelupas</h4>
+            <div class="row"><span class="chip sev-d">🚨 Berbahaya</span></div>
+            <div class="meta"><span>Lab RPL 2</span><span class="score">61</span></div>
+          </div>
+          <div class="kc m">
+            <h4>Toilet putra tidak bisa disiram</h4>
+            <div class="row"><span class="chip sev-m">Sedang</span></div>
+            <div class="meta"><span>Gedung B lt 2</span><span class="score">42</span></div>
+          </div>
+          <div class="kc">
+            <h4>Kursi kelas XI RPL 1 patah</h4>
+            <div class="row"><span class="chip">Rendah</span></div>
+            <div class="meta"><span>Ruang 203</span><span class="score">12</span></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col-h">🔧 Diproses <span>11</span></div>
+          <div class="kc d">
+            <h4>Atap kantin bocor dekat panel listrik</h4>
+            <div class="row">
+              <span class="chip sev-d">🚨</span><span class="chip st-late">⏰ Terlambat</span>
+            </div>
+            <div class="meta"><span>Pak Hadi</span><span class="score">74</span></div>
+          </div>
+          <div class="kc m">
+            <h4>Proyektor ruang 105 mati</h4>
+            <div class="row"><span class="chip sev-m">Sedang</span></div>
+            <div class="meta"><span>Bu Rina</span><span class="score">28</span></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col-h">⏳ Menunggu konfirmasi <span>4</span></div>
+          <div class="kc">
+            <h4>Wastafel lantai 1 mampet</h4>
+            <div class="row"><span class="chip st-wait">Foto sesudah ✓</span></div>
+            <div class="meta"><span>Sisa 2 hari</span><span class="score">19</span></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="col-h">✅ Selesai <span>137</span></div>
+          <div class="kc">
+            <h4>Lampu lorong gedung A mati</h4>
+            <div class="row"><span class="chip st-done">Dikonfirmasi pelapor</span></div>
+            <div class="meta"><span>1,4 hari</span><span class="score">–</span></div>
+          </div>
+          <div class="kc">
+            <h4>Sampah menumpuk di parkiran</h4>
+            <div class="row"><span class="chip">Dikonfirmasi otomatis</span></div>
+            <div class="meta"><span>2,1 hari</span><span class="score">–</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ============ VERIFIKASI ADMIN BOARD ============ -->
+<section data-page="verify" class="shell two" hidden>
+  <nav class="nav" aria-label="Menu Admin Board">
+    <a class="on" href="#"
+      ><svg class="i"><use href="#shield" /></svg>Kandidat Official</a
+    >
+    <a href="#"
+      ><svg class="i"><use href="#check" /></svg>Board Official</a
+    >
+  </nav>
+  <main>
+    <div>
+      <h1 style="font-size: 22px">Verifikasi Board</h1>
+      <p class="muted" style="margin: 2px 0 0">
+        Tinjau Board yang memenuhi syarat menjadi Official.
+      </p>
+    </div>
+    <div class="stats">
+      <div class="stat s1">
+        <span class="ic"
+          ><svg class="i"><use href="#shield" /></svg></span
+        ><strong>6</strong><span>Kandidat</span>
+      </div>
+      <div class="stat s3">
+        <span class="ic"
+          ><svg class="i"><use href="#check" /></svg></span
+        ><strong>14</strong><span>Board Official</span>
+      </div>
+      <div class="stat s2">
+        <span class="ic"
+          ><svg class="i"><use href="#x" /></svg></span
+        ><strong>1</strong><span>Dicabut 30 hari</span>
+      </div>
+    </div>
+    <div class="card pad">
+      <div class="sec-t" style="margin-bottom: 10px">Antrean kandidat</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Board</th>
+              <th>Kota</th>
+              <th>Rating</th>
+              <th>Skor</th>
+              <th>Tanggap</th>
+              <th>Umur</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="sel">
+              <td><b>Jalan Rungkut Madya</b><br /><span class="community">Komunitas</span></td>
+              <td>Surabaya</td>
+              <td>82</td>
+              <td>
+                <span class="trust"
+                  ><svg class="i"><use href="#star" /></svg>4,4</span
+                >
+              </td>
+              <td>90%</td>
+              <td>64 hari</td>
+              <td><button class="btn btn-ghost btn-sm">Tinjau</button></td>
+            </tr>
+            <tr>
+              <td><b>Kampus UPN Jatim</b><br /><span class="community">Komunitas</span></td>
+              <td>Surabaya</td>
+              <td>41</td>
+              <td>
+                <span class="trust"
+                  ><svg class="i"><use href="#star" /></svg>4,1</span
+                >
+              </td>
+              <td>84%</td>
+              <td>45 hari</td>
+              <td><button class="btn btn-ghost btn-sm">Tinjau</button></td>
+            </tr>
+            <tr>
+              <td><b>Pasar Larangan</b><br /><span class="community">Komunitas</span></td>
+              <td>Sidoarjo</td>
+              <td>23</td>
+              <td>
+                <span class="trust"
+                  ><svg class="i"><use href="#star" /></svg>4,0</span
+                >
+              </td>
+              <td>79%</td>
+              <td>33 hari</td>
+              <td><button class="btn btn-ghost btn-sm">Tinjau</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div
+      class="card pad"
+      style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px"
+    >
+      <div>
+        <div class="sec-t">Jalan Rungkut Madya</div>
+        <p class="muted" style="font-size: 13px; margin: 4px 0 14px">
+          Dibuat Ascar · Relawan komunitas pengendara
+        </p>
+        <ul class="check">
+          <li>
+            <span class="ok"
+              ><svg class="i"><use href="#check" /></svg></span
+            >Minimal 20 rating (82)
+          </li>
+          <li>
+            <span class="ok"
+              ><svg class="i"><use href="#check" /></svg></span
+            >Skor kepercayaan 4,0 ke atas (4,4)
+          </li>
+          <li>
+            <span class="ok"
+              ><svg class="i"><use href="#check" /></svg></span
+            >Umur minimal 30 hari (64)
+          </li>
+          <li>
+            <span class="ok"
+              ><svg class="i"><use href="#check" /></svg></span
+            >Board aktif
+          </li>
+          <li>
+            <span class="ok"
+              ><svg class="i"><use href="#check" /></svg></span
+            >Tidak ada tanda "Board palsu" terbuka
+          </li>
+        </ul>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px">
+        <div class="kv"><span class="muted">Laporan selesai</span><b>118 dari 131</b></div>
+        <div class="kv"><span class="muted">Ditolak</span><b>3%</b></div>
+        <div class="kv"><span class="muted">Dipulihkan moderator</span><b>0</b></div>
+        <div class="kv"><span class="muted">Penilaian cepat</span><b>👍 61 · 🐢 7 · ❓ 2</b></div>
+        <div class="row" style="margin-top: auto">
+          <button class="btn btn-pri">
+            <svg class="i"><use href="#check" /></svg>Jadikan Official</button
+          ><button class="btn btn-ghost">Lewati</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- ============ MASUK ============ -->
+<section data-page="auth" hidden>
+  <div class="auth">
+    <div class="card auth-card">
+      <div class="auth-art blobs">
+        <svg class="hero-svg" viewBox="0 0 300 220" role="img" aria-label="Ilustrasi warga melapor">
+          <ellipse cx="150" cy="200" rx="120" ry="12" fill="#C9F5E5" />
+          <circle cx="210" cy="70" r="52" fill="#C9F5E5" />
+          <rect x="70" y="120" width="70" height="80" rx="8" fill="#16201C" opacity=".08" />
+          <circle cx="110" cy="72" r="18" fill="#F2C9A5" />
+          <path d="M92 68a18 18 0 0 1 36 0z" fill="#2D3A4F" />
+          <rect x="94" y="92" width="34" height="56" rx="12" fill="#2F5BEA" />
+          <rect x="96" y="146" width="12" height="44" rx="5" fill="#2D3A4F" />
+          <rect x="114" y="146" width="12" height="44" rx="5" fill="#2D3A4F" />
+          <rect
+            x="128"
+            y="104"
+            width="30"
+            height="46"
+            rx="5"
+            fill="#fff"
+            stroke="#16201C"
+            stroke-width="3"
+          />
+          <rect x="134" y="112" width="18" height="12" rx="2" fill="#22E3A7" />
+          <rect x="134" y="130" width="18" height="3" fill="#8A9590" />
+          <rect x="134" y="137" width="12" height="3" fill="#8A9590" />
+          <circle cx="208" cy="64" r="22" fill="#14C08B" />
+          <path
+            d="m197 64 8 8 14-15"
+            stroke="#fff"
+            stroke-width="5"
+            fill="none"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <h2>Lapor cepat, ditindak nyata.</h2>
+        <p class="muted" style="margin: 0">
+          Dukung laporan, ikuti Board lingkunganmu, dan pantau sampai masalahnya beres.
+        </p>
+      </div>
+      <form class="auth-form" onsubmit="event.preventDefault()">
+        <a class="logo" href="#" style="color: var(--mint-600); align-self: center"
+          >T<span class="bang">!</span>INDAK</a
+        >
+        <h1>Selamat datang kembali!</h1>
+        <div class="field">
+          <label for="a-email">Email</label
+          ><input id="a-email" class="input" type="email" value="ascar@contoh.com" />
+        </div>
+        <div class="field">
+          <label for="a-pass">Password</label
+          ><input id="a-pass" class="input" type="password" value="rahasia123" />
+        </div>
+        <a class="link" href="#" style="font-size: 13px; text-align: right">Lupa password?</a>
+        <button class="btn btn-pri btn-block">Masuk</button>
+        <div class="divider">atau</div>
+        <button type="button" class="gbtn">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path
+              fill="#4285F4"
+              d="M22 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.6a4.8 4.8 0 0 1-2.1 3.1v2.6h3.4c2-1.8 3.1-4.5 3.1-7.5z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 22c2.8 0 5.2-.9 6.9-2.5l-3.4-2.6c-.9.6-2.1 1-3.5 1a6.1 6.1 0 0 1-5.7-4.2H2.8v2.7A10 10 0 0 0 12 22z"
+            />
+            <path fill="#FBBC05" d="M6.3 13.7a6 6 0 0 1 0-3.4V7.6H2.8a10 10 0 0 0 0 8.8z" />
+            <path
+              fill="#EA4335"
+              d="M12 5.9c1.5 0 2.9.5 4 1.6l3-3A10 10 0 0 0 2.8 7.6l3.5 2.7A6.1 6.1 0 0 1 12 5.9z"
+            /></svg
+          >Masuk dengan Google
+        </button>
+        <p style="text-align: center; margin: 4px 0 0; font-size: 13px">
+          Belum punya akun? <a class="link" href="#">Daftar</a>
+        </p>
+      </form>
+    </div>
+  </div>
+</section>
+
+<nav class="bnav" aria-label="Navigasi bawah">
+  <a class="on" href="#" data-go="home"
+    ><svg class="i"><use href="#home" /></svg>Beranda</a
+  >
+  <a href="#"
+    ><svg class="i"><use href="#clip" /></svg>Laporan Saya</a
+  >
+  <a class="fab" href="#" data-go="form" aria-label="Buat laporan"
+    ><svg class="i"><use href="#plus" /></svg
+  ></a>
+  <a href="#"
+    ><svg class="i"><use href="#search" /></svg>Cari Board</a
+  >
+  <a href="#"
+    ><svg class="i"><use href="#bell" /></svg>Notifikasi</a
+  >
+</nav>
+
+<script>
+  (function () {
+    const pages = [...document.querySelectorAll('[data-page]')];
+    const demo = [...document.querySelectorAll('.demo button')];
+    function go(id) {
+      pages.forEach((p) => (p.hidden = p.dataset.page !== id));
+      demo.forEach((b) => b.setAttribute('aria-pressed', b.dataset.go === id));
+      document.getElementById('topbar').hidden = id === 'auth';
+      document.querySelector('.bnav').hidden = id === 'auth';
+      window.scrollTo(0, 0);
+    }
+    document.addEventListener('click', (e) => {
+      const up = e.target.closest('.up');
+      if (up) {
+        const n = up.querySelector('svg').nextSibling;
+        const on = up.classList.toggle('on');
+        const m = n.textContent.match(/\d+/);
+        if (m) n.textContent = n.textContent.replace(m[0], +m[0] + (on ? 1 : -1));
+        return;
+      }
+      if (e.target.closest('.rx,.btn-ghost,.btn-danger')) return;
+      const tab = e.target.closest('.tabs button');
+      if (tab) {
+        tab.parentElement
+          .querySelectorAll('button')
+          .forEach((b) => b.classList.toggle('on', b === tab));
+        return;
+      }
+      const t = e.target.closest('[data-go]');
+      if (t) {
+        e.preventDefault();
+        go(t.dataset.go);
+      }
+    });
+    const h = (location.hash || '').slice(1);
+    if (pages.some((p) => p.dataset.page === h)) go(h);
+  })();
+</script>
