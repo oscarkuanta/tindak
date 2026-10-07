@@ -6,7 +6,12 @@ import {
   notifyBoardVerificationRevoked,
   notifyBoardVerified,
 } from '../notifications/notifications.service.js';
-import { boardChecklist, recomputeBoardTrust, trustSnapshot } from './trust.service.js';
+import {
+  boardChecklist,
+  needsReview,
+  recomputeBoardTrust,
+  trustSnapshot,
+} from './trust.service.js';
 import { ratingDistribution, toTrustSummary } from './ratings.service.js';
 import { boardAgeDays } from './trustScore.js';
 
@@ -25,13 +30,6 @@ function reviewWhere() {
       { trustScore: { lt: VERIFICATION_RULES.REVIEW_TRUST_SCORE_BELOW } },
     ],
   };
-}
-
-function needsReview(board) {
-  return (
-    board.status === 'INACTIVE' ||
-    (board.trustScore !== null && board.trustScore < VERIFICATION_RULES.REVIEW_TRUST_SCORE_BELOW)
-  );
 }
 
 async function findBoard(slug) {
@@ -171,7 +169,7 @@ export async function getVerificationDetail(slug, now = new Date()) {
     verifiedBy: board.verifiedBy,
     followerCount,
     restoredByAdminCount: board.restoredByAdminCount,
-    needsReview: board.verification === 'OFFICIAL' && needsReview(board),
+    needsReview: needsReview(board),
     ...ratings,
     reports: {
       total: Object.values(reportsByStatus).reduce((sum, count) => sum + count, 0),
@@ -277,7 +275,7 @@ export async function revokeVerification(slug, admin, { reason }, now = new Date
     return tx.board.findUnique({ where: { id: board.id } });
   });
   await recordAudit('BOARD_VERIFICATION_REVOKED', { actorId: admin.id, boardId: board.id, reason });
-  await notifyBoardVerificationRevoked(updated);
+  await notifyBoardVerificationRevoked(updated, reason);
   await recomputeBoardTrust(board.id, now);
   return { slug: updated.slug, verification: 'COMMUNITY' };
 }

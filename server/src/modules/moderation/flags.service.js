@@ -4,6 +4,7 @@ import { recordAudit } from '../../lib/audit.js';
 import { AppError } from '../../utils/AppError.js';
 import { getBoardMembership } from '../boards/boards.service.js';
 import { recomputeBoardTrust } from '../trust/trust.service.js';
+import { notifyReportModerated } from '../notifications/notify.service.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -97,6 +98,9 @@ async function maybeHideReport(report, flaggerId, weight) {
     data: { isHidden: true, hiddenReason: reason, hiddenByHandler: reason === 'HANDLER_FLAG' },
   });
   if (count > 0) {
+    await notifyReportModerated(report.id, {
+      actorUserId: reason === 'HANDLER_FLAG' ? flaggerId : null,
+    });
     await recordAudit('REPORT_AUTO_HIDDEN', {
       actorId: reason === 'HANDLER_FLAG' ? flaggerId : null,
       reportId: report.id,

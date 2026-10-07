@@ -664,7 +664,7 @@ Auth: OWNER. Mengalihkan kepemilikan kepada Penindak berstatus `ACTIVE`.
 
 Body: `{ "userId": 18 }`. Hanya field `userId` yang diterima; field lain seperti `verification` membalas `400 VALIDATION_ERROR`.
 
-Sukses `200`: `{ "data": <Board> }` dilihat dari sudut pandang pemilik lama (`viewer.role` sekarang `HANDLER`, `owner` sudah berganti). `Board.ownerId` ikut pindah, sehingga batas tiga Board milik dihitung untuk pemilik baru. Perubahan OWNER dan HANDLER dilakukan dalam satu transaksi. Penerima harus tetap berada dalam batas tiga Board milik. Field `verification` dan `verifiedAt` tidak berubah saat kepemilikan dialihkan. Server mencatat audit `BOARD_OWNER_CHANGED` dan memanggil notifikasi `BOARD_OWNER_CHANGED` untuk semua Admin Board (untuk sekarang dicatat di log server; tabel audit dibuat di Fase 7 dan pengiriman notifikasi di Fase 9).
+Sukses `200`: `{ "data": <Board> }` dilihat dari sudut pandang pemilik lama (`viewer.role` sekarang `HANDLER`, `owner` sudah berganti). `Board.ownerId` ikut pindah, sehingga batas tiga Board milik dihitung untuk pemilik baru. Perubahan OWNER dan HANDLER dilakukan dalam satu transaksi. Penerima harus tetap berada dalam batas tiga Board milik. Field `verification` dan `verifiedAt` tidak berubah saat kepemilikan dialihkan. Server mencatat audit `BOARD_OWNER_CHANGED`. Jika Board berstatus Official, semua Admin Board menerima notifikasi `BOARD_OWNER_CHANGED` (lihat Fase 9).
 
 Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 HANDLER_NOT_FOUND`, `409 BOARD_LIMIT_REACHED`.
 
@@ -1329,7 +1329,7 @@ Auth: publik. Sukses `200`: field kepercayaan seperti di respons rating, ditamba
 
 ### Antrean Kandidat Official
 
-Board menjadi kandidat jika semua terpenuhi: `COMMUNITY`, minimal 20 rating, skor minimal 4,0, umur minimal 30 hari, status `ACTIVE`, tidak ada tanda `FAKE_BOARD` berstatus `OPEN`, dan tidak dilewati dalam 30 hari terakhir. `Board.candidateSince` diisi saat Board pertama kali memenuhi syarat dan dikosongkan saat tidak lagi memenuhi. Saat berubah dari kosong ke terisi, server memanggil `notifyBoardAdminsNewCandidate` (isi notifikasi di Fase 9).
+Board menjadi kandidat jika semua terpenuhi: `COMMUNITY`, minimal 20 rating, skor minimal 4,0, umur minimal 30 hari, status `ACTIVE`, tidak ada tanda `FAKE_BOARD` berstatus `OPEN`, dan tidak dilewati dalam 30 hari terakhir. `Board.candidateSince` diisi saat Board pertama kali memenuhi syarat dan dikosongkan saat tidak lagi memenuhi. Saat berubah dari kosong ke terisi, semua Admin Board menerima notifikasi `BOARD_CANDIDATE_NEW` (Fase 9).
 
 ### Endpoint Admin Board
 
@@ -1344,3 +1344,101 @@ Semua `/api/board-admin/*` hanya untuk `User.role` `BOARD_ADMIN`. Tamu `401`, ro
 - `POST /api/board-admin/boards/:slug/revoke` body `{ "reason": "min 10" }`. Board kembali `COMMUNITY`, `verifiedAt` dan `verifiedById` dikosongkan. Sukses `200`: `{ "data": { "slug", "verification": "COMMUNITY" } }`. `409` jika bukan Official.
 
 Pembekuan Board Official oleh Admin (Fase 7) sekarang juga menulis `BoardVerificationLog` `REVOKED` dengan actor sistem (`null`) dan alasan "Board dibekukan moderator".
+
+---
+
+## Fase 9: Notifikasi dan Realtime
+
+### Objek Notification
+
+```json
+{
+  "id": 12,
+  "type": "REPORT_STATUS_CHANGED",
+  "data": {
+    "reportId": 7,
+    "reportTitle": "Lubang besar",
+    "boardSlug": "jalan-rungkut-madya-surabaya",
+    "boardName": "Jalan Rungkut Madya",
+    "status": "IN_PROGRESS",
+    "statusLabel": "Diproses"
+  },
+  "isRead": false,
+  "readAt": null,
+  "createdAt": "2026-10-06T10:00:00.000Z"
+}
+```
+
+`data` berbeda per jenis. Teks yang ditampilkan dibuat frontend dari `type` dan `data`. Tujuan klik ada di `notificationLink()` (`shared/src/constants/notifications.js`).
+
+| Type                         | Penerima                                                         | Isi `data` tambahan                       |
+| ---------------------------- | ---------------------------------------------------------------- | ----------------------------------------- |
+| `REPORT_STATUS_CHANGED`      | Pelapor (akun)                                                   | `status`, `statusLabel`                   |
+| `REPORT_INFO_REQUESTED`      | Pelapor                                                          | `question`                                |
+| `REPORT_MARKED_DUPLICATE`    | Pelapor                                                          | `parentId`                                |
+| `REPORT_HIDDEN`              | Pelapor                                                          | -                                         |
+| `REPORT_REMOVED`             | Pelapor                                                          | -                                         |
+| `REPORT_SUPPORT_MILESTONE`   | Pelapor, sekali per milestone 10, 25, 50                         | `milestone`                               |
+| `SUPPORTED_REPORT_RESOLVED`  | Pendukung saat laporan menjadi `RESOLVED`                        | -                                         |
+| `BOARD_NEW_REPORT`           | Pengikut Board sesuai `notifyLevel` (bukan Penindak)             | `severity`                                |
+| `HANDLER_NEW_REPORT`         | Penindak aktif                                                   | `severity`                                |
+| `HANDLER_DANGEROUS_REPORT`   | Penindak aktif, untuk laporan Berbahaya                          | `severity`                                |
+| `HANDLER_DEADLINE_SOON`      | Penindak aktif, sekali, 6 jam sebelum `dueAt` laporan Berbahaya  | `hours`                                   |
+| `HANDLER_REPORT_REOPENED`    | Penindak aktif                                                   | -                                         |
+| `HANDLER_INFO_ANSWERED`      | Penindak aktif                                                   | -                                         |
+| `BOARD_INVITATION`           | User yang diundang menjadi Penindak                              | `invitationId`                            |
+| `BOARD_RATING_DIGEST`        | Penindak aktif, harian jika ada rating baru atau diubah          | `newRatings`, `ratingCount`, `trustScore` |
+| `BOARD_VERIFIED`             | Penindak Utama                                                   | -                                         |
+| `BOARD_VERIFICATION_REVOKED` | Penindak Utama (termasuk karena Board dibekukan)                 | `reason`                                  |
+| `BOARD_CANDIDATE_NEW`        | Semua Admin Board                                                | `ratingCount`                             |
+| `BOARD_OWNER_CHANGED`        | Semua Admin Board, hanya untuk Board Official                    | `previousOwnerId`, `newOwnerId`           |
+| `BOARD_NEEDS_REVIEW`         | Semua Admin Board saat Board Official masuk Perlu Ditinjau Ulang | `status`                                  |
+
+Semua jenis berisi `boardSlug` dan `boardName`; jenis laporan juga berisi `reportId` dan `reportTitle`. Pelaku aksi tidak pernah menerima notifikasi untuk aksinya sendiri, dan satu orang menerima paling banyak satu notifikasi per kejadian (Penindak yang juga mengikuti Board hanya mendapat versi Penindak). Tamu tidak mendapat notifikasi; halaman Lacak tetap diperbarui realtime.
+
+### GET /api/notifications
+
+Auth: login. Query: `page` (default 1), `pageSize` (default 20, maks 50), `unread` (`true` untuk yang belum dibaca saja). Terbaru dulu. Sukses `200`: `{ "data": [<Notification>], "meta": { "page", "pageSize", "total", "totalPages" } }`.
+
+### GET /api/notifications/unread-count
+
+Auth: login. Sukses `200`: `{ "data": { "count": 3 } }`.
+
+### POST /api/notifications/:id/read
+
+Auth: login. Sukses `200`: `<Notification>` dengan `isRead: true`. Notifikasi milik user lain atau tidak ada: `404 NOT_FOUND`.
+
+### POST /api/notifications/read-all
+
+Auth: login. Sukses `200`: `{ "data": { "updated": 2 } }`.
+
+### Realtime (Socket.IO)
+
+Socket.IO berjalan di server dan alamat yang sama, path `/socket.io`. Koneksi memakai cookie session yang sama dengan login; tamu tetap bisa tersambung. Koneksi dari origin selain `CLIENT_URL` ditolak.
+
+Room:
+
+- `user:<id>`: otomatis untuk user yang login.
+- `board:<slug>`: klien mengirim `board:subscribe` dengan slug. Ditolak untuk Board beku kecuali Admin dan Admin Board.
+- `report:<id>`: klien mengirim `report:subscribe` dengan `{ id, trackingCode?, secret? }`. Laporan yang terlihat publik boleh untuk siapa saja. Laporan tersembunyi hanya untuk Penindak Board itu, Admin, pelapor, atau yang membawa Kode Lacak dan secret yang benar. Laporan yang dihapus hanya untuk Admin.
+
+Kedua event subscribe menerima callback `{ ok: true | false }`. `board:unsubscribe` dan `report:unsubscribe` keluar dari room.
+
+Event dari server (dipancarkan setelah transaksi database berhasil):
+
+| Event              | Tujuan                                                   | Payload                                                             |
+| ------------------ | -------------------------------------------------------- | ------------------------------------------------------------------- |
+| `notification:new` | `user:<id>` penerima                                     | `<Notification>`                                                    |
+| `report:updated`   | `report:<id>`, dan `board:<slug>` jika tidak tersembunyi | `{ id, boardSlug, status, isHidden, supportCount, reactionCounts }` |
+| `report:created`   | `board:<slug>` (laporan tidak tersembunyi)               | `{ id, boardSlug, severity }`                                       |
+| `queue:updated`    | `user:<id>` setiap Penindak aktif                        | `{ boardSlug, reportId }`                                           |
+| `board:updated`    | `board:<slug>`                                           | `{ slug, status, verification, verifiedAt }`                        |
+
+### Job
+
+- Per jam: peringatan laporan Berbahaya yang `dueAt`-nya kurang dari 6 jam lagi (`Report.dueWarningSentAt` mencegah pengiriman ulang). Hasil `runScheduledJobs` menambah `dueWarnings`.
+- Harian: ringkasan rating untuk Penindak.
+
+### Deploy satu link
+
+Dengan `NODE_ENV=production` dan folder `client/dist` tersedia, server Express juga menyajikan frontend (semua path selain `/api`, `/uploads`, dan `/socket.io` mengembalikan `index.html`). Content Security Policy mengizinkan script dan frame Cloudflare Turnstile.

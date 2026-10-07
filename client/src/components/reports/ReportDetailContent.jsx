@@ -11,6 +11,7 @@ import { ReportTimeline } from './ReportTimeline.jsx';
 import { EngagementBar } from './EngagementBar.jsx';
 import { BlurredImage } from './BlurredImage.jsx';
 import { FlagButton } from '../moderation/FlagButton.jsx';
+import { useReportChannel } from '../../features/realtime/socketContext.js';
 
 function formatCreatedAt(value) {
   if (!value) return null;
@@ -29,6 +30,7 @@ const HANDLER_ACTIONS = [
 
 export function ReportDetailContent({ report, credentials }) {
   const [searchParams] = useSearchParams();
+  useReportChannel(report.id, credentials);
   const allowed = useMemo(() => new Set(report.allowedActions ?? []), [report.allowedActions]);
   const canHandle = HANDLER_ACTIONS.some((action) => allowed.has(action));
   const boardSlug = report.board?.slug;

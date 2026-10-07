@@ -14,15 +14,16 @@ import { createVerifyOrigin } from './middlewares/verifyOrigin.js';
 import { UPLOAD_ROUTE, uploadDir } from './lib/storage.js';
 import { notFound } from './middlewares/notFound.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { contentSecurityPolicy, serveClient } from './lib/clientApp.js';
 
-export function createApp() {
+export function createApp({ clientDir = isProduction ? undefined : null } = {}) {
   const app = express();
   const passport = configurePassport();
 
   if (isProduction) app.set('trust proxy', 1);
 
   app.disable('x-powered-by');
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy }));
   app.use(cors({ origin: env.CLIENT_URL, credentials: true }));
   app.use(
     pinoHttp({
@@ -47,6 +48,8 @@ export function createApp() {
   );
 
   app.use('/api', createRateLimiter({ windowMs: 60_000, limit: 300 }), createApiRouter());
+
+  if (clientDir !== null) serveClient(app, clientDir);
 
   app.use(notFound);
   app.use(errorHandler);

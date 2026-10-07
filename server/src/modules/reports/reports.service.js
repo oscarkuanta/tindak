@@ -21,6 +21,7 @@ import {
 } from './reports.presenter.js';
 import { viewerEngagement } from '../engagement/engagement.service.js';
 import { recomputeBoardTrust } from '../trust/trust.service.js';
+import { notifyReportCreated } from '../notifications/notify.service.js';
 
 const NEWEST_FIRST = [{ createdAt: 'desc' }, { id: 'desc' }];
 
@@ -232,6 +233,7 @@ export async function createReport({ slug, user, input, files, ip, guestTokenHas
     });
   }
   await recomputeBoardTrust(report.boardId);
+  await notifyReportCreated(report.id, user?.id ?? null);
 
   return {
     report: await presentDetail(report, user, await viewerContext(report, user)),
