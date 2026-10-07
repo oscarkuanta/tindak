@@ -13,6 +13,8 @@
     "postdb:migrate": "prisma generate",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "db:seed:demo": "node --env-file-if-exists=../.env prisma/seed-demo.js",
+    "smoke": "node scripts/smoke.js",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "postdb:reset": "prisma generate",
