@@ -18,6 +18,9 @@ export function slugify(value = '') {
 }
 
 export function boardBaseSlug(name, city) {
+  const nameSlug = slugify(name);
+  const citySlug = slugify(stripCityPrefix(city));
+  if (citySlug && (nameSlug === citySlug || nameSlug.endsWith(`-${citySlug}`))) return nameSlug;
   return slugify(`${name} ${stripCityPrefix(city)}`) || 'board';
 }
 

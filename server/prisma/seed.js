@@ -4,7 +4,6 @@ import { prisma } from '../src/lib/prisma.js';
 import { logger } from '../src/lib/logger.js';
 import { BCRYPT_COST } from '../src/modules/auth/auth.service.js';
 import { createBoard } from '../src/modules/boards/boards.service.js';
-import { boardBaseSlug } from '../src/utils/slugify.js';
 import { normalizeImage } from '../src/lib/images.js';
 import { saveFile } from '../src/lib/storage.js';
 import { hashIp, sha256 } from '../src/utils/crypto.js';
@@ -68,6 +67,10 @@ const BOARDS = [
   },
 ];
 
+function findBoard(name, city) {
+  return prisma.board.findFirst({ where: { name, city }, orderBy: { id: 'asc' } });
+}
+
 async function seedUsers() {
   const passwordHash = await bcrypt.hash(SEED_PASSWORD, BCRYPT_COST);
   const users = {};
@@ -84,11 +87,10 @@ async function seedUsers() {
 async function seedBoards(users) {
   let created = 0;
   for (const { owner, official, extraCategories = [], ...input } of BOARDS) {
-    const slug = boardBaseSlug(input.name, input.city);
-    let board = await prisma.board.findUnique({ where: { slug } });
+    let board = await findBoard(input.name, input.city);
     if (!board) {
       await createBoard(users[owner], { ...input, extraCategories, dangerousTargetHours: 48 });
-      board = await prisma.board.findUnique({ where: { slug } });
+      board = await findBoard(input.name, input.city);
       created += 1;
     }
     if (official && board.verification !== 'OFFICIAL') {
@@ -132,7 +134,7 @@ const FOLLOWS = [
 ];
 
 async function boardIdFor([name, city]) {
-  const board = await prisma.board.findUnique({ where: { slug: boardBaseSlug(name, city) } });
+  const board = await findBoard(name, city);
   return board.id;
 }
 
@@ -365,7 +367,7 @@ async function seedReports(users) {
   let created = 0;
   const ipHash = hashIp('seed');
   for (const item of [...REPORTS, ...WORKFLOW_REPORTS]) {
-    const board = await prisma.board.findUnique({ where: { slug: boardBaseSlug(...item.board) } });
+    const board = await findBoard(...item.board);
     const exists = await prisma.report.findFirst({
       where: { boardId: board.id, title: item.title },
     });
