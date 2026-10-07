@@ -1442,3 +1442,117 @@ Event dari server (dipancarkan setelah transaksi database berhasil):
 ### Deploy satu link
 
 Dengan `NODE_ENV=production` dan folder `client/dist` tersedia, server Express juga menyajikan frontend (semua path selain `/api`, `/uploads`, dan `/socket.io` mengembalikan `index.html`). Content Security Policy mengizinkan script dan frame Cloudflare Turnstile.
+
+---
+
+## Fase 10: Dashboard Statistik Penindak
+
+Konstanta di `shared/src/constants/stats.js` (`STATS_RANGES`, `STATS_RANGE_LABELS`, `STATS_DEFAULT_RANGE`). Skema query di `shared/src/schemas/stats.js`.
+
+### GET /api/boards/:slug/stats
+
+Auth: Penindak Utama (OWNER) dan Penindak (HANDLER) aktif Board itu. Admin dan Admin Board tidak termasuk.
+
+Query: `range` = `7d`, `30d` (default), atau `90d`.
+
+Aturan:
+
+- Statistik dihitung dari laporan yang **dibuat** dalam rentang (sejak `since`). Laporan yang dihapus Admin tidak dihitung; laporan tersembunyi tetap dihitung.
+- `handling.averageHours`: rata-rata jam dari laporan dibuat sampai pertama kali `AWAITING_CONFIRMATION`. `handledCount` adalah jumlah laporan yang sudah sampai tahap itu.
+- `responseRate`: persen bulat, rumus Fase 8 untuk laporan dalam rentang, `null` jika belum ada yang bisa dihitung.
+- `dangerous`: laporan Berbahaya yang sudah ditandai selesai atau batas waktunya sudah lewat (tanpa `REJECTED` dan `DUPLICATE`). Tepat waktu jika ditandai selesai sebelum `dueAt`. `lateReports` maksimal 20, urut batas waktu terlama; `lateHours` dihitung sampai ditandai selesai atau sampai sekarang.
+- `categories`: semua kategori Board, urut jumlah terbanyak (termasuk yang 0).
+- `weeklyTrend`: setiap minggu (Senin, WIB) dalam rentang, termasuk minggu kosong. `incoming` = laporan dibuat, `resolved` = laporan yang pertama kali menjadi `RESOLVED` pada minggu itu.
+- `oldestActive`: 5 laporan berstatus aktif paling lama, tidak dibatasi rentang.
+- `handlers`: hanya untuk OWNER (`null` untuk HANDLER). Semua anggota aktif, dari aksi di timeline dalam rentang: `processed` (menjadi `IN_PROGRESS`), `resolved` (menjadi `AWAITING_CONFIRMATION`), `averageHours` (dibuat sampai ditandai selesai oleh Penindak itu).
+- `rating`: ringkasan kepercayaan Fase 8 ditambah `newRatings` dalam rentang.
+- Dihitung dengan agregasi di database (`groupBy` dan SQL agregat), tanpa memuat semua laporan.
+
+Sukses `200`:
+
+```json
+{
+  "data": {
+    "range": "30d",
+    "since": "2026-09-07T08:00:00.000Z",
+    "generatedAt": "2026-10-07T08:00:00.000Z",
+    "totals": { "total": 6, "active": 4, "resolved": 1, "rejected": 1 },
+    "statusCounts": {
+      "NEW": 2,
+      "NEED_INFO": 0,
+      "IN_PROGRESS": 0,
+      "AWAITING_CONFIRMATION": 2,
+      "RESOLVED": 1,
+      "REOPENED": 0,
+      "REJECTED": 1,
+      "DUPLICATE": 0
+    },
+    "handling": { "handledCount": 3, "averageHours": 30 },
+    "responseRate": 75,
+    "dangerous": {
+      "total": 3,
+      "onTime": 1,
+      "late": 2,
+      "onTimeRate": 33,
+      "lateReports": [
+        {
+          "id": 15,
+          "title": "Kabel listrik putus",
+          "status": "AWAITING_CONFIRMATION",
+          "createdAt": "2026-09-22T08:00:00.000Z",
+          "dueAt": "2026-09-24T08:00:00.000Z",
+          "markedResolvedAt": "2026-09-24T20:00:00.000Z",
+          "lateHours": 12
+        }
+      ]
+    },
+    "categories": [{ "id": 10, "name": "Jalan Berlubang", "count": 4 }],
+    "weeklyTrend": [{ "weekStart": "2026-09-07", "incoming": 1, "resolved": 0 }],
+    "oldestActive": [
+      {
+        "id": 16,
+        "title": "Lampu jalan mati",
+        "status": "NEW",
+        "severity": "LOW",
+        "createdAt": "2026-08-28T08:00:00.000Z",
+        "dueAt": null,
+        "category": { "id": 11, "name": "Lampu Jalan" },
+        "ageDays": 40
+      }
+    ],
+    "handlers": [
+      {
+        "userId": 6,
+        "name": "Siti Aminah",
+        "role": "HANDLER",
+        "processed": 2,
+        "resolved": 2,
+        "averageHours": 35
+      }
+    ],
+    "rating": {
+      "trustScore": 3.3,
+      "trustLabel": "NEW",
+      "ratingCount": 2,
+      "averageStars": 4,
+      "responseRate": null,
+      "rejectedPercentage": 17,
+      "distribution": { "1": 0, "2": 0, "3": 1, "4": 0, "5": 1 },
+      "quickTags": { "RESPONSIVE": 0, "SLOW": 0, "DOUBTFUL": 0 },
+      "newRatings": 2
+    }
+  }
+}
+```
+
+`averageHours` dan `onTimeRate` bernilai `null` jika belum ada data. `rating.responseRate` dan `rating.rejectedPercentage` adalah nilai keseluruhan Board (Fase 8), sedangkan `responseRate` di atasnya khusus rentang.
+
+Error: `400 VALIDATION_ERROR` (`range` tidak valid), `401 UNAUTHENTICATED`, `403 FORBIDDEN` (bukan Penindak Board itu), `404 BOARD_NOT_FOUND`.
+
+### GET /api/boards/:slug/export
+
+Auth: sama dengan stats. Rate limit 10 per menit. Query: `format` = `csv` (default), `range` = `7d`, `30d` (default), `90d`.
+
+Mengunduh file `statistik-<slug>-<range>.csv` (UTF-8 dengan BOM agar terbaca benar di Excel, baris dipisah CRLF), maksimal 5000 laporan terbaru dalam rentang. Kolom: `ID`, `Judul`, `Kategori`, `Tingkat Bahaya`, `Status`, `Dibuat (WIB)`, `Batas Waktu (WIB)`, `Ditandai Selesai (WIB)`, `Lokasi`, `Dukungan`. Identitas pelapor, Kode Lacak, dan data IP tidak ikut. Sel yang diawali `=`, `+`, `-`, `@`, tab, atau carriage return diberi awalan `'` agar tidak dijalankan sebagai rumus.
+
+Error: `400 VALIDATION_ERROR` (format atau rentang tidak valid), `401`, `403`, `404`, `429`.

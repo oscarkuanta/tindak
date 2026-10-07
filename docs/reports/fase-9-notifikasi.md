@@ -3,7 +3,7 @@
 - Branch: `feat/f9-notifications`
 - Pemilik: Oscar (fullstack, bagian A dan B dalam satu branch)
 - Tanggal: 2026-10-06
-- PR: dicatat di commit fase berikutnya
+- PR: [#26](https://github.com/oscarkuanta/tindak/pull/26)
 
 ## Ringkasan
 
