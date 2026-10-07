@@ -57,7 +57,7 @@ Tidak ada endpoint baru dan tidak ada perubahan kontrak di `docs/API.md`.
 - `npm run build`: lulus. Bundel JavaScript minified sekitar 1.49 MB memunculkan peringatan ukuran chunk dari Vite.
 - `npm run test -w client -- --pool=threads --maxWorkers=1 --reporter=dot`: 23 file dan 85 tes lulus setelah perubahan breakpoint.
 - `npm test` root lokal gagal saat Vitest memuat tes backend karena file sementara SSR tidak ditemukan (`ENOENT`). Pengulangan backend dengan satu worker tidak menghasilkan keluaran dan dihentikan setelah macet. Belum ada perubahan backend atau database.
-- GitHub Actions untuk [PR #33](https://github.com/oscarkuanta/tindak/pull/33) pada commit sebelum perubahan breakpoint: lint, migrasi database tes, `npm test`, dan build lulus. CI perlu dijalankan lagi setelah perubahan lokal dikirim.
+- GitHub Actions [run #77](https://github.com/oscarkuanta/tindak/actions/runs/37670312949) untuk commit `612ace3`: lint, migrasi database tes, seluruh tes workspace, dan build lulus. Laporan tes CI menunjukkan 408 tes server dan 85 tes client lulus.
 
 ## Pemeriksaan Visual Manual
 
@@ -77,7 +77,7 @@ Tidak ada endpoint baru dan tidak ada perubahan kontrak di `docs/API.md`.
 ## Hal yang Belum Selesai
 
 - Pemeriksaan visual setiap halaman pada tiga resolusi dan lintas browser masih perlu dilengkapi. Screenshot yang tersedia hanya cukup untuk memastikan responsivitas Beranda di Brave.
-- Pengulangan tes lokal setelah perubahan breakpoint terhambat oleh error file sementara Vitest dan proses test yang macet. CI perlu mengonfirmasi ulang commit terbaru.
+- Tes seluruh workspace belum berjalan tuntas di mesin lokal karena error file sementara Vitest pada server suite; GitHub Actions berhasil menjalankan suite penuh pada commit terbaru.
 - Peringatan ukuran chunk build belum ditangani karena pemecahan bundel berada di luar pekerjaan penyegaran tampilan ini.
 
 ## Catatan untuk Fase Berikutnya
