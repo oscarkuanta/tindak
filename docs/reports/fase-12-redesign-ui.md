@@ -2,7 +2,7 @@
 
 - Branch: `feat/f12-redesign-ui`
 - Pemilik: Akmal
-- Tanggal: 2026-10-07
+- Tanggal: 2026-10-08
 - PR: [#33](https://github.com/oscarkuanta/tindak/pull/33)
 
 ## Ringkasan
@@ -53,12 +53,19 @@ Tidak ada endpoint baru dan tidak ada perubahan kontrak di `docs/API.md`.
 
 ## Hasil Tes
 
-- `npm run lint`: lulus, exit code 0.
-- `npm run test -w client -- --pool=vmThreads --fileParallelism=false`: 23 file lulus, 85 tes lulus.
+- `npm run lint`: lulus, exit code 0, setelah ambang breakpoint mobile diperbaiki.
 - `npm run build`: lulus. Bundel JavaScript minified sekitar 1.49 MB memunculkan peringatan ukuran chunk dari Vite.
-- `npm test` root: setup tes backend tidak dapat menyambung ke MySQL lokal di `127.0.0.1:3306` untuk database `tindak_test`; tidak ada perubahan server atau database.
-- GitHub Actions untuk [PR #33](https://github.com/oscarkuanta/tindak/pull/33): lint, migrasi database tes, `npm test`, dan build lulus.
-- Pemeriksaan visual manual di Chrome, Firefox, Edge pada tiga ukuran belum dapat dilakukan. Browser yang tersedia tidak dapat menjangkau server lokal, dan Chrome, Firefox, serta Edge tidak tersedia di sesi browser ini.
+- `npm run test -w client -- --pool=threads --maxWorkers=1 --reporter=dot`: 23 file dan 85 tes lulus setelah perubahan breakpoint.
+- `npm test` root lokal gagal saat Vitest memuat tes backend karena file sementara SSR tidak ditemukan (`ENOENT`). Pengulangan backend dengan satu worker tidak menghasilkan keluaran dan dihentikan setelah macet. Belum ada perubahan backend atau database.
+- GitHub Actions untuk [PR #33](https://github.com/oscarkuanta/tindak/pull/33) pada commit sebelum perubahan breakpoint: lint, migrasi database tes, `npm test`, dan build lulus. CI perlu dijalankan lagi setelah perubahan lokal dikirim.
+
+## Pemeriksaan Visual Manual
+
+- Beranda diperiksa melalui Brave dari screenshot pada lebar 1280px, 768px, dan 390px. Terlihat layout desktop dengan tiga area pada lebar desktop, layout tablet pada 768px, dan header ringkas serta bottom navigation pada 390px. Tidak tampak scroll horizontal pada screenshot tersebut.
+- Breakpoint disetel ke `max-width: 759px`, sehingga lebar 760px tetap memakai layout tablet sesuai instruksi “mobile di bawah 760px”.
+- Console menampilkan `401` dari `GET /api/auth/me` saat pengguna belum login. Ini respons yang ditentukan kontrak `docs/API.md`; `getMe` menangkap status tersebut dan menganggap sesi sebagai tamu.
+- Halaman lain sebelumnya sudah dibuka dengan data demo untuk pemeriksaan alur dan komponen, tetapi belum semuanya diperiksa pada tiga lebar.
+- Hanya Brave tersedia untuk pemeriksaan manual. Chrome, Firefox, dan Edge tidak tersedia, jadi pemeriksaan lintas browser belum terverifikasi.
 
 ## Keputusan dan Alasan
 
@@ -69,11 +76,11 @@ Tidak ada endpoint baru dan tidak ada perubahan kontrak di `docs/API.md`.
 
 ## Hal yang Belum Selesai
 
-- Pemeriksaan visual lintas browser dan resolusi perlu dilakukan manual setelah aplikasi dapat dibuka di Chrome, Firefox, dan Edge.
-- Tes seluruh workspace memerlukan MySQL test lokal yang aktif. Tes seluruh frontend sudah berjalan dan lulus.
+- Pemeriksaan visual setiap halaman pada tiga resolusi dan lintas browser masih perlu dilengkapi. Screenshot yang tersedia hanya cukup untuk memastikan responsivitas Beranda di Brave.
+- Pengulangan tes lokal setelah perubahan breakpoint terhambat oleh error file sementara Vitest dan proses test yang macet. CI perlu mengonfirmasi ulang commit terbaru.
 - Peringatan ukuran chunk build belum ditangani karena pemecahan bundel berada di luar pekerjaan penyegaran tampilan ini.
 
 ## Catatan untuk Fase Berikutnya
 
 - Pertimbangkan endpoint ringkasan Beranda bila produk memerlukan metrik mingguan.
-- Jalankan kembali pemeriksaan visual dan `npm test` pada lingkungan yang menyediakan tiga browser dan MySQL test.
+- Jalankan kembali pemeriksaan visual halaman lain dan lintas browser pada lingkungan yang menyediakan browser tersebut.
