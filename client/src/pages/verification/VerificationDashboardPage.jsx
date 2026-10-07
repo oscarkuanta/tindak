@@ -53,7 +53,7 @@ function CandidatesTab() {
       {(boards, meta) => (
         <>
           <Card className="overflow-x-auto p-0">
-            <table className="w-full min-w-[44rem]">
+            <table className="w-full min-w-[40rem]">
               <thead className="border-b border-border">
                 <tr>
                   <th className={TH}>Board</th>
