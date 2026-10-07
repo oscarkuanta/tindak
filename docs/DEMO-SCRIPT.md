@@ -4,7 +4,8 @@ Batas video 7 menit. Naskah ini sekitar 6 menit, jadi masih ada sisa untuk pembu
 
 ## Persiapan sebelum merekam
 
-- Data demo baru diisi (`npm run db:seed:demo -- --reset` di lingkungan demo).
+- Database demo kosong dan sudah dimigrasikan: `npm run db:deploy`, lalu `npm run db:seed:demo`.
+- Jika mengulang rekaman, `npm run db:seed:demo -- --reset` menghapus seluruh data di database tujuan. Jalankan hanya pada database demo sekali pakai.
 - **Browser A** (Chrome biasa) dan **Browser B** (jendela Incognito), berdampingan.
 - Siapkan satu foto jalan rusak di komputer untuk diunggah.
 - Tutup notifikasi sistem dan tab lain.
