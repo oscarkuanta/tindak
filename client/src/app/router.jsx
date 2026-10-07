@@ -20,6 +20,7 @@ import { BoardSettingsPage } from '../pages/board-settings/BoardSettingsPage.jsx
 import { FollowedBoardsPage } from '../pages/followed-boards/FollowedBoardsPage.jsx';
 import { InvitationsPage } from '../pages/invitations/InvitationsPage.jsx';
 import { BoardQueuePage } from '../pages/board-queue/BoardQueuePage.jsx';
+import { BoardStatsPage } from '../pages/board-stats/BoardStatsPage.jsx';
 import { ReportBoardPickerPage } from '../pages/create-report/ReportBoardPickerPage.jsx';
 import { DeviceReportsPage } from '../pages/device-reports/DeviceReportsPage.jsx';
 import { MyReportsPage } from '../pages/my-reports/MyReportsPage.jsx';
@@ -119,6 +120,14 @@ export const routes = [
                     element: (
                       <RequireAuth>
                         <BoardQueuePage />
+                      </RequireAuth>
+                    ),
+                  },
+                  {
+                    path: '/b/:slug/dashboard',
+                    element: (
+                      <RequireAuth>
+                        <BoardStatsPage />
                       </RequireAuth>
                     ),
                   },
