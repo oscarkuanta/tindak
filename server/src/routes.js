@@ -13,31 +13,34 @@ import {
   createReportsRouter,
   createTrackRouter,
 } from './modules/reports/reports.routes.js';
-
 import { createAdminRouter, createFlagsRouter } from './modules/moderation/moderation.routes.js';
 import { createBoardAdminRouter, createBoardRatingsRouter } from './modules/trust/trust.routes.js';
 import { createNotificationsRouter } from './modules/notifications/notifications.routes.js';
 import { createBoardStatsRouter } from './modules/stats/stats.routes.js';
 
+export function apiMounts() {
+  return [
+    ['/health', healthRouter],
+    ['/auth', createAuthRouter()],
+    ['/boards', createBoardReportsRouter()],
+    ['/boards', createBoardRatingsRouter()],
+    ['/boards', createBoardStatsRouter()],
+    ['/boards', createBoardsRouter()],
+    ['/reports', createReportsRouter()],
+    ['/track', createTrackRouter()],
+    ['/feed', createFeedRouter()],
+    ['/flags', createFlagsRouter()],
+    ['/admin', createAdminRouter()],
+    ['/board-admin', createBoardAdminRouter()],
+    ['/notifications', createNotificationsRouter()],
+    ['/me', createMeReportsRouter()],
+    ['/me', createMeBoardsRouter()],
+    ['/meta', createMetaRouter()],
+  ];
+}
+
 export function createApiRouter() {
   const router = Router();
-
-  router.use('/health', healthRouter);
-  router.use('/auth', createAuthRouter());
-  router.use('/boards', createBoardReportsRouter());
-  router.use('/boards', createBoardRatingsRouter());
-  router.use('/boards', createBoardStatsRouter());
-  router.use('/boards', createBoardsRouter());
-  router.use('/reports', createReportsRouter());
-  router.use('/track', createTrackRouter());
-  router.use('/feed', createFeedRouter());
-  router.use('/flags', createFlagsRouter());
-  router.use('/admin', createAdminRouter());
-  router.use('/board-admin', createBoardAdminRouter());
-  router.use('/notifications', createNotificationsRouter());
-  router.use('/me', createMeReportsRouter());
-  router.use('/me', createMeBoardsRouter());
-  router.use('/meta', createMetaRouter());
-
+  for (const [path, mounted] of apiMounts()) router.use(path, mounted);
   return router;
 }

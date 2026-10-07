@@ -257,7 +257,10 @@ describe('GET /api/boards/:slug/export', () => {
     });
 
     const res = await owner.agent.get(`/api/boards/${board.slug}/export?format=csv&range=30d`);
-    const lines = res.text.replace(/^﻿/, '').trim().split('\r\n');
+    const lines = res.text
+      .replace(/^\uFEFF/, '')
+      .trim()
+      .split('\r\n');
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toContain('text/csv');
