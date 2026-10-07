@@ -3,7 +3,7 @@
 - Branch: `feat/f10b-dashboard`
 - Pemilik: Akmal
 - Tanggal: 2026-10-07
-- PR: -
+- PR: [#31](https://github.com/oscarkuanta/tindak/pull/31)
 
 ## Ringkasan
 
