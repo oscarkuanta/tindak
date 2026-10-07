@@ -12,6 +12,7 @@ import { ReportStatusBadge } from '../../components/reports/ReportStatusBadge.js
 import { useBoard, useBoardHandlers } from '../../features/boards/hooks.js';
 import { useQueueReportAction, useReportQueue } from '../../features/handling/hooks.js';
 import { useToast } from '../../features/boards/toastContext.js';
+import { useBoardChannel } from '../../features/realtime/socketContext.js';
 
 const TARGET_ACTIONS = {
   NEED_INFO: { action: REPORT_HANDLING_ACTIONS.REQUEST_INFO, path: 'request-info' },
@@ -59,6 +60,7 @@ function ReportQueueCard({ report, onDragStart }) {
 
 export function BoardQueuePage() {
   const { slug } = useParams();
+  useBoardChannel(slug);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [view, setView] = useState('kanban');
