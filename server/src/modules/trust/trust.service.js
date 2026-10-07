@@ -1,6 +1,9 @@
 import { prisma } from '../../lib/prisma.js';
 import { openFakeBoardFlagCount } from '../moderation/flags.service.js';
-import { notifyBoardAdminsNewCandidate } from '../notifications/notifications.service.js';
+import {
+  notifyBoardAdminsNewCandidate,
+  notifyBoardNeedsReview,
+} from '../notifications/notifications.service.js';
 import {
   candidateChecklist,
   computeRejectedRate,
@@ -10,6 +13,7 @@ import {
   isCandidate,
   roundTo,
 } from './trustScore.js';
+import { VERIFICATION_RULES } from '@tindak/shared';
 
 export async function lastSkippedAt(boardId, client = prisma) {
   const log = await client.boardVerificationLog.findFirst({
@@ -66,6 +70,15 @@ async function reportStats(boardId, now) {
   };
 }
 
+export function needsReview(board) {
+  if (board.verification !== 'OFFICIAL') return false;
+  return (
+    board.status === 'INACTIVE' ||
+    (board.trustScore !== null &&
+      roundTo(board.trustScore, 1) < VERIFICATION_RULES.REVIEW_TRUST_SCORE_BELOW)
+  );
+}
+
 export async function recomputeBoardTrust(boardId, now = new Date()) {
   const board = await prisma.board.findUnique({ where: { id: boardId } });
   if (!board) return null;
@@ -100,6 +113,7 @@ export async function recomputeBoardTrust(boardId, now = new Date()) {
     data: { ...next, candidateSince },
   });
   if (candidate && !board.candidateSince) await notifyBoardAdminsNewCandidate(updated);
+  if (needsReview(updated) && !needsReview(board)) await notifyBoardNeedsReview(updated);
   return updated;
 }
 

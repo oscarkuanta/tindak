@@ -162,26 +162,39 @@ Tanpa langkah ini aplikasi tetap jalan, hanya tombol login Google yang mengarah 
 
 Callback sengaja lewat port 5173 (proxy Vite) agar cookie login tetap satu situs dengan frontend.
 
+## Realtime dan Deploy Satu Link
+
+Notifikasi dan pembaruan tanpa refresh memakai Socket.IO di server Express yang sama (`/socket.io`). Saat development, Vite meneruskan `/api` dan `/socket.io` ke server di port 3000.
+
+Untuk production, cukup satu service dan satu alamat:
+
+1. `npm run build` membuat frontend di `client/dist`.
+2. `npm run db:deploy` menjalankan migrasi.
+3. `npm start` dengan `NODE_ENV=production`. Server menyajikan frontend, `/api`, `/socket.io`, dan `/uploads` dari alamat yang sama, jadi `CLIENT_URL` diisi alamat situs itu sendiri.
+
+Pakai hosting yang servernya selalu menyala (misalnya Railway, Render, atau VPS), bukan hosting serverless seperti Vercel, karena Socket.IO, job terjadwal, dan folder upload butuh proses yang terus berjalan. Panduan lengkap ada di Fase 11.
+
 ## Daftar Script
 
 Semua dijalankan dari folder root.
 
-| Script                                         | Fungsi                                                                       |
-| ---------------------------------------------- | ---------------------------------------------------------------------------- |
-| `npm run dev`                                  | Menjalankan server (3000) dan client (5173) bersamaan                        |
-| `npm run build`                                | Build client untuk production ke `client/dist`                               |
-| `npm run lint`                                 | ESLint dan cek format Prettier                                               |
-| `npm run format`                               | Merapikan semua file dengan Prettier                                         |
-| `npm test`                                     | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`        |
-| `npm run db:generate`                          | Membuat ulang Prisma Client setelah `schema.prisma` berubah                  |
-| `npm run db:migrate`                           | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev        |
-| `npm run db:deploy`                            | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production) |
-| `npm run db:seed`                              | Mengisi data awal dari `server/prisma/seed.js`                               |
-| `npm run db:studio`                            | Membuka Prisma Studio untuk melihat isi database                             |
-| `npm run db:reset`                             | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                |
-| `npm run db:test:deploy -w server`             | Menjalankan migrasi ke database `tindak_test`                                |
-| `npm run make-admin -- email@contoh.com`       | Menjadikan user dengan email itu sebagai Admin                               |
-| `npm run make-board-admin -- email@contoh.com` | Menjadikan user dengan email itu sebagai Admin Board                         |
+| Script                                         | Fungsi                                                                                             |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `npm run dev`                                  | Menjalankan server (3000) dan client (5173) bersamaan                                              |
+| `npm run build`                                | Build client untuk production ke `client/dist`                                                     |
+| `npm start`                                    | Menjalankan server. Dengan `NODE_ENV=production`, server juga menyajikan `client/dist` (satu link) |
+| `npm run lint`                                 | ESLint dan cek format Prettier                                                                     |
+| `npm run format`                               | Merapikan semua file dengan Prettier                                                               |
+| `npm test`                                     | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`                              |
+| `npm run db:generate`                          | Membuat ulang Prisma Client setelah `schema.prisma` berubah                                        |
+| `npm run db:migrate`                           | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev                              |
+| `npm run db:deploy`                            | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production)                       |
+| `npm run db:seed`                              | Mengisi data awal dari `server/prisma/seed.js`                                                     |
+| `npm run db:studio`                            | Membuka Prisma Studio untuk melihat isi database                                                   |
+| `npm run db:reset`                             | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                                      |
+| `npm run db:test:deploy -w server`             | Menjalankan migrasi ke database `tindak_test`                                                      |
+| `npm run make-admin -- email@contoh.com`       | Menjadikan user dengan email itu sebagai Admin                                                     |
+| `npm run make-board-admin -- email@contoh.com` | Menjadikan user dengan email itu sebagai Admin Board                                               |
 
 ## Kontribusi
 

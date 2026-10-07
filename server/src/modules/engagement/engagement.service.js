@@ -3,6 +3,7 @@ import { prisma } from '../../lib/prisma.js';
 import { AppError } from '../../utils/AppError.js';
 import { getBoardMembership } from '../boards/boards.service.js';
 import { refreshReportScores } from './scores.service.js';
+import { notifyEngagementChanged } from '../notifications/notify.service.js';
 
 function notFound() {
   return new AppError(404, ERROR_CODES.REPORT_NOT_FOUND, 'Laporan tidak ditemukan');
@@ -38,6 +39,7 @@ async function commit(report, user, change) {
     await tx.report.update({ where: { id: report.id }, data: { lastEngagementAt: new Date() } });
     await refreshReportScores(tx, report.id);
   });
+  await notifyEngagementChanged(report.id);
   return getEngagementState(report.id, user);
 }
 
