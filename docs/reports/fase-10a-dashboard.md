@@ -3,7 +3,7 @@
 - Branch: `feat/f10a-dashboard`
 - Pemilik: Oscar (bagian A, backend saja; bagian B dikerjakan anggota tim lain)
 - Tanggal: 2026-10-07
-- PR: dicatat di commit fase berikutnya
+- PR: [#27](https://github.com/oscarkuanta/tindak/pull/27)
 
 ## Ringkasan
 

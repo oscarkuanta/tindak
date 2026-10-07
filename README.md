@@ -2,13 +2,51 @@
 
 Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan melaporkan jalan rusak, sampah, toilet rusak, atau lampu mati ke sebuah **Board** (mirip subreddit). Komunitas memberi dukungan dan reaksi, lalu **Penindak** board menindaklanjuti sampai pelapor mengonfirmasi selesai.
 
-Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Status pengerjaan ada di [docs/PROGRESS.md](docs/PROGRESS.md).
+**Demo:** link diisi setelah deploy (lihat [docs/DEPLOY.md](docs/DEPLOY.md)). Akun demo ada di [docs/DEMO.md](docs/DEMO.md).
+
+## Screenshot
+
+| Beranda                                        | Halaman Board                        | Kanban Penindak                              |
+| ---------------------------------------------- | ------------------------------------ | -------------------------------------------- |
+| ![Beranda](docs/screenshots/beranda.png)       | ![Board](docs/screenshots/board.png) | ![Kanban](docs/screenshots/kanban.png)       |
+| **Dashboard Verifikasi**                       | **Panel Admin**                      | **Dashboard Statistik**                      |
+| ![Verifikasi](docs/screenshots/verifikasi.png) | ![Admin](docs/screenshots/admin.png) | ![Statistik](docs/screenshots/statistik.png) |
+
+## Fitur
+
+- **Board per tempat:** sekolah, kampus, kantor, jalan, RT/RW, fasilitas umum. Siapa pun bisa membuat Board, semua mulai sebagai Komunitas.
+- **Lapor tanpa akun:** tamu melapor dengan foto dan captcha, lalu memantau lewat Kode Lacak. Bisa juga melapor anonim saat login.
+- **Penindakan berstatus:** Baru, Perlu Info, Diproses, Menunggu Konfirmasi, Selesai, Dibuka Ulang, Ditolak, Duplikat. Penindak bekerja lewat antrean daftar atau kanban, pelapor mengonfirmasi hasilnya.
+- **Prioritas dari warga:** dukungan dan reaksi (🚨 Berbahaya, ⏳ Sudah Lama, 😤 Mengganggu) membentuk skor prioritas dan feed Ramai. Laporan Berbahaya punya batas waktu.
+- **Kepercayaan Board:** rating bintang dan tingkat tanggap menghasilkan Skor Kepercayaan otomatis (Baru, Terpercaya, Perlu Waspada).
+- **Verifikasi Official:** Board yang memenuhi syarat masuk antrean, lalu Admin Board memutuskan Jadikan Official, Lewati, atau Cabut. Semua keputusan tercatat.
+- **Moderasi:** Tandai Pelanggaran, sembunyi otomatis, foto tidak pantas diburamkan, ban akun/perangkat/IP, bekukan Board, audit log.
+- **Notifikasi dan realtime:** lonceng notifikasi, antrean dan status berubah tanpa refresh (Socket.IO).
+- **Dashboard Penindak:** statistik per status, waktu penanganan, Berbahaya tepat waktu, tren mingguan, kinerja per Penindak, ekspor CSV.
+
+## Arsitektur
+
+```
+Browser (React + TanStack Query + Socket.IO client)
+        │  satu domain: /  /api  /socket.io  /api/uploads
+        ▼
+Express 5 (satu proses Node.js)
+  ├─ routes → controller → service   (validasi Zod dari folder shared)
+  ├─ Socket.IO (session cookie yang sama, room user/board/laporan)
+  ├─ job terjadwal (node-cron): konfirmasi otomatis, Board Tidak Aktif, skor, peringatan batas waktu
+  └─ menyajikan client/dist di production
+        │
+        ├─ Prisma 7 → MySQL 8 / MariaDB
+        └─ folder upload (volume permanen di production)
+```
+
+Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Status pengerjaan ada di [docs/PROGRESS.md](docs/PROGRESS.md). Dokumen rilis: [docs/DEPLOY.md](docs/DEPLOY.md), [docs/DEMO.md](docs/DEMO.md), [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md), [docs/QA-CHECKLIST.md](docs/QA-CHECKLIST.md).
 
 ## Stack
 
 | Bagian  | Teknologi                                                                                             |
 | ------- | ----------------------------------------------------------------------------------------------------- |
-| Server  | Node.js 22.18+ (ESM), Express 5, Prisma 7 + MySQL 8, Zod, helmet, cors, express-rate-limit, pino-http |
+| Server  | Node.js 22.18+ (ESM), Express 5, Prisma 7 + MySQL 8, Zod, Socket.IO, helmet, express-rate-limit, pino |
 | Client  | React 19, Vite, React Router, TanStack Query, Tailwind CSS 4                                          |
 | Shared  | Skema Zod, enum, dan konstanta yang dipakai server dan client                                         |
 | Testing | Vitest + Supertest                                                                                    |
@@ -125,15 +163,15 @@ File `.env` di root dipakai oleh server dan Prisma. File `.env.test` dipakai saa
 | `TURNSTILE_SECRET_KEY`    | Production | Secret key Cloudflare Turnstile untuk captcha form laporan. Kosong di development berarti memakai kunci test `1x0000000000000000000000000000000AA` (selalu lolos, tanpa internet). Production wajib memakai key asli |
 | `VITE_TURNSTILE_SITE_KEY` | Ya         | Site key publik Turnstile untuk widget di frontend. Development: kunci test `1x00000000000000000000AA`                                                                                                               |
 | `NSFW_ENABLED`            | Tidak      | `true` untuk mengaktifkan scan foto tidak pantas (nsfwjs). Default `false`. Aktifkan di production                                                                                                                   |
-| `UPLOAD_DIR`              | Tidak      | Folder penyimpanan foto laporan. Default `server/uploads` (diabaikan git)                                                                                                                                            |
+| `UPLOAD_DIR`              | Production | Folder penyimpanan foto laporan. Default `server/uploads` (diabaikan git). Di production wajib folder permanen (volume)                                                                                              |
 | `JOBS_ENABLED`            | Tidak      | `false` untuk mematikan job terjadwal (konfirmasi otomatis 3 hari dan Board Tidak Aktif 30 hari). Default aktif                                                                                                      |
 | `LOG_LEVEL`               | Tidak      | Level log pino: `fatal`, `error`, `warn`, `info`, `debug`, `trace`, `silent`                                                                                                                                         |
 
-Variabel bertanda "Fase N" boleh dikosongkan sampai fase tersebut dikerjakan.
+Di production server juga menolak menyala jika `SESSION_SECRET` atau `IP_HASH_SECRET` masih nilai contoh atau `CLIENT_URL` bukan https. Daftar lengkap variabel production ada di [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Foto Laporan dan Captcha
 
-- Foto laporan disimpan di `server/uploads` (atau `UPLOAD_DIR`) dan disajikan di `/api/uploads/...`. Folder ini tidak ikut git. Semua penyimpanan lewat `server/src/lib/storage.js`, jadi saat deploy cukup mengganti modul itu ke cloud storage.
+- Foto laporan disimpan di `server/uploads` (atau `UPLOAD_DIR`) dan disajikan di `/api/uploads/...`. Folder ini tidak ikut git. Di production, `UPLOAD_DIR` diarahkan ke volume permanen. Semua penyimpanan lewat `server/src/lib/storage.js`, jadi jika nanti pindah ke cloud storage cukup mengganti modul itu.
 - Captcha memakai Cloudflare Turnstile. Kunci test di `.env.example` membuat widget selalu menampilkan "Success!" dan server selalu menerima. Untuk kunci asli, daftar di dashboard Cloudflare → Turnstile, lalu isi `VITE_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`.
 - Scan foto tidak pantas memakai nsfwjs dengan `@tensorflow/tfjs` (versi JavaScript murni, tanpa kompilasi). Model dimuat saat foto pertama diperiksa, sekitar 1 detik, lalu sekitar 1 detik per foto.
 
@@ -148,7 +186,7 @@ Jalankan `npm run db:seed` untuk membuat akun, Board, pengikut, dan 5 laporan co
 | `budi@tindak.test`       | USER        | Penindak Utama 3 Board (termasuk SMKN 1 Surabaya, Official), punya 1 undangan Penindak |
 | `siti@tindak.test`       | USER        | Penindak Utama 2 Board, Penindak di SMKN 1 Surabaya                                    |
 
-Akun demo hanya untuk development. Jangan jalankan seed di server production.
+Akun di atas hanya untuk development. Untuk lingkungan demo atau lomba, pakai **data demo** yang lebih lengkap: `npm run db:seed:demo` membuat 45 akun (semua role, password `demo1234`), 8 Board di Surabaya dan Sidoarjo, dan 81 laporan. Rinciannya di [docs/DEMO.md](docs/DEMO.md).
 
 ## Mengaktifkan Login Google
 
@@ -172,7 +210,7 @@ Untuk production, cukup satu service dan satu alamat:
 2. `npm run db:deploy` menjalankan migrasi.
 3. `npm start` dengan `NODE_ENV=production`. Server menyajikan frontend, `/api`, `/socket.io`, dan `/uploads` dari alamat yang sama, jadi `CLIENT_URL` diisi alamat situs itu sendiri.
 
-Pakai hosting yang servernya selalu menyala (misalnya Railway, Render, atau VPS), bukan hosting serverless seperti Vercel, karena Socket.IO, job terjadwal, dan folder upload butuh proses yang terus berjalan. Panduan lengkap ada di Fase 11.
+Pakai hosting yang servernya selalu menyala (misalnya Railway atau VPS), bukan hosting serverless seperti Vercel, karena Socket.IO, job terjadwal, dan folder upload butuh proses yang terus berjalan. Konfigurasi Railway ada di `railway.json`, panduan langkah demi langkah di [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Daftar Script
 
@@ -185,11 +223,13 @@ Semua dijalankan dari folder root.
 | `npm start`                                    | Menjalankan server. Dengan `NODE_ENV=production`, server juga menyajikan `client/dist` (satu link) |
 | `npm run lint`                                 | ESLint dan cek format Prettier                                                                     |
 | `npm run format`                               | Merapikan semua file dengan Prettier                                                               |
-| `npm test`                                     | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`                              |
+| `npm test`                                     | Menjalankan tes server (Vitest + Supertest) ke database `tindak_test`, lalu tes client             |
 | `npm run db:generate`                          | Membuat ulang Prisma Client setelah `schema.prisma` berubah                                        |
 | `npm run db:migrate`                           | `prisma migrate dev`: membuat dan menjalankan migrasi di database dev                              |
 | `npm run db:deploy`                            | `prisma migrate deploy`: menjalankan migrasi yang sudah ada (CI, production)                       |
 | `npm run db:seed`                              | Mengisi data awal dari `server/prisma/seed.js`                                                     |
+| `npm run db:seed:demo`                         | Mengisi data demo lengkap ke database kosong (tambahkan `-- --reset` untuk mengosongkan dulu)      |
+| `npm run smoke -- https://alamat-situs`        | Cek cepat situs yang berjalan dengan akun demo (hanya membaca data)                                |
 | `npm run db:studio`                            | Membuka Prisma Studio untuk melihat isi database                                                   |
 | `npm run db:reset`                             | Menghapus semua data dan menjalankan ulang migrasi. Hati-hati                                      |
 | `npm run db:test:deploy -w server`             | Menjalankan migrasi ke database `tindak_test`                                                      |
