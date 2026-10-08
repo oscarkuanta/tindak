@@ -6,6 +6,7 @@ import {
   FLAG_REASON_ORDER,
   FLAG_STATUSES,
   FLAG_TARGET_TYPES,
+  FREEZE_DURATIONS,
   IP_BAN_DURATIONS,
   REPORT_FLAG_REASONS,
 } from '../constants/moderation.js';
@@ -88,6 +89,7 @@ export const moderationNoteRequestSchema = z.strictObject({
 
 export const freezeBoardRequestSchema = z.strictObject({
   reason: z.string().trim().min(3, 'Alasan minimal 3 karakter').max(500),
+  duration: z.enum(Object.keys(FREEZE_DURATIONS), { error: 'Pilih durasi freeze' }),
 });
 
 export const moderationQuerySchema = z.object({

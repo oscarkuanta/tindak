@@ -18,16 +18,6 @@ export const BOARD_TYPE_LABELS = Object.freeze({
   OTHER: 'Lainnya',
 });
 
-export const BOARD_TYPE_ICONS = Object.freeze({
-  SCHOOL: '🏫',
-  CAMPUS: '🎓',
-  OFFICE: '🏢',
-  ROAD: '🛣️',
-  AREA: '🏘️',
-  PUBLIC_FACILITY: '🏥',
-  OTHER: '📍',
-});
-
 export const BOARD_VERIFICATIONS = Object.freeze(['COMMUNITY', 'OFFICIAL']);
 export const BOARD_VERIFICATION_LABELS = Object.freeze({
   COMMUNITY: 'Komunitas',
@@ -107,7 +97,7 @@ export const BOARD_STATUSES = Object.freeze(['ACTIVE', 'INACTIVE', 'FROZEN']);
 export const BOARD_STATUS_LABELS = Object.freeze({
   ACTIVE: 'Aktif',
   INACTIVE: 'Tidak Aktif',
-  FROZEN: 'Dibekukan',
+  FROZEN: 'Di-freeze',
 });
 
 export const BOARD_MAX_CATEGORIES = 20;

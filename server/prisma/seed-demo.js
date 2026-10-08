@@ -312,6 +312,17 @@ async function storePhoto(name) {
   return saveFile(photoCache.get(name), 'webp');
 }
 
+const BOARD_COVERS = {
+  sman5: 'cover-sman5',
+  ayani: 'cover-ayani',
+  ayaniPalsu: 'cover-ayani',
+  its: 'cover-its',
+  pondokjati: 'cover-pondokjati',
+  gubeng: 'cover-gubeng',
+  alunalun: 'cover-alunalun',
+  bungkul: 'cover-bungkul',
+};
+
 const AFTER_PHOTO = {
   'jalan-berlubang': 'jalan-diperbaiki',
   'sampah-menumpuk': 'sampah-bersih',
@@ -393,9 +404,14 @@ async function seedBoard(spec, users) {
     dangerousTargetHours: 48,
     extraCategories: [],
   });
+  const cover = await storePhoto(BOARD_COVERS[spec.key]);
   await prisma.board.update({
     where: { id: created.id },
-    data: { createdAt: at(spec.ageDays), lastHandlerActivityAt: at(0, -2) },
+    data: {
+      createdAt: at(spec.ageDays),
+      lastHandlerActivityAt: at(0, -2),
+      coverImageUrl: cover.url,
+    },
   });
   for (const handler of spec.handlers) {
     await prisma.boardMember.create({

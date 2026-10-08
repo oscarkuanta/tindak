@@ -109,6 +109,7 @@ model Board {
   status                BoardStatus            @default(ACTIVE)
   lastHandlerActivityAt DateTime               @default(now()) @map("last_handler_activity_at")
   restoredByAdminCount  Int                    @default(0) @map("restored_by_admin_count")
+  frozenUntil           DateTime?              @map("frozen_until")
   ratingCount           Int                    @default(0) @map("rating_count")
   ratingSum             Int                    @default(0) @map("rating_sum")
   responseRate          Float?                 @map("response_rate")

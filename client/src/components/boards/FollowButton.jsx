@@ -5,6 +5,7 @@ import { useMe } from '../../features/auth/hooks.js';
 import { useFollowBoard, useUpdateFollowNotifyLevel } from '../../features/boards/hooks.js';
 import { useToast } from '../../features/boards/toastContext.js';
 import { Badge, Button } from '../ui/index.js';
+import { CaretDown, Check, Plus } from '@phosphor-icons/react';
 
 export function FollowButton({ board, compact = false }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -87,6 +88,7 @@ export function FollowButton({ board, compact = false }) {
         onClick={startFollowing}
         loading={followMutation.isPending}
       >
+        <Plus size={16} weight="bold" aria-hidden="true" />
         Ikuti
       </Button>
     );
@@ -102,7 +104,9 @@ export function FollowButton({ board, compact = false }) {
         onClick={() => setMenuOpen((open) => !open)}
         loading={followMutation.isPending}
       >
-        Diikuti <span aria-hidden="true">⌄</span>
+        <Check size={16} weight="bold" aria-hidden="true" />
+        Diikuti
+        <CaretDown size={14} weight="bold" aria-hidden="true" />
       </Button>
       {menuOpen && (
         <div
@@ -122,7 +126,9 @@ export function FollowButton({ board, compact = false }) {
               onClick={() => changeNotifyLevel(level)}
             >
               {FOLLOW_NOTIFY_LEVEL_LABELS[level]}
-              <span aria-hidden="true">{notifyLevel === level ? '✓' : ''}</span>
+              {notifyLevel === level && (
+                <Check aria-hidden="true" size={16} weight="bold" className="text-mint-700" />
+              )}
             </button>
           ))}
           <div className="my-1 border-t border-border" />

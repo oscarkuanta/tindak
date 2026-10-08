@@ -10,6 +10,7 @@ import { useBoardReports } from '../../features/reports/hooks.js';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
 import { FlagButton } from '../../components/moderation/FlagButton.jsx';
 import { useBoardChannel } from '../../features/realtime/socketContext.js';
+import { Megaphone } from '@phosphor-icons/react';
 
 const FEED_TABS = [
   { value: 'hot', label: 'Ramai', sort: 'hot' },
@@ -176,7 +177,7 @@ export function BoardDetailPage() {
             {board.coverImageUrl && <img src={board.coverImageUrl} alt="" />}
           </div>
           <div className="p-5 sm:p-6">
-            <div className="flex min-w-0 flex-wrap items-end gap-3">
+            <div className="flex min-w-0 flex-wrap items-start gap-3 sm:items-end">
               <div className="board-avatar -mt-11" aria-hidden="true">
                 {getInitials(board.name)}
               </div>
@@ -200,8 +201,9 @@ export function BoardDetailPage() {
             <div className="mt-5 flex flex-wrap gap-2">
               <Link
                 to={`/b/${slug}/lapor`}
-                className="inline-flex h-10 items-center rounded-base bg-brand px-4 text-sm font-semibold text-brand-contrast hover:bg-brand-hover"
+                className="inline-flex h-10 items-center gap-2 rounded-base bg-brand px-4 text-sm font-semibold text-brand-contrast hover:bg-brand-hover"
               >
+                <Megaphone size={18} weight="fill" aria-hidden="true" />
                 Laporkan Masalah
               </Link>
               <FollowButton board={board} />

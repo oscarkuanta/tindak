@@ -3,11 +3,13 @@ import {
   REPORT_SEVERITY_DESCRIPTIONS,
   REPORT_SEVERITY_LABELS,
 } from '@tindak/shared';
+import { cn } from '../../lib/cn.js';
+import { SeverityIcon } from '../icons/AppIcons.jsx';
 
-const severityStyle = {
-  LOW: 'border-border bg-surface-muted text-text',
-  MEDIUM: 'border-warning/40 bg-warning/10 text-text',
-  DANGEROUS: 'border-danger/40 bg-danger/10 text-danger',
+const OPTION_CLASS = {
+  LOW: 'severity-option--low',
+  MEDIUM: 'severity-option--medium',
+  DANGEROUS: 'severity-option--dangerous',
 };
 
 export function SeveritySelector({ value, onChange, error }) {
@@ -18,7 +20,11 @@ export function SeveritySelector({ value, onChange, error }) {
         {REPORT_SEVERITIES.map((severity) => (
           <label
             key={severity}
-            className={`flex min-h-24 cursor-pointer gap-3 rounded-card border p-3 transition hover:border-brand ${severityStyle[severity]} ${value === severity ? 'ring-2 ring-brand' : ''}`}
+            className={cn(
+              'severity-option',
+              OPTION_CLASS[severity],
+              value === severity && 'is-selected',
+            )}
           >
             <input
               type="radio"
@@ -26,15 +32,14 @@ export function SeveritySelector({ value, onChange, error }) {
               value={severity}
               checked={value === severity}
               onChange={() => onChange(severity)}
-              className="mt-1 accent-brand"
+              className="sr-only"
             />
-            <span>
-              <span className="block text-sm font-semibold">
-                {REPORT_SEVERITY_LABELS[severity]}
-              </span>
-              <span className="mt-1 block text-xs text-text-muted">
-                {REPORT_SEVERITY_DESCRIPTIONS[severity]}
-              </span>
+            <span className="severity-option__icon">
+              <SeverityIcon severity={severity} size={26} className="!text-current" />
+            </span>
+            <span className="block text-sm font-semibold">{REPORT_SEVERITY_LABELS[severity]}</span>
+            <span className="block text-xs text-text-muted">
+              {REPORT_SEVERITY_DESCRIPTIONS[severity]}
             </span>
           </label>
         ))}

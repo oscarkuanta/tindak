@@ -1,8 +1,8 @@
+import { X } from '@phosphor-icons/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
   BOARD_DEFAULT_CATEGORIES,
-  BOARD_TYPE_ICONS,
   BOARD_TYPE_LABELS,
   DEFAULT_DANGEROUS_TARGET_HOURS,
   boardAboutSchema,
@@ -16,6 +16,7 @@ import { BoardCard } from '../../components/boards/BoardCard.jsx';
 import { CitySelect } from '../../components/boards/CitySelect.jsx';
 import { useBoardSimilar, useCreateBoard } from '../../features/boards/hooks.js';
 import { useToast } from '../../features/boards/toastContext.js';
+import { BoardTypeIcon } from '../../components/icons/AppIcons.jsx';
 
 const STEPS = [
   { name: 'Identitas', schema: boardIdentitySchema },
@@ -226,9 +227,7 @@ export function CreateBoardPage() {
                     onClick={() => updateField('type', type)}
                     className={`flex min-h-14 items-center gap-2 rounded-base border px-3 py-2 text-left text-sm focus-visible:outline-2 focus-visible:outline-brand ${form.type === type ? 'border-brand bg-brand-soft text-brand' : 'border-border bg-surface hover:bg-surface-muted'}`}
                   >
-                    <span aria-hidden="true" className="text-lg">
-                      {BOARD_TYPE_ICONS[type]}
-                    </span>
+                    <BoardTypeIcon type={type} size={24} className="text-mint-700" />
                     <span className="font-medium">{label}</span>
                   </button>
                 ))}
@@ -303,7 +302,7 @@ export function CreateBoardPage() {
               </div>
             </div>
             <Alert tone="info">
-              Board baru berstatus Komunitas. Status Official ✔️ diberikan Admin Board setelah Board
+              Board baru berstatus Komunitas. Status Official diberikan Admin Board setelah Board
               mendapat banyak rating dan dipercaya pengguna.
             </Alert>
           </Card>
@@ -340,9 +339,9 @@ export function CreateBoardPage() {
                       type="button"
                       aria-label={`Hapus ${category}`}
                       onClick={() => removeCategory(category)}
-                      className="font-bold"
+                      className="grid place-items-center"
                     >
-                      ×
+                      <X aria-hidden="true" size={12} weight="bold" />
                     </button>
                   </span>
                 ))}

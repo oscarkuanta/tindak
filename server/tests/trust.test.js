@@ -507,7 +507,7 @@ describe('Admin Board', () => {
 
     await admin.agent
       .post(`/api/admin/boards/${board.slug}/freeze`)
-      .send({ reason: 'Board palsu' })
+      .send({ reason: 'Board palsu', duration: 'permanent' })
       .expect(200);
 
     expect(
@@ -515,7 +515,7 @@ describe('Admin Board', () => {
     ).toMatchObject({
       action: 'REVOKED',
       actorUserId: null,
-      reason: 'Board dibekukan moderator',
+      reason: 'Board di-freeze moderator',
     });
   });
 });
