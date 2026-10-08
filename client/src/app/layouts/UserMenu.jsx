@@ -48,7 +48,7 @@ export function UserMenu({ user }) {
         aria-controls={menuId}
         aria-label={`Menu akun ${user.name}`}
         onClick={() => setOpen((value) => !value)}
-        className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        className="rounded-full border-2 border-surface/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-surface"
       >
         <Avatar name={user.name} src={user.avatarUrl} size="sm" />
       </button>

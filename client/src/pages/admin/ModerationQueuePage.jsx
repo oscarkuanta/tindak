@@ -162,7 +162,7 @@ function ReportItem({ item }) {
               className="size-24 rounded-base object-cover"
             />
             {typeof photo.nsfwScore === 'number' && (
-              <span className="absolute bottom-1 left-1 rounded bg-text/75 px-1 text-[11px] text-white">
+              <span className="absolute bottom-1 left-1 rounded bg-text/75 px-1 text-[11px] text-surface">
                 NSFW {Math.round(photo.nsfwScore * 100)}%
               </span>
             )}

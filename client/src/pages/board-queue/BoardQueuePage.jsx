@@ -5,10 +5,15 @@ import {
   REPORT_HANDLING_KANBAN_COLUMNS,
   REPORT_HANDLING_STATUS_LABELS,
   REPORT_HANDLING_STATUSES,
+  REPORT_SEVERITY_LABELS,
   reportQueueFiltersSchema,
 } from '@tindak/shared';
-import { Alert, Badge, Button, Card, Spinner } from '../../components/ui/index.js';
-import { ReportStatusBadge } from '../../components/reports/ReportStatusBadge.jsx';
+import { Alert, Badge, Button, Card, Spinner, Tabs } from '../../components/ui/index.js';
+import {
+  LateChip,
+  ReportSeverityBadge,
+  ReportStatusBadge,
+} from '../../components/reports/ReportStatusBadge.jsx';
 import { useBoard, useBoardHandlers } from '../../features/boards/hooks.js';
 import { useQueueReportAction, useReportQueue } from '../../features/handling/hooks.js';
 import { useToast } from '../../features/boards/toastContext.js';
@@ -20,7 +25,10 @@ const TARGET_ACTIONS = {
   AWAITING_CONFIRMATION: { action: REPORT_HANDLING_ACTIONS.RESOLVE, path: 'resolve' },
 };
 
-const SEVERITY_LABELS = { LOW: 'Rendah', MEDIUM: 'Sedang', DANGEROUS: 'Berbahaya' };
+const VIEW_TABS = [
+  { value: 'kanban', label: 'Kanban' },
+  { value: 'list', label: 'Daftar' },
+];
 
 function columnForStatus(status) {
   return REPORT_HANDLING_KANBAN_COLUMNS.find((column) => column.statuses.includes(status));
@@ -36,10 +44,8 @@ function ReportQueueCard({ report, onDragStart }) {
     >
       <div className="flex flex-wrap items-center gap-2">
         <ReportStatusBadge status={report.status} />
-        <Badge tone={report.severity === 'DANGEROUS' ? 'danger' : 'neutral'}>
-          {SEVERITY_LABELS[report.severity] ?? report.severity}
-        </Badge>
-        {report.isOverdue && <Badge tone="danger">⏰ Terlambat</Badge>}
+        <ReportSeverityBadge severity={report.severity} />
+        {report.isOverdue && <LateChip />}
       </div>
       <Link
         to={`/laporan/${report.id}`}
@@ -170,20 +176,7 @@ export function BoardQueuePage() {
           </Link>
           <h1 className="mt-1 text-2xl font-bold">Antrean Laporan</h1>
         </div>
-        <div className="flex gap-2" aria-label="Tampilan antrean">
-          <Button
-            variant={view === 'kanban' ? 'primary' : 'secondary'}
-            onClick={() => setView('kanban')}
-          >
-            Kanban
-          </Button>
-          <Button
-            variant={view === 'list' ? 'primary' : 'secondary'}
-            onClick={() => setView('list')}
-          >
-            Daftar
-          </Button>
-        </div>
+        <Tabs items={VIEW_TABS} value={view} label="Tampilan antrean" onChange={setView} />
       </div>
       {board?.status === 'INACTIVE' && (
         <Alert tone="info">
@@ -230,7 +223,7 @@ export function BoardQueuePage() {
             className="h-10 w-full rounded-base border border-border bg-surface px-3"
           >
             <option value="">Semua tingkat</option>
-            {Object.entries(SEVERITY_LABELS).map(([value, label]) => (
+            {Object.entries(REPORT_SEVERITY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
                 {label}
               </option>
@@ -275,7 +268,7 @@ export function BoardQueuePage() {
         </Card>
       ) : view === 'kanban' ? (
         <>
-          <div className="grid gap-4 xl:grid-cols-5">
+          <div className="kanban-scroll">
             {REPORT_HANDLING_KANBAN_COLUMNS.map((column) => {
               const items = reports.filter((report) => column.statuses.includes(report.status));
               return (
