@@ -1,8 +1,49 @@
 import { Card } from '../../components/ui/index.js';
+import { Link, useLocation } from 'react-router';
+import { useMe } from '../../features/auth/hooks.js';
+import { useMyFollows } from '../../features/boards/hooks.js';
+import { usePopularBoards } from '../../features/feed/hooks.js';
+import { VerificationBadge } from '../../components/boards/BoardBadges.jsx';
+
+function PopularBoards() {
+  const query = usePopularBoards();
+  const boards = query.data?.data ?? [];
+  if (query.isPending || !boards.length) return null;
+  return (
+    <Card>
+      <h2 className="font-heading text-base font-bold">Board Populer</h2>
+      <ul className="mt-3 divide-y divide-border">
+        {boards.map((board) => (
+          <li key={board.id} className="py-3 first:pt-0 last:pb-0">
+            <Link to={`/b/${board.slug}`} className="group block">
+              <span className="flex flex-wrap items-center gap-1.5 text-sm font-semibold group-hover:text-mint-700">
+                {board.name}
+                <VerificationBadge verification={board.verification} size="sm" />
+              </span>
+              <span className="mt-1 block text-xs text-text-muted">
+                {board.city} · {board.followerCount} pengikut · {board.activeReportCount} laporan
+                aktif
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </Card>
+  );
+}
 
 export function RightSidebar() {
+  const location = useLocation();
+  const { data: user, isPending: userPending } = useMe();
+  const followsQuery = useMyFollows({ enabled: location.pathname === '/' && Boolean(user) });
+  const showPopular =
+    location.pathname === '/' &&
+    !userPending &&
+    (!user || (!followsQuery.isPending && (followsQuery.data?.data ?? []).length === 0));
+
   return (
-    <div className="sticky top-[calc(var(--spacing-header)+1.5rem)] flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
+      {showPopular && <PopularBoards />}
       <Card>
         <h2 className="text-sm font-semibold">Tentang T!indak</h2>
         <p className="mt-2 text-sm text-text-muted">

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router';
 import { TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { useBoardSearch } from '../../features/boards/hooks.js';
@@ -73,6 +74,12 @@ export function BoardSearch() {
       <label className="sr-only" htmlFor="header-board-search">
         Cari Board
       </label>
+      <MagnifyingGlass
+        className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-text-subtle"
+        size={18}
+        weight="bold"
+        aria-hidden="true"
+      />
       <input
         id="header-board-search"
         role="combobox"
@@ -89,7 +96,7 @@ export function BoardSearch() {
         onFocus={() => setOpen(true)}
         onKeyDown={handleKeyDown}
         placeholder="Cari Board..."
-        className="h-10 w-full rounded-full border border-border bg-surface-muted px-4 text-sm outline-none transition focus:border-accent focus:bg-surface focus:ring-2 focus:ring-accent/20"
+        className="h-11 w-full rounded-full border-0 bg-surface py-2 pr-4 pl-11 text-sm text-text outline-none transition placeholder:text-text-subtle focus:bg-surface focus:ring-2 focus:ring-mint/35"
       />
       {showPanel && (
         <div

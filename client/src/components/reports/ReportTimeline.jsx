@@ -1,4 +1,5 @@
 import { REPORT_HANDLING_STATUS_LABELS, REPORT_REJECTION_REASON_LABELS } from '@tindak/shared';
+import { Check, Circle, Gear } from '@phosphor-icons/react';
 
 function actorLabel(entry) {
   if (entry.actor?.name || entry.actorName) return entry.actor?.name ?? entry.actorName;
@@ -35,7 +36,13 @@ export function ReportTimeline({ entries = [] }) {
               aria-hidden="true"
               className="absolute -left-[1.625rem] top-0.5 grid size-4 place-items-center rounded-full border-2 border-surface bg-brand text-[0.55rem] text-brand-contrast"
             >
-              {entry.actorType === 'SYSTEM' ? '⚙' : entry.toStatus === 'RESOLVED' ? '✓' : '•'}
+              {entry.actorType === 'SYSTEM' ? (
+                <Gear size={9} weight="bold" />
+              ) : entry.toStatus === 'RESOLVED' ? (
+                <Check size={9} weight="bold" />
+              ) : (
+                <Circle size={5} weight="fill" />
+              )}
             </span>
             <div className="flex flex-wrap items-center gap-2">
               <strong className="text-sm">{status}</strong>
