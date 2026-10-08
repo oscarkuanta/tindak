@@ -14,7 +14,8 @@ export const contentSecurityPolicy = {
     frameSrc: ['https://challenges.cloudflare.com'],
     imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
     connectSrc: ["'self'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],
+    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+    fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
   },
 };
 
