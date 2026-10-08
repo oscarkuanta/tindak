@@ -6,6 +6,11 @@ const EMPTY_CITIES = [];
 export function CitySelect({ value, onChange, error, label = 'Kota', id = 'board-city' }) {
   const { data, isPending, error: loadError, refetch } = useCities();
   const [search, setSearch] = useState(value ?? '');
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (syncedValue !== value) {
+    setSyncedValue(value);
+    if (value) setSearch(value);
+  }
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const cities = data?.data ?? EMPTY_CITIES;
@@ -44,8 +49,11 @@ export function CitySelect({ value, onChange, error, label = 'Kota', id = 'board
         aria-autocomplete="list"
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
-        value={value || search}
-        onFocus={() => setOpen(true)}
+        value={search}
+        onFocus={(event) => {
+          event.target.select();
+          setOpen(true);
+        }}
         onChange={(event) => {
           setSearch(event.target.value);
           setOpen(true);
