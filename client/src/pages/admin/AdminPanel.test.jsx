@@ -72,11 +72,13 @@ describe('Panel Admin', () => {
     expect(await screen.findByText('403 · Akses ditolak')).toBeInTheDocument();
   });
 
-  it('tamu diarahkan ke halaman masuk', async () => {
+  it('tamu diminta masuk dan tidak melihat isi Panel Admin', async () => {
     mockApi({ 'GET /auth/me': guestMe });
     const { router } = renderApp('/admin/moderasi');
 
-    await waitFor(() => expect(router.state.location.pathname).toBe('/masuk'));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/admin/moderasi');
+    expect(screen.queryByRole('heading', { name: 'Panel Admin' })).not.toBeInTheDocument();
   });
 
   it('menampilkan statistik dashboard dan mengalihkan /panel-admin', async () => {

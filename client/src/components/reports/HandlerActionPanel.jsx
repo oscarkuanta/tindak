@@ -12,6 +12,7 @@ import {
 } from '@tindak/shared';
 import { searchBoardReports } from '../../features/handling/api.js';
 import { Alert, Button, Input, Modal } from '../ui/index.js';
+import { compressImages } from '../../lib/compressImage.js';
 
 const HANDLER_ACTIONS = [
   REPORT_HANDLING_ACTIONS.PROCESS,
@@ -37,7 +38,7 @@ function validatePhotos(files) {
         file.size > 5 * 1024 * 1024,
     )
   ) {
-    return 'Foto harus JPEG, PNG, atau WebP dan berukuran maksimal 5 MB.';
+    return 'Foto tidak bisa diproses. Coba foto lain dalam format JPG, PNG, atau WebP.';
   }
   return null;
 }
@@ -161,15 +162,16 @@ export function HandlerActionPanel({
     submit(REPORT_HANDLING_ACTIONS.RESOLVE, body);
   }
 
-  function handleFileChange(event) {
+  async function handleFileChange(event) {
     const selectedFiles = Array.from(event.target.files ?? []);
     if (selectedFiles.length > 4) {
       setFiles([]);
       setFormError('Maksimal 4 foto sesudah.');
       return;
     }
-    setFiles(selectedFiles);
-    setFormError('');
+    const { files: ready, errors } = await compressImages(selectedFiles);
+    setFiles(ready);
+    setFormError(errors.join(' '));
   }
 
   async function processReport() {
@@ -402,7 +404,7 @@ export function HandlerActionPanel({
             <Input
               type="file"
               label="Foto sesudah (wajib, maksimal 4 foto)"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/*"
               multiple
               onChange={handleFileChange}
             />

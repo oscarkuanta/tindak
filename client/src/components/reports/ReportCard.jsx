@@ -31,7 +31,7 @@ export function ReportCard({ report, showBoard = false }) {
             src={photo.url}
             alt={`Foto laporan: ${report.title}`}
             isBlurred={photo.isBlurred}
-            className="max-h-72 w-full object-cover"
+            frameClassName="aspect-[4/3] w-full sm:aspect-[16/10]"
           />
         )}
         <div className="p-4 sm:p-5">
