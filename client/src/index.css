@@ -71,6 +71,7 @@
   --color-mint: var(--mint);
   --color-mint-600: var(--mint-600);
   --color-mint-700: var(--mint-700);
+  --color-mint-800: var(--mint-800);
   --color-blue-100: var(--blue-100);
   --color-blue-200: var(--blue-200);
   --color-blue-700: var(--blue-700);
@@ -580,8 +581,8 @@
     transform: translateY(-1rem);
     border: 4px solid var(--bg) !important;
     border-radius: 50% !important;
-    background: var(--yellow);
-    color: var(--ink) !important;
+    background: var(--surface);
+    color: var(--mint-700) !important;
     box-shadow: var(--shadow-lg);
   }
 

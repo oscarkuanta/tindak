@@ -8,7 +8,7 @@ const VARIANTS = {
   ghost: 'text-text hover:bg-surface-muted',
   danger: 'bg-danger text-danger-contrast hover:opacity-90',
   accent:
-    'bg-yellow font-extrabold text-text shadow-md ring-2 ring-surface/60 hover:-translate-y-0.5 hover:brightness-105',
+    'bg-surface font-extrabold text-mint-700 shadow-md ring-2 ring-surface/50 ring-offset-2 ring-offset-mint-800 hover:-translate-y-0.5 hover:bg-mint-50',
   outlineLight: 'border border-surface/70 text-surface hover:bg-surface/15',
 };
 

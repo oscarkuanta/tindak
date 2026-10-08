@@ -24,7 +24,7 @@ Fase ini menindaklanjuti hasil testing UI/UX dari anggota tim. Ada delapan temua
   - Kota dipilih sekali lewat kotak pencarian kota dan disimpan di browser. Untuk user yang sudah login, kota ditebak dari Board yang paling banyak diikuti.
   - Halaman Jelajahi Board dan kotak Board Populer di samping juga otomatis memakai kota itu, dengan pilihan "Tampilkan semua kota".
 - **Foto laporan tidak terpotong.** Foto ditampilkan utuh (`object-fit: contain`) di atas salinan dirinya yang diburamkan sebagai latar, seperti Reddit dan Twitter. Berlaku di kartu feed, detail laporan, dan perbandingan sebelum/sesudah.
-- **Hierarki navigasi.** Laporkan Masalah menjadi tombol kuning yang paling menonjol di header dan di tombol tengah navigasi bawah HP. Buat Board menjadi tombol garis, Masuk dan Daftar tetap putih.
+- **Hierarki navigasi.** Laporkan Masalah tetap berisi putih, dengan teks hijau tema yang tebal, ukuran lebih besar, dan cincin putih, sehingga paling menonjol di header. Tombol tengah navigasi bawah HP memakai gaya yang sama. Buat Board menjadi tombol garis, Masuk dan Daftar tetap putih.
 
 ## File Penting
 
