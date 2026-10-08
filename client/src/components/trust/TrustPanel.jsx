@@ -7,6 +7,7 @@ import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
 import { useRatingSummary } from '../../features/trust/hooks.js';
 import { QuickTagSummary, StarDistribution } from './StarDistribution.jsx';
 import { RatingModal } from './RatingModal.jsx';
+import { StarIcon } from '../icons/AppIcons.jsx';
 
 export function TrustPanel({ board }) {
   const { data: user } = useMe();
@@ -33,7 +34,7 @@ export function TrustPanel({ board }) {
       </div>
       <p className="mt-1 text-xs text-text-muted">
         {board.ratingCount ?? 0} rating
-        {board.averageStars ? ` · rata-rata ${formatScore(board.averageStars)} ★` : ''}
+        {board.averageStars ? ` · rata-rata ${formatScore(board.averageStars)} dari 5` : ''}
       </p>
       <details className="mt-2 text-xs text-text-muted">
         <summary className="cursor-pointer font-medium text-brand">Cara skor dihitung</summary>
@@ -68,7 +69,8 @@ export function TrustPanel({ board }) {
       </dl>
       {!isStaff && (
         <Button variant="secondary" block className="mt-4" onClick={handleRate}>
-          ⭐ Beri Rating
+          <StarIcon size={18} />
+          Beri Rating
         </Button>
       )}
       {user && <RatingModal slug={board.slug} open={open} onClose={() => setOpen(false)} />}

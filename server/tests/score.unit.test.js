@@ -5,13 +5,13 @@ import { comparePopularity } from '../src/modules/boards/boards.ranking.js';
 const DAY = 24 * 60 * 60 * 1000;
 
 describe('priorityScore (contoh PRODUCT.md)', () => {
-  it('lubang besar Berbahaya, 5 dukungan, 4 reaksi 🚨, 3 hari = 53', () => {
+  it('lubang besar Berbahaya, 5 dukungan, 4 reaksi Berbahaya, 3 hari = 53', () => {
     expect(
       priorityScore({ supportCount: 5, dangerousCount: 4, severity: 'DANGEROUS', daysOpen: 3 }),
     ).toBe(53);
   });
 
-  it('lampu taman mati Rendah, 30 dukungan, 2 reaksi 😤, 1 hari = 34', () => {
+  it('lampu taman mati Rendah, 30 dukungan, 2 reaksi Mengganggu, 1 hari = 34', () => {
     expect(
       priorityScore({ supportCount: 30, annoyingCount: 2, severity: 'LOW', daysOpen: 1 }),
     ).toBe(34);

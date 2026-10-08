@@ -9,6 +9,15 @@ import { VerificationTimeline } from '../../components/trust/VerificationTimelin
 import { RevokeModal, SkipModal, VerifyModal } from '../../components/trust/VerificationModals.jsx';
 import { useVerificationDetail } from '../../features/trust/hooks.js';
 import { formatDateTime } from '../admin/adminFormat.js';
+import {
+  ArrowCounterClockwise,
+  ArrowLeft,
+  Check,
+  SealCheck,
+  SkipForward,
+  X,
+} from '@phosphor-icons/react';
+import { FlagReasonIcon } from '../../components/icons/AppIcons.jsx';
 
 function Row({ label, children }) {
   return (
@@ -28,7 +37,7 @@ function Checklist({ items }) {
             aria-hidden="true"
             className={`inline-flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-bold text-surface ${item.passed ? 'bg-success' : 'bg-danger'}`}
           >
-            {item.passed ? '✓' : '✕'}
+            {item.passed ? <Check size={12} weight="bold" /> : <X size={12} weight="bold" />}
           </span>
           <span>
             <span className="sr-only">{item.passed ? 'Terpenuhi: ' : 'Belum terpenuhi: '}</span>
@@ -57,8 +66,12 @@ export function VerificationDetailPage() {
 
   return (
     <>
-      <Link to="/verifikasi" className="text-sm font-medium text-brand hover:underline">
-        ← Dashboard Verifikasi
+      <Link
+        to="/verifikasi"
+        className="inline-flex items-center gap-1 text-sm font-medium text-mint-700 hover:underline"
+      >
+        <ArrowLeft aria-hidden="true" size={16} weight="bold" />
+        Dashboard Verifikasi
       </Link>
       <Card className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -79,14 +92,21 @@ export function VerificationDetailPage() {
           <Alert tone="warning">Board Official ini Perlu Ditinjau Ulang.</Alert>
         )}
         <div className="flex flex-wrap gap-2">
-          {canVerify && <Button onClick={() => setModal('verify')}>Jadikan Official</Button>}
+          {canVerify && (
+            <Button className="action-btn-official" onClick={() => setModal('verify')}>
+              <SealCheck size={18} weight="fill" aria-hidden="true" />
+              Jadikan Official
+            </Button>
+          )}
           {canVerify && (
             <Button variant="secondary" onClick={() => setModal('skip')}>
+              <SkipForward size={18} weight="bold" aria-hidden="true" />
               Lewati
             </Button>
           )}
           {board.verification === 'OFFICIAL' && (
             <Button variant="danger" onClick={() => setModal('revoke')}>
+              <ArrowCounterClockwise size={18} weight="bold" aria-hidden="true" />
               Cabut Official
             </Button>
           )}
@@ -132,8 +152,9 @@ export function VerificationDetailPage() {
             <ul className="space-y-1 text-sm">
               {flagEntries.map(([reason, count]) => (
                 <li key={reason} className="flex justify-between gap-3">
-                  <span>
-                    {FLAG_REASON_META[reason]?.emoji} {FLAG_REASON_META[reason]?.label ?? reason}
+                  <span className="inline-flex items-center gap-1.5">
+                    <FlagReasonIcon reason={reason} size={16} className="text-danger" />
+                    {FLAG_REASON_META[reason]?.label ?? reason}
                   </span>
                   <span className="text-text-muted">
                     {count.open} terbuka / {count.total} total

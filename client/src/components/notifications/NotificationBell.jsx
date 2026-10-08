@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { Bell } from 'lucide-react';
+import { BellSimple } from '@phosphor-icons/react';
 import { Link } from 'react-router';
 import { NOTIFICATION_DROPDOWN_LIMIT } from '@tindak/shared';
 import { Spinner } from '../ui/index.js';
@@ -56,7 +56,7 @@ export function NotificationBell() {
         onClick={() => setOpen((value) => !value)}
         className="relative inline-flex size-9 items-center justify-center rounded-full text-surface transition-colors hover:bg-surface/15"
       >
-        <Bell size={20} strokeWidth={1.8} aria-hidden="true" />
+        <BellSimple size={21} weight="bold" aria-hidden="true" />
         {count > 0 && (
           <span
             aria-hidden="true"

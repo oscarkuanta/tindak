@@ -4,6 +4,7 @@ import { Alert, Button, Modal, Spinner } from '../ui/index.js';
 import { useMyRating, useRateBoard } from '../../features/trust/hooks.js';
 import { apiErrorMessage } from '../../features/auth/formErrors.js';
 import { useToast } from '../../features/boards/toastContext.js';
+import { QuickTagIcon, StarIcon } from '../icons/AppIcons.jsx';
 
 function RatingForm({ slug, current, onDone }) {
   const [stars, setStars] = useState(current?.stars ?? 0);
@@ -40,9 +41,9 @@ function RatingForm({ slug, current, onDone }) {
               aria-label={`${value} bintang`}
               aria-pressed={stars === value}
               onClick={() => setStars(value)}
-              className={`text-3xl leading-none transition-transform hover:scale-110 ${value <= stars ? 'text-warning' : 'text-border'}`}
+              className="rounded-full p-0.5 transition-transform hover:scale-115 active:scale-95"
             >
-              ★
+              <StarIcon filled={value <= stars} size={34} />
             </button>
           ))}
         </div>
@@ -56,9 +57,10 @@ function RatingForm({ slug, current, onDone }) {
               type="button"
               aria-pressed={quickTag === tag}
               onClick={() => setQuickTag((value) => (value === tag ? null : tag))}
-              className={`rounded-full border px-3 py-1 text-sm ${quickTag === tag ? 'border-brand bg-brand-soft text-brand' : 'border-border hover:bg-surface-muted'}`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium ${quickTag === tag ? 'border-brand bg-brand-soft text-mint-700' : 'border-border hover:bg-surface-muted'}`}
             >
-              {RATING_QUICK_TAG_META[tag].emoji} {RATING_QUICK_TAG_META[tag].label}
+              <QuickTagIcon tag={tag} />
+              {RATING_QUICK_TAG_META[tag].label}
             </button>
           ))}
         </div>

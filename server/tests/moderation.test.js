@@ -13,7 +13,11 @@ import {
   hideDecision,
   openFakeBoardFlagCount,
 } from '../src/modules/moderation/flags.service.js';
-import { maskHash, purgeOldIpHashes } from '../src/modules/moderation/admin.service.js';
+import {
+  maskHash,
+  purgeOldIpHashes,
+  unfreezeExpiredBoards,
+} from '../src/modules/moderation/admin.service.js';
 import { createUser, resetDatabase } from './helpers/db.js';
 import { jpegWithExif } from './helpers/images.js';
 
@@ -501,12 +505,16 @@ describe('Admin: kelola Board', () => {
 
     const frozen = await admin.agent
       .post(`/api/admin/boards/${board.slug}/freeze`)
-      .send({ reason: 'Board palsu' });
+      .send({ reason: 'Board palsu', duration: 'permanent' });
     const again = await admin.agent
       .post(`/api/admin/boards/${board.slug}/freeze`)
-      .send({ reason: 'Board palsu' });
+      .send({ reason: 'Board palsu', duration: 'permanent' });
 
-    expect(frozen.body.data).toMatchObject({ status: 'FROZEN', verificationRevoked: true });
+    expect(frozen.body.data).toMatchObject({
+      status: 'FROZEN',
+      frozenUntil: null,
+      verificationRevoked: true,
+    });
     expect(again.status).toBe(409);
     const stored = await prisma.board.findUnique({ where: { id: board.id } });
     expect(stored).toMatchObject({
@@ -529,6 +537,60 @@ describe('Admin: kelola Board', () => {
       status: 'ACTIVE',
       verification: 'COMMUNITY',
     });
+  });
+
+  it('freeze 7 hari mengisi frozenUntil lalu otomatis unfreeze saat waktunya habis', async () => {
+    const { admin, board } = await setup();
+
+    const noDuration = await admin.agent
+      .post(`/api/admin/boards/${board.slug}/freeze`)
+      .send({ reason: 'Board spam' });
+    const before = Date.now();
+    const frozen = await admin.agent
+      .post(`/api/admin/boards/${board.slug}/freeze`)
+      .send({ reason: 'Board spam', duration: '7d' });
+    const until = new Date(frozen.body.data.frozenUntil).getTime();
+
+    expect(noDuration.status).toBe(400);
+    expect(noDuration.body.error.details[0].message).toBe('Pilih durasi freeze');
+    expect(frozen.status).toBe(200);
+    expect(until - before).toBeGreaterThanOrEqual(7 * DAY - 5000);
+    expect(until - before).toBeLessThanOrEqual(7 * DAY + 5000);
+    expect(await unfreezeExpiredBoards(new Date(before + 6 * DAY))).toBe(0);
+
+    expect(await unfreezeExpiredBoards(new Date(before + 8 * DAY))).toBe(1);
+    const stored = await prisma.board.findUnique({ where: { id: board.id } });
+    expect(stored).toMatchObject({ status: 'ACTIVE', frozenUntil: null });
+    expect(await prisma.auditLog.findFirst({ where: { action: 'BOARD_UNFROZEN' } })).toMatchObject({
+      actorUserId: null,
+      data: expect.objectContaining({ automatic: true }),
+    });
+    expect((await request(app).get(`/api/boards/${board.slug}`)).status).toBe(200);
+  });
+
+  it('freeze permanen tidak di-unfreeze otomatis', async () => {
+    const { admin, board } = await setup();
+    await admin.agent
+      .post(`/api/admin/boards/${board.slug}/freeze`)
+      .send({ reason: 'Board palsu', duration: 'permanent' })
+      .expect(200);
+
+    expect(await unfreezeExpiredBoards(new Date(Date.now() + 365 * DAY))).toBe(0);
+    expect((await prisma.board.findUnique({ where: { id: board.id } })).status).toBe('FROZEN');
+  });
+
+  it('Penindak tidak bisa menandai Board yang dikelolanya sendiri', async () => {
+    const { owner, board } = await setup();
+
+    const res = await owner.agent
+      .post('/api/flags')
+      .send({ targetType: 'BOARD', targetId: board.id, reason: 'FAKE_BOARD' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.message).toBe(
+      'Penindak tidak bisa menandai Board yang dikelolanya sendiri',
+    );
+    expect(await prisma.flag.count()).toBe(0);
   });
 
   it('mengabaikan tanda Board Palsu', async () => {
@@ -554,7 +616,7 @@ describe('Admin: kelola Board', () => {
       .send({ verification: 'OFFICIAL' });
     const freezeWithField = await admin.agent
       .post(`/api/admin/boards/${board.slug}/freeze`)
-      .send({ reason: 'coba', verification: 'OFFICIAL' });
+      .send({ reason: 'coba', duration: 'permanent', verification: 'OFFICIAL' });
 
     expect(patch.status).toBe(403);
     expect(freezeWithField.status).toBe(400);
