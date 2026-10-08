@@ -151,3 +151,5 @@ vite.config.ts.timestamp-*
 
 server/src/generated/
 server/uploads/
+
+docs/*.pdf
