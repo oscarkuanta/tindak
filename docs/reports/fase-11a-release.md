@@ -80,7 +80,8 @@ Tidak ada. Perubahan perilaku: slug Board baru tidak mengulang nama kota jika na
 ## Bug yang Ditemukan dan Diperbaiki
 
 - **Slug Board mengulang nama kota.** Contoh: "SMAN 5 Surabaya" di Kota Surabaya menjadi `sman-5-surabaya-surabaya`. Sekarang menjadi `sman-5-surabaya`, dengan unit test baru. Board lama tidak berubah karena slug memang tidak pernah berubah. `seed.js` development sekarang mencari Board berdasarkan nama dan kota, agar seed ulang di database lama tidak membuat Board ganda.
-- **`server/tests/stats.test.js` (Fase 10A) berisi karakter BOM tak terlihat di sebuah regex**, sehingga ESLint gagal. Kemungkinan besar CI PR #27 merah karena ini. Penyebabnya, saat Fase 10A saya hanya membaca baris terakhir output lint, bukan status keluarnya. Sudah diganti dengan escape `﻿`, dan pemeriksaan lint sekarang memakai status keluar.
+- **`server/tests/stats.test.js` (Fase 10A) berisi karakter BOM tak terlihat di sebuah regex**, sehingga ESLint gagal. Kemungkinan besar CI PR #27 merah karena ini. Penyebabnya, saat Fase 10A saya hanya membaca baris terakhir output lint, bukan status keluarnya. Sudah diganti dengan escape `\uFEFF`, dan pemeriksaan lint sekarang memakai status keluar.
+- **Font Poppins dan Montserrat diblokir CSP di production** (ditemukan setelah redesign Fase 12). Frontend memuat font dari Google Fonts, sedangkan CSP hanya mengizinkan stylesheet dari situs sendiri. Di mode dev tidak terlihat karena CSP hanya aktif saat server menyajikan frontend. Diperbaiki di branch `fix/f11-csp-fonts`: `style-src` mengizinkan `https://fonts.googleapis.com` dan `font-src` mengizinkan `https://fonts.gstatic.com`. Tes baru di `security.test.js` membaca semua alamat luar di `client/index.html`, `client/src/index.css`, dan widget Turnstile, lalu memastikan semuanya ada di CSP.
 
 ## npm audit
 
