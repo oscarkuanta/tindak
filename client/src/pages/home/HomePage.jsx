@@ -1,47 +1,17 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
-import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
+import { ArrowFatUp, ClipboardText, WarningOctagon } from '@phosphor-icons/react';
+import { Alert, Button, Spinner, StatCard, Tabs } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
-import { VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
 import { useMe } from '../../features/auth/hooks.js';
 import { useMyFollows } from '../../features/boards/hooks.js';
-import { useHomeFeed, usePopularBoards } from '../../features/feed/hooks.js';
-import { cn } from '../../lib/cn.js';
+import { useHomeFeed } from '../../features/feed/hooks.js';
 
 const PAGE_SIZE = 10;
 const TABS = [
-  { id: 'following', label: 'Diikuti' },
-  { id: 'hot', label: 'Ramai' },
+  { value: 'following', label: 'Diikuti' },
+  { value: 'hot', label: 'Ramai' },
 ];
-
-function PopularBoards() {
-  const query = usePopularBoards();
-  const boards = query.data?.data ?? [];
-  if (query.isPending) return <Spinner label="Memuat Board populer" />;
-  if (!boards.length) return null;
-  return (
-    <Card>
-      <h2 className="font-semibold">Board Populer</h2>
-      <ul className="mt-3 flex flex-col divide-y divide-border">
-        {boards.map((board) => (
-          <li key={board.id} className="py-2">
-            <Link to={`/b/${board.slug}`} className="group flex flex-col gap-0.5">
-              <span className="flex flex-wrap items-center gap-2 text-sm font-medium group-hover:text-brand">
-                {board.name}
-                <VerificationBadge verification={board.verification} size="sm" />
-              </span>
-              <span className="text-xs text-text-muted">
-                {board.city} · {board.followerCount} pengikut · {board.activeReportCount} laporan
-                aktif
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
 
 function Feed({ tab }) {
   const [page, setPage] = useState(1);
@@ -50,20 +20,64 @@ function Feed({ tab }) {
   if (query.isError) return <Alert>{query.error.message}</Alert>;
   const reports = query.data.data;
   const meta = query.data.meta;
+  const dangerousCount = reports.filter((report) => report.severity === 'DANGEROUS').length;
+  const supportCount = reports.reduce((total, report) => total + (report.supportCount ?? 0), 0);
+  const summary = (
+    <section
+      aria-label="Ringkasan feed"
+      className="rounded-card border border-border bg-surface p-4 shadow-card sm:p-5"
+    >
+      <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 className="text-base font-bold">Ringkasan laporan</h2>
+          <p className="mt-1 text-xs text-text-muted">
+            Angka mengikuti hasil yang sedang ditampilkan.
+          </p>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <StatCard
+          label="Laporan tampil"
+          value={reports.length}
+          note="Di halaman ini"
+          icon={ClipboardText}
+          tone="blue"
+        />
+        <StatCard
+          label="Berbahaya"
+          value={dangerousCount}
+          note="Di halaman ini"
+          icon={WarningOctagon}
+          tone="red"
+        />
+        <StatCard
+          label="Total dukungan"
+          value={supportCount}
+          note="Di halaman ini"
+          icon={ArrowFatUp}
+          tone="mint"
+        />
+      </div>
+    </section>
+  );
   if (!reports.length) {
     return (
-      <EmptyState
-        title="Belum ada laporan"
-        description={
-          tab === 'following'
-            ? 'Board yang kamu ikuti belum punya laporan.'
-            : 'Jadilah yang pertama melaporkan masalah di sekitarmu.'
-        }
-      />
+      <div className="flex flex-col gap-4">
+        {summary}
+        <EmptyState
+          title="Belum ada laporan"
+          description={
+            tab === 'following'
+              ? 'Board yang kamu ikuti belum punya laporan.'
+              : 'Jadilah yang pertama melaporkan masalah di sekitarmu.'
+          }
+        />
+      </div>
     );
   }
   return (
     <div className="flex flex-col gap-4">
+      {summary}
       {reports.map((report) => (
         <ReportCard key={report.id} report={report} showBoard />
       ))}
@@ -109,29 +123,8 @@ export function HomePage() {
         </p>
       </header>
 
-      {hasFollows && (
-        <div role="tablist" aria-label="Pilih feed" className="flex border-b border-border">
-          {TABS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={tab === item.id}
-              onClick={() => setSelectedTab(item.id)}
-              className={cn(
-                'border-b-2 px-4 py-3 text-sm font-medium',
-                tab === item.id
-                  ? 'border-brand text-brand'
-                  : 'border-transparent text-text-muted hover:text-text',
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {hasFollows && <Tabs items={TABS} value={tab} onChange={setSelectedTab} label="Pilih feed" />}
 
-      {!hasFollows && <PopularBoards />}
       <Feed key={tab} tab={tab} />
     </section>
   );

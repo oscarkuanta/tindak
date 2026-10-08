@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { ArrowCounterClockwise, Medal, MagnifyingGlass, SealCheck } from '@phosphor-icons/react';
+import { BoardTypeIcon } from '../../components/icons/AppIcons.jsx';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { BOARD_TYPE_LABELS } from '@tindak/shared';
-import { Button, Card, Input } from '../../components/ui/index.js';
+import { Button, Card, Input, StatCard, Tabs } from '../../components/ui/index.js';
 import { OfficialBadge, TrustBadge } from '../../components/boards/BoardBadges.jsx';
 import { formatPercent, formatScore } from '../../components/boards/trustFormat.js';
 import { RevokeModal } from '../../components/trust/VerificationModals.jsx';
@@ -21,24 +23,29 @@ const TABS = [
 const TH = 'px-3 py-2 text-left text-xs font-medium text-text-muted';
 const TD = 'px-3 py-2 text-sm';
 
-function Stat({ label, value }) {
-  return (
-    <Card>
-      <p className="text-sm text-text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value ?? '-'}</p>
-    </Card>
-  );
+function Stat({ label, value, icon, tone }) {
+  return <StatCard label={label} value={value ?? '-'} icon={icon} tone={tone} />;
 }
 
 function StatsRow() {
   const query = useBoardAdminStats();
   const stats = query.data?.data;
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
-      <Stat label="Kandidat Official" value={stats?.candidates} />
-      <Stat label="Board Official" value={stats?.official} />
-      <Stat label="Dicabut 30 hari" value={stats?.revokedLast30Days} />
-      <Stat label="Perlu Ditinjau Ulang" value={stats?.needsReview} />
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <Stat label="Kandidat Official" value={stats?.candidates} icon={Medal} tone="amber" />
+      <Stat label="Board Official" value={stats?.official} icon={SealCheck} tone="blue" />
+      <Stat
+        label="Dicabut 30 hari"
+        value={stats?.revokedLast30Days}
+        icon={ArrowCounterClockwise}
+        tone="red"
+      />
+      <Stat
+        label="Perlu Ditinjau Ulang"
+        value={stats?.needsReview}
+        icon={MagnifyingGlass}
+        tone="violet"
+      />
     </div>
   );
 }
@@ -53,7 +60,7 @@ function CandidatesTab() {
       {(boards, meta) => (
         <>
           <Card className="overflow-x-auto p-0">
-            <table className="w-full min-w-[44rem]">
+            <table className="w-full min-w-[40rem]">
               <thead className="border-b border-border">
                 <tr>
                   <th className={TH}>Board</th>
@@ -82,7 +89,12 @@ function CandidatesTab() {
                       </Link>
                       <span className="block text-xs text-text-muted">{board.city}</span>
                     </td>
-                    <td className={TD}>{BOARD_TYPE_LABELS[board.type]}</td>
+                    <td className={TD}>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                        <BoardTypeIcon type={board.type} size={16} />
+                        {BOARD_TYPE_LABELS[board.type]}
+                      </span>
+                    </td>
                     <td className={TD}>{board.ratingCount}</td>
                     <td className={TD}>{formatScore(board.trustScore)}</td>
                     <td className={TD}>{formatPercent(board.responseRate)}</td>
@@ -173,6 +185,7 @@ function OfficialTab() {
                       </td>
                       <td className={`${TD} text-right`}>
                         <Button variant="danger" size="sm" onClick={() => setRevoking(board)}>
+                          <ArrowCounterClockwise size={16} weight="bold" aria-hidden="true" />
                           Cabut
                         </Button>
                       </td>
@@ -205,24 +218,12 @@ export function VerificationDashboardPage() {
         <OfficialBadge />
       </div>
       <StatsRow />
-      <nav
-        role="tablist"
-        aria-label="Daftar verifikasi"
-        className="flex gap-1 border-b border-border"
-      >
-        {TABS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.key}
-            onClick={() => setSearchParams(item.key === 'kandidat' ? {} : { tab: item.key })}
-            className={`border-b-2 px-4 py-2 text-sm font-medium ${tab === item.key ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text'}`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <Tabs
+        items={TABS.map((item) => ({ ...item, value: item.key }))}
+        value={tab}
+        label="Daftar verifikasi"
+        onChange={(value) => setSearchParams(value === 'kandidat' ? {} : { tab: value })}
+      />
       {tab === 'kandidat' ? <CandidatesTab /> : <OfficialTab />}
     </>
   );

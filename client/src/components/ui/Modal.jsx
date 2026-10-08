@@ -1,3 +1,4 @@
+import { X } from '@phosphor-icons/react';
 import { useEffect, useId, useRef } from 'react';
 import { cn } from '../../lib/cn.js';
 
@@ -50,9 +51,9 @@ export function Modal({ open, onClose, title, children, className }) {
                 type="button"
                 onClick={onClose}
                 aria-label="Tutup"
-                className="rounded-base px-2 text-xl leading-none text-text-muted hover:bg-surface-muted"
+                className="grid size-8 place-items-center rounded-full text-text-muted hover:bg-surface-muted"
               >
-                ×
+                <X aria-hidden="true" size={18} weight="bold" />
               </button>
             </div>
           )}

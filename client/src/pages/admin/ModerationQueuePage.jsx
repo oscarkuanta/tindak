@@ -20,12 +20,14 @@ import { useToast } from '../../features/boards/toastContext.js';
 import { apiErrorMessage } from '../../features/auth/formErrors.js';
 import { Pager, QueryState } from './adminShared.jsx';
 import { SELECT_CLASS, TEXTAREA_CLASS, formatDateTime } from './adminFormat.js';
+import { FlagReasonIcon } from '../../components/icons/AppIcons.jsx';
+import { Snowflake } from '@phosphor-icons/react';
 
 function ReasonBadge({ reason }) {
   const meta = FLAG_REASON_META[reason];
   return (
     <Badge tone={meta?.severe ? 'danger' : 'warning'}>
-      <span aria-hidden="true">{meta?.emoji}</span> {meta?.label ?? reason}
+      <FlagReasonIcon reason={reason} size={14} /> {meta?.label ?? reason}
     </Badge>
   );
 }
@@ -162,7 +164,7 @@ function ReportItem({ item }) {
               className="size-24 rounded-base object-cover"
             />
             {typeof photo.nsfwScore === 'number' && (
-              <span className="absolute bottom-1 left-1 rounded bg-text/75 px-1 text-[11px] text-white">
+              <span className="absolute bottom-1 left-1 rounded bg-text/75 px-1 text-[11px] text-surface">
                 NSFW {Math.round(photo.nsfwScore * 100)}%
               </span>
             )}
@@ -248,7 +250,7 @@ function BoardItem({ item }) {
       <div className="flex flex-wrap items-center gap-2 text-xs text-text-muted">
         <Badge tone="brand">Board</Badge>
         <span>{item.flagCount} tanda</span>
-        {board.status === 'FROZEN' && <Badge tone="danger">Dibekukan</Badge>}
+        {board.status === 'FROZEN' && <Badge tone="info">Di-freeze</Badge>}
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Link to={`/b/${board.slug}`} className="font-semibold hover:text-brand">
@@ -267,7 +269,8 @@ function BoardItem({ item }) {
         </Button>
         {board.status !== 'FROZEN' && (
           <Button variant="danger" size="sm" onClick={() => setFreezing(true)}>
-            Bekukan Board
+            <Snowflake aria-hidden="true" size={16} weight="bold" />
+            Freeze Board
           </Button>
         )}
       </div>
@@ -293,7 +296,7 @@ export function ModerationQueuePage() {
           <option value="">Semua alasan</option>
           {FLAG_REASON_ORDER.map((reason) => (
             <option key={reason} value={reason}>
-              {FLAG_REASON_META[reason].emoji} {FLAG_REASON_META[reason].label}
+              {FLAG_REASON_META[reason].label}
             </option>
           ))}
         </select>

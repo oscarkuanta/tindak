@@ -120,6 +120,8 @@ describe('env production', () => {
       DATABASE_URL: 'mysql://root@localhost:3306/tindak',
       SESSION_SECRET: 'x'.repeat(32),
       IP_HASH_SECRET: 'y'.repeat(16),
+      CLIENT_URL: 'https://tindak.example.app',
+      UPLOAD_DIR: '/data/uploads',
     };
     expect(() => parseEnv(base)).toThrow(/TURNSTILE_SECRET_KEY/);
     expect(() =>
@@ -130,5 +132,36 @@ describe('env production', () => {
         NSFW_ENABLED: true,
       },
     );
+  });
+
+  it('menolak secret contoh, alamat tanpa https, dan folder upload kosong', async () => {
+    const { parseEnv } = await import('../src/config/env.js');
+    const valid = {
+      NODE_ENV: 'production',
+      DATABASE_URL: 'mysql://root@localhost:3306/tindak',
+      SESSION_SECRET: 'x'.repeat(32),
+      IP_HASH_SECRET: 'y'.repeat(16),
+      CLIENT_URL: 'https://tindak.example.app',
+      UPLOAD_DIR: '/data/uploads',
+      TURNSTILE_SECRET_KEY: 'asli',
+    };
+
+    expect(parseEnv(valid)).toMatchObject({ UPLOAD_DIR: '/data/uploads' });
+    expect(() =>
+      parseEnv({ ...valid, SESSION_SECRET: 'ganti-dengan-string-acak-minimal-32-karakter' }),
+    ).toThrow(/SESSION_SECRET/);
+    expect(() =>
+      parseEnv({ ...valid, IP_HASH_SECRET: 'ganti-dengan-string-acak-minimal-16-karakter' }),
+    ).toThrow(/IP_HASH_SECRET/);
+    expect(() => parseEnv({ ...valid, CLIENT_URL: 'http://localhost:5173' })).toThrow(/CLIENT_URL/);
+    expect(() => parseEnv({ ...valid, UPLOAD_DIR: '' })).toThrow(/UPLOAD_DIR/);
+    expect(
+      parseEnv({
+        ...valid,
+        NODE_ENV: 'development',
+        CLIENT_URL: 'http://localhost:5173',
+        UPLOAD_DIR: '',
+      }).NODE_ENV,
+    ).toBe('development');
   });
 });

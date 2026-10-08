@@ -82,7 +82,7 @@ export function SearchBoardsPage() {
       />
 
       <div className="grid gap-5 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <Card as="aside" className="h-fit">
+        <Card as="aside" className="h-fit min-w-0">
           <h2 className="font-semibold">Filter</h2>
           <div className="mt-4 flex flex-col gap-4">
             <label className="flex flex-col gap-1 text-sm font-medium">
@@ -91,7 +91,7 @@ export function SearchBoardsPage() {
                 aria-label="Filter kota"
                 value={params.city}
                 onChange={(event) => updateFilters({ city: event.target.value })}
-                className="h-10 rounded-base border border-border bg-surface px-3 text-sm font-normal"
+                className="h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 text-sm font-normal"
               >
                 <option value="">Semua kota</option>
                 {cities.map((city) => (
@@ -107,7 +107,7 @@ export function SearchBoardsPage() {
                 aria-label="Filter jenis Board"
                 value={params.scopeType}
                 onChange={(event) => updateFilters({ scopeType: event.target.value })}
-                className="h-10 rounded-base border border-border bg-surface px-3 text-sm font-normal"
+                className="h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 text-sm font-normal"
               >
                 <option value="">Semua jenis</option>
                 {BOARD_TYPES.map((type) => (
@@ -123,7 +123,7 @@ export function SearchBoardsPage() {
                 aria-label="Filter verifikasi"
                 value={params.verification}
                 onChange={(event) => updateFilters({ verification: event.target.value })}
-                className="h-10 rounded-base border border-border bg-surface px-3 text-sm font-normal"
+                className="h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 text-sm font-normal"
               >
                 <option value="">Semua</option>
                 {BOARD_VERIFICATIONS.map((verification) => (

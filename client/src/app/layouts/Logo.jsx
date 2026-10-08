@@ -1,14 +1,18 @@
 import { Link } from 'react-router';
 import { cn } from '../../lib/cn.js';
 
-export function Logo({ className }) {
+const TONES = { light: 'text-surface', brand: 'text-mint-600' };
+
+export function Logo({ className, tone = 'light' }) {
   return (
     <Link
       to="/"
       aria-label="T!indak, ke Beranda"
-      className={cn('shrink-0 text-xl font-extrabold tracking-tight text-text', className)}
+      className={cn('brand-link shrink-0', TONES[tone], className)}
     >
-      T<span className="text-brand">!</span>indak
+      <span className="brand-wordmark">
+        T<span className="brand-mark">!</span>NDAK
+      </span>
     </Link>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { BellSimple } from '@phosphor-icons/react';
 import { Link } from 'react-router';
 import { NOTIFICATION_DROPDOWN_LIMIT } from '@tindak/shared';
 import { Spinner } from '../ui/index.js';
@@ -53,16 +54,16 @@ export function NotificationBell() {
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((value) => !value)}
-        className="relative inline-flex size-9 items-center justify-center rounded-full text-lg hover:bg-surface-muted"
+        className="relative inline-flex size-9 items-center justify-center rounded-full text-surface transition-colors hover:bg-surface/15"
       >
-        <span aria-hidden="true">🔔</span>
+        <BellSimple size={21} weight="bold" aria-hidden="true" />
         {count > 0 && (
           <span
             aria-hidden="true"
             data-testid="notification-badge"
-            className="absolute -top-0.5 -right-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[11px] font-semibold text-danger-contrast"
+            className="absolute -top-0.5 -right-0.5 inline-flex min-w-2.5 items-center justify-center rounded-full border-2 border-teal bg-yellow px-1 text-[11px] font-semibold text-text"
           >
-            {count > 99 ? '99+' : count}
+            <span className="sr-only">{count > 99 ? '99+' : count}</span>
           </span>
         )}
       </button>

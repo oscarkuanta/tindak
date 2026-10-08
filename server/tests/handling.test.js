@@ -567,6 +567,7 @@ describe('Job terjadwal', () => {
       autoConfirmed: 1,
       inactiveBoards: 0,
       dueWarnings: 0,
+      unfrozenBoards: 0,
     });
   });
 });

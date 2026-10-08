@@ -3,6 +3,7 @@ import { useMe } from '../../features/auth/hooks.js';
 import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
 import { useToast } from '../../features/boards/toastContext.js';
 import { FlagModal } from './FlagModal.jsx';
+import { DotsThree, FlagBanner } from '@phosphor-icons/react';
 
 export function FlagButton({ targetType, targetId, label = 'Opsi lainnya' }) {
   const { data: user } = useMe();
@@ -55,9 +56,9 @@ export function FlagButton({ targetType, targetId, label = 'Opsi lainnya' }) {
         aria-expanded={menuOpen}
         aria-controls={menuId}
         onClick={() => setMenuOpen((value) => !value)}
-        className="inline-flex size-8 items-center justify-center rounded-base text-lg leading-none text-text-muted hover:bg-surface-muted"
+        className="inline-flex size-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-muted"
       >
-        ⋯
+        <DotsThree aria-hidden="true" size={22} weight="bold" />
       </button>
       {menuOpen && (
         <div
@@ -69,9 +70,10 @@ export function FlagButton({ targetType, targetId, label = 'Opsi lainnya' }) {
             type="button"
             role="menuitem"
             onClick={startFlag}
-            className="block w-full rounded-base px-3 py-2 text-left text-sm text-danger hover:bg-surface-muted"
+            className="flex w-full items-center gap-2 rounded-base px-3 py-2 text-left text-sm font-medium text-danger hover:bg-red-50"
           >
-            🚩 Tandai Pelanggaran
+            <FlagBanner aria-hidden="true" size={16} weight="fill" />
+            Tandai Pelanggaran
           </button>
         </div>
       )}

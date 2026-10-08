@@ -1,5 +1,6 @@
 import { PASSWORD_MIN_LENGTH } from '@tindak/shared';
 import { cn } from '../../lib/cn.js';
+import { Check } from '@phosphor-icons/react';
 
 const RULES = [
   {
@@ -27,7 +28,7 @@ export function PasswordChecklist({ value, id }) {
                 passed ? 'border-success bg-success text-brand-contrast' : 'border-border',
               )}
             >
-              {passed ? '✓' : ''}
+              {passed && <Check size={10} weight="bold" />}
             </span>
             {rule.label}
             <span className="sr-only">{passed ? '(terpenuhi)' : '(belum terpenuhi)'}</span>

@@ -38,6 +38,18 @@ describe('slugify', () => {
     expect(boardBaseSlug('!!!', 'Kota Surabaya')).toBe('surabaya');
   });
 
+  it('tidak mengulang nama kota yang sudah ada di akhir nama Board', () => {
+    expect(boardBaseSlug('Alun-Alun Sidoarjo', 'Kabupaten Sidoarjo')).toBe('alun-alun-sidoarjo');
+    expect(boardBaseSlug('SMAN 5 Surabaya', 'Kota Surabaya')).toBe('sman-5-surabaya');
+    expect(boardBaseSlug('Surabaya', 'Kota Surabaya')).toBe('surabaya');
+    expect(boardBaseSlug('Surabaya Barat Raya', 'Kota Surabaya')).toBe(
+      'surabaya-barat-raya-surabaya',
+    );
+    expect(boardBaseSlug('Pasar Sidoarjoan', 'Kabupaten Sidoarjo')).toBe(
+      'pasar-sidoarjoan-sidoarjo',
+    );
+  });
+
   it('mencari akhiran angka berikutnya saat slug bentrok', () => {
     expect(nextAvailableSlug('taman', [])).toBe('taman');
     expect(nextAvailableSlug('taman', ['taman'])).toBe('taman-2');

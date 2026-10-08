@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ArrowCounterClockwise, SealCheck, SkipForward } from '@phosphor-icons/react';
 import {
   VERIFICATION_RULES,
   revokeVerificationRequestSchema,
@@ -22,6 +23,8 @@ function ActionModal({
   board,
   submitLabel,
   submitVariant = 'primary',
+  submitIcon: SubmitIcon,
+  submitClassName,
   successMessage,
   onClose,
   children,
@@ -65,7 +68,13 @@ function ActionModal({
           <Button variant="secondary" onClick={onClose}>
             Batal
           </Button>
-          <Button type="submit" variant={submitVariant} loading={mutation.isPending}>
+          <Button
+            type="submit"
+            variant={submitVariant}
+            className={submitClassName}
+            loading={mutation.isPending}
+          >
+            {SubmitIcon && <SubmitIcon size={18} weight="fill" aria-hidden="true" />}
             {submitLabel}
           </Button>
         </div>
@@ -84,6 +93,8 @@ export function VerifyModal({ board, failedRequirements = [], onClose }) {
       mutation={useVerifyBoard()}
       board={board}
       submitLabel="Jadikan Official"
+      submitIcon={SealCheck}
+      submitClassName="action-btn-official"
       successMessage={() => `${board.name} sekarang Official`}
       onClose={onClose}
     >
@@ -114,6 +125,7 @@ export function SkipModal({ board, onClose }) {
       mutation={useSkipBoard()}
       board={board}
       submitLabel="Lewati"
+      submitIcon={SkipForward}
       submitVariant="secondary"
       successMessage={() => `${board.name} dilewati`}
       onClose={onClose}
@@ -136,6 +148,7 @@ export function RevokeModal({ board, onClose }) {
       mutation={useRevokeVerification()}
       board={board}
       submitLabel="Cabut Official"
+      submitIcon={ArrowCounterClockwise}
       submitVariant="danger"
       successMessage={() => `Status Official ${board.name} dicabut`}
       onClose={onClose}

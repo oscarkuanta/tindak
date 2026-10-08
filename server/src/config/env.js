@@ -56,8 +56,29 @@ export const TURNSTILE_TEST_SECRETS = Object.freeze({
   FAIL: '2x0000000000000000000000000000000AA',
 });
 
+const PLACEHOLDER_PREFIX = 'ganti-dengan';
+
+function productionIssues(value) {
+  const issues = [];
+  for (const key of ['SESSION_SECRET', 'IP_HASH_SECRET']) {
+    if (value[key].startsWith(PLACEHOLDER_PREFIX)) {
+      issues.push([key, 'masih nilai contoh, ganti dengan string acak di production']);
+    }
+  }
+  if (!value.CLIENT_URL.startsWith('https://')) {
+    issues.push(['CLIENT_URL', 'wajib alamat https situs ini di production']);
+  }
+  if (!value.UPLOAD_DIR) {
+    issues.push(['UPLOAD_DIR', 'wajib diisi folder penyimpanan permanen (volume) di production']);
+  }
+  return issues;
+}
+
 const envSchemaWithRules = envSchema.superRefine((value, ctx) => {
   if (value.NODE_ENV === 'production') {
+    for (const [key, message] of productionIssues(value)) {
+      ctx.addIssue({ code: 'custom', path: [key], message });
+    }
     const secret = value.TURNSTILE_SECRET_KEY;
     if (!secret || Object.values(TURNSTILE_TEST_SECRETS).includes(secret)) {
       ctx.addIssue({

@@ -225,7 +225,7 @@ Aturan akun:
 | `BoardType`         | `SCHOOL` (Sekolah), `CAMPUS` (Kampus), `OFFICE` (Kantor), `ROAD` (Jalan), `AREA` (Wilayah RT/RW/Kelurahan), `PUBLIC_FACILITY` (Fasilitas Umum), `OTHER` (Lainnya) |
 | `BoardVerification` | `COMMUNITY` (Komunitas, status awal semua board), `OFFICIAL` (Official ✔️, diberikan Admin Board)                                                                 |
 | `BoardRole`         | `OWNER` (Penindak Utama), `HANDLER` (Penindak)                                                                                                                    |
-| `BoardStatus`       | `ACTIVE` (Aktif), `INACTIVE` (💤 Tidak Aktif, Penindak tidak aktif 30 hari), `FROZEN` (dibekukan Admin)                                                           |
+| `BoardStatus`       | `ACTIVE` (Aktif), `INACTIVE` (💤 Tidak Aktif, Penindak tidak aktif 30 hari), `FROZEN` (Di-freeze Admin, bisa sementara atau permanen)                             |
 | `TrustLabel`        | `NEW` (🆕 Baru), `TRUSTED` (✅ Terpercaya), `NONE` (tanpa label), `CAUTION` (⚠️ Perlu Waspada), `INACTIVE` (💤 Tidak Aktif)                                       |
 
 Kategori bawaan per jenis (disimpan di `shared`, otomatis dibuat saat board dibuat):
@@ -282,7 +282,7 @@ Semua field BoardCard ditambah:
 }
 ```
 
-- `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
+- `slug` dibuat dari nama dan kota tanpa awalan Kota/Kabupaten/Administrasi, contoh `Jalan Rungkut Madya` + `Kota Surabaya` menjadi `jalan-rungkut-madya-surabaya`. Jika nama sudah diakhiri nama kota, kota tidak ditambahkan lagi (`SMAN 5 Surabaya` + `Kota Surabaya` menjadi `sman-5-surabaya`, mulai Fase 11). Unik. Jika sudah dipakai, diberi akhiran `-2`, `-3`, dan seterusnya. Slug tidak berubah walaupun nama diganti.
 - `trustScore`, `trustLabel`, `ratingCount`, `averageStars`, `responseRate`, `rejectedPercentage`, dan `verificationHistory` dijelaskan di bagian Fase 8. `followerCount` adalah jumlah pengikut sebenarnya.
 - `handlerCount` adalah jumlah anggota Board berstatus aktif, termasuk Penindak Utama.
 - `owner` adalah Penindak Utama saat ini.
@@ -770,7 +770,7 @@ Auth: opsional (tamu atau login). Menerima `multipart/form-data`.
 
 Field lain ditolak `400 VALIDATION_ERROR`. Frontend membaca public site key Turnstile dari `VITE_TURNSTILE_SITE_KEY`.
 
-Urutan pengecekan server: Board ada dan tidak beku, kategori milik Board, cek ban (Fase 7), batas laporan, captcha, lalu foto (jenis, pemrosesan, scan NSFW). Laporan dan foto baru disimpan setelah semua lolos.
+Urutan pengecekan server: Board ada dan tidak di-freeze, kategori milik Board, cek ban (Fase 7), batas laporan, captcha, lalu foto (jenis, pemrosesan, scan NSFW). Laporan dan foto baru disimpan setelah semua lolos.
 
 Cookie tamu: setiap pengirim mendapat cookie `tindak.gt` (httpOnly, 1 tahun). Server hanya menyimpan hash-nya untuk menghitung batas per perangkat. IP disimpan sebagai HMAC-SHA256 (`IP_HASH_SECRET`), tidak pernah sebagai IP asli.
 
@@ -1091,7 +1091,7 @@ Auth: Login. Menghapus reaksi. Idempoten. Sukses `200` dengan bentuk yang sama.
 
 Auth: opsional. Query: `tab` (`hot` default, atau `following`), `page`, `pageSize` (default 10, maks 50).
 
-- `hot`: laporan dari semua Board yang tidak beku, urut `hotScore` lalu terbaru.
+- `hot`: laporan dari semua Board yang tidak di-freeze, urut `hotScore` lalu terbaru.
 - `following`: wajib login (`401` untuk tamu). Laporan dari Board yang diikuti, terbaru dulu.
 
 Laporan tersembunyi tidak ikut. Setiap item berisi `board` (`id`, `slug`, `name`, `status`, `verification`).
@@ -1104,7 +1104,7 @@ Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`.
 
 Auth: opsional. Query: `limit` (default 6, maks 20).
 
-Board yang tidak beku, diurutkan dari pengikut terbanyak, lalu laporan aktif terbanyak, lalu Official, lalu `trustScore` tertinggi, lalu terbaru. Urutan ada di fungsi `comparePopularity` (`server/src/modules/boards/boards.ranking.js`).
+Board yang tidak di-freeze, diurutkan dari pengikut terbanyak, lalu laporan aktif terbanyak, lalu Official, lalu `trustScore` tertinggi, lalu terbaru. Urutan ada di fungsi `comparePopularity` (`server/src/modules/boards/boards.ranking.js`).
 
 Sukses `200`: `{ "data": [<BoardCard>] }`. Setiap item berisi `verification`, `followerCount`, `activeReportCount`, dan `viewer`.
 
@@ -1191,7 +1191,8 @@ Sukses `201`: `{ "data": { "id", "targetType", "targetId", "reason", "status": "
 | 400    | `VALIDATION_ERROR`      | Alasan tidak berlaku untuk target (misalnya `FAKE_BOARD` untuk laporan) |
 | 401    | `UNAUTHENTICATED`       | Belum login                                                             |
 | 403    | `ACCOUNT_BANNED`        | Sedang di-ban                                                           |
-| 404    | `FLAG_TARGET_NOT_FOUND` | Laporan atau Board tidak ada, dihapus, atau Board beku                  |
+| 403    | `FORBIDDEN`             | Penindak Utama atau Penindak menandai Board yang dikelolanya sendiri    |
+| 404    | `FLAG_TARGET_NOT_FOUND` | Laporan atau Board tidak ada, dihapus, atau Board di-freeze             |
 | 409    | `ALREADY_FLAGGED`       | User sudah pernah menandai target ini                                   |
 | 429    | `RATE_LIMITED`          | Batas 20 tanda per hari tercapai                                        |
 
@@ -1240,15 +1241,17 @@ Mencabut ban (`revokedAt` diisi). Sukses `200`: `<Ban>` dengan `isActive: false`
 
 ### GET /api/admin/boards
 
-Query: `q` (nama), `status`, `page`, `pageSize`. Setiap item: id, slug, name, city, type, status, verification, verifiedAt, restoredByAdminCount, owner, reportCount, openFlagCount, fakeBoardFlagCount, createdAt.
+Query: `q` (nama), `status`, `page`, `pageSize`. Setiap item: id, slug, name, city, type, status, verification, verifiedAt, restoredByAdminCount, frozenUntil, owner, reportCount, openFlagCount, fakeBoardFlagCount, createdAt.
 
 ### POST /api/admin/boards/:slug/freeze
 
-Body: `{ "reason": "min 3" }`. Field lain ditolak. Board menjadi `FROZEN`, tanda Board `OPEN` menjadi `ACCEPTED`. Jika Board `OFFICIAL`, dalam transaksi yang sama `verification` menjadi `COMMUNITY` dan `verifiedAt`, `verifiedById` dikosongkan, lalu tercatat audit `BOARD_VERIFICATION_REVOKED_BY_FREEZE` (berisi tanggal dan pemberi verifikasi sebelumnya). Sukses `200`: `{ "data": { "slug", "status": "FROZEN", "verification": "COMMUNITY", "verificationRevoked": true } }`. `409 CONFLICT` jika sudah beku.
+Body: `{ "reason": "min 3", "duration": "7d" | "30d" | "permanent" }`. `duration` wajib (pesan "Pilih durasi freeze"), field lain ditolak. Board menjadi `FROZEN` dan `frozenUntil` diisi waktu sekarang ditambah durasi (`null` untuk permanen), tanda Board `OPEN` menjadi `ACCEPTED`. Jika Board `OFFICIAL`, dalam transaksi yang sama `verification` menjadi `COMMUNITY` dan `verifiedAt`, `verifiedById` dikosongkan, lalu tercatat audit `BOARD_VERIFICATION_REVOKED_BY_FREEZE` (berisi tanggal dan pemberi verifikasi sebelumnya). Audit `BOARD_FROZEN` menyimpan `reason`, `duration`, dan `frozenUntil`. Sukses `200`: `{ "data": { "slug", "status": "FROZEN", "frozenUntil": "ISO" | null, "verification": "COMMUNITY", "verificationRevoked": true } }`. `409 CONFLICT` jika sudah di-freeze.
 
 ### POST /api/admin/boards/:slug/unfreeze
 
-Board kembali `ACTIVE`. Status Official tidak dikembalikan; harus diajukan ulang ke Admin Board. Sukses `200`: `{ "data": { "slug", "status": "ACTIVE", "verification" } }`. `409 CONFLICT` jika tidak sedang beku.
+Board kembali `ACTIVE` dan `frozenUntil` dikosongkan. Status Official tidak dikembalikan; harus diajukan ulang ke Admin Board. Sukses `200`: `{ "data": { "slug", "status": "ACTIVE", "verification" } }`. `409 CONFLICT` jika tidak sedang di-freeze.
+
+Unfreeze otomatis: job terjadwal mengaktifkan lagi Board `FROZEN` yang `frozenUntil`-nya sudah lewat. Audit `BOARD_UNFROZEN` ditulis dengan actor `null` dan `automatic: true`. Freeze permanen tidak pernah di-unfreeze otomatis.
 
 ### POST /api/admin/boards/:slug/dismiss-flags
 
@@ -1288,7 +1291,7 @@ Skor              = 0,6 × Rating Tertimbang + 0,4 × Tingkat Tanggap × 5
 - Label (`trustLabel`): kurang dari 5 rating `NEW`; skor (dibulatkan 1 desimal) 4,0 ke atas `TRUSTED`; 2,5 sampai 3,9 `NONE`; di bawah 2,5 `CAUTION`. Board berstatus `INACTIVE` selalu berlabel `INACTIVE`.
 - Contoh 1: 40 rating, total 180 bintang, tanggap 90%. Rating Tertimbang (15 + 180) ÷ 45 = 4,33. Skor 0,6 × 4,33 + 0,4 × 0,9 × 5 = **4,4** (`TRUSTED`).
 - Contoh 2: 10 rating, total 20 bintang, tanggap 45%. Rating Tertimbang 35 ÷ 15 = 2,33. Skor 1,4 + 0,9 = **2,3** (`CAUTION`).
-- Dihitung ulang saat rating berubah, laporan dibuat, status laporan berubah, laporan dipulihkan atau dihapus Admin, Board dibekukan atau dicairkan, tanda Board Palsu dibuat atau diabaikan, dan lewat job harian.
+- Dihitung ulang saat rating berubah, laporan dibuat, status laporan berubah, laporan dipulihkan atau dihapus Admin, Board di-freeze atau di-unfreeze, tanda Board Palsu dibuat atau diabaikan, dan lewat job harian.
 - Skor dan label dihitung otomatis dan **tidak pernah** mengubah `verification`. Official hanya diberikan Admin Board.
 
 ### Perubahan BoardCard dan detail Board
@@ -1305,7 +1308,7 @@ Dengan `q`: kecocokan nama → `OFFICIAL` di atas → `trustScore` tertinggi (`n
 
 Auth: login, tidak sedang di-ban. Rate limit 20 per menit.
 
-Syarat: mengikuti Board, bukan Penindak (OWNER atau HANDLER) Board itu, Board tidak beku. Satu rating per user per Board. Rating boleh diubah kapan saja; mengubah tidak menambah jumlah rating. Jika user berhenti mengikuti, rating lama tetap dihitung.
+Syarat: mengikuti Board, bukan Penindak (OWNER atau HANDLER) Board itu, Board tidak di-freeze. Satu rating per user per Board. Rating boleh diubah kapan saja; mengubah tidak menambah jumlah rating. Jika user berhenti mengikuti, rating lama tetap dihitung.
 
 Body: `{ "stars": 1-5, "quickTag": "RESPONSIVE" | "SLOW" | "DOUBTFUL" | null }`.
 
@@ -1317,7 +1320,7 @@ Sukses `200`: `{ "data": { "rating": { "stars", "quickTag", "createdAt", "update
 | 401    | `UNAUTHENTICATED`    | Belum login                                                               |
 | 403    | `ACCOUNT_BANNED`     | Sedang di-ban                                                             |
 | 403    | `RATING_NOT_ALLOWED` | Belum mengikuti Board atau Penindak Board itu; `message` berisi alasannya |
-| 404    | `BOARD_NOT_FOUND`    | Board tidak ada atau beku                                                 |
+| 404    | `BOARD_NOT_FOUND`    | Board tidak ada atau di-freeze                                            |
 
 ### GET /api/boards/:slug/rating/me
 
@@ -1338,12 +1341,12 @@ Semua `/api/board-admin/*` hanya untuk `User.role` `BOARD_ADMIN`. Tamu `401`, ro
 - `GET /api/board-admin/stats`: `{ "candidates", "official", "revokedLast30Days", "needsReview" }`.
 - `GET /api/board-admin/candidates?page=&pageSize=`: urut `ratingCount` terbanyak, lalu `trustScore`. Item: id, slug, name, city, type, status, verification, verifiedAt, candidateSince, ageDays, dan field kepercayaan.
 - `GET /api/board-admin/official?q=&review=&page=`: Board `OFFICIAL`, terbaru diverifikasi dulu, ditambah `verifiedBy` { id, name } dan `needsReview`. `review=true` hanya menampilkan Perlu Ditinjau Ulang (skor di bawah 2,5 atau status `INACTIVE`).
-- `GET /api/board-admin/boards/:slug`: detail verifikasi. Field baris di atas ditambah description, managerTitle, createdAt, owner { id, name, email }, verifiedBy, followerCount, restoredByAdminCount, needsReview, distribution, quickTags, reports { total, resolved, rejected }, flags (`{ "<reason>": { "open", "total" } }` untuk tanda Board), checklist (`[{ key, label, passed, value }]` untuk 7 syarat), isCandidateEligible, dan history (`[{ id, action, actor, reason, snapshot, createdAt }]`). Board beku tetap bisa dibuka.
-- `POST /api/board-admin/boards/:slug/verify` body `{ "note": "min 5" }` (catatan wajib sesuai PRODUCT.md). Hanya Board `COMMUNITY` yang tidak beku; Board yang belum memenuhi syarat tetap boleh, tetapi respons berisi `warnings` (label syarat yang belum terpenuhi). Sukses `200`: `{ "data": { "slug", "verification": "OFFICIAL", "verifiedAt", "warnings": [] } }`. `409 CONFLICT` jika sudah Official atau beku.
+- `GET /api/board-admin/boards/:slug`: detail verifikasi. Field baris di atas ditambah description, managerTitle, createdAt, owner { id, name, email }, verifiedBy, followerCount, restoredByAdminCount, needsReview, distribution, quickTags, reports { total, resolved, rejected }, flags (`{ "<reason>": { "open", "total" } }` untuk tanda Board), checklist (`[{ key, label, passed, value }]` untuk 7 syarat), isCandidateEligible, dan history (`[{ id, action, actor, reason, snapshot, createdAt }]`). Board di-freeze tetap bisa dibuka.
+- `POST /api/board-admin/boards/:slug/verify` body `{ "note": "min 5" }` (catatan wajib sesuai PRODUCT.md). Hanya Board `COMMUNITY` yang tidak di-freeze; Board yang belum memenuhi syarat tetap boleh, tetapi respons berisi `warnings` (label syarat yang belum terpenuhi). Sukses `200`: `{ "data": { "slug", "verification": "OFFICIAL", "verifiedAt", "warnings": [] } }`. `409 CONFLICT` jika sudah Official atau di-freeze.
 - `POST /api/board-admin/boards/:slug/skip` body `{ "note"? }`. Board keluar dari antrean selama 30 hari. Sukses `200`: `{ "data": { "slug", "skippedUntil" } }`. `409` jika bukan Komunitas.
 - `POST /api/board-admin/boards/:slug/revoke` body `{ "reason": "min 10" }`. Board kembali `COMMUNITY`, `verifiedAt` dan `verifiedById` dikosongkan. Sukses `200`: `{ "data": { "slug", "verification": "COMMUNITY" } }`. `409` jika bukan Official.
 
-Pembekuan Board Official oleh Admin (Fase 7) sekarang juga menulis `BoardVerificationLog` `REVOKED` dengan actor sistem (`null`) dan alasan "Board dibekukan moderator".
+Freeze Board Official oleh Admin (Fase 7) sekarang juga menulis `BoardVerificationLog` `REVOKED` dengan actor sistem (`null`) dan alasan "Board di-freeze moderator".
 
 ---
 
@@ -1389,7 +1392,7 @@ Pembekuan Board Official oleh Admin (Fase 7) sekarang juga menulis `BoardVerific
 | `BOARD_INVITATION`           | User yang diundang menjadi Penindak                              | `invitationId`                            |
 | `BOARD_RATING_DIGEST`        | Penindak aktif, harian jika ada rating baru atau diubah          | `newRatings`, `ratingCount`, `trustScore` |
 | `BOARD_VERIFIED`             | Penindak Utama                                                   | -                                         |
-| `BOARD_VERIFICATION_REVOKED` | Penindak Utama (termasuk karena Board dibekukan)                 | `reason`                                  |
+| `BOARD_VERIFICATION_REVOKED` | Penindak Utama (termasuk karena Board di-freeze)                 | `reason`                                  |
 | `BOARD_CANDIDATE_NEW`        | Semua Admin Board                                                | `ratingCount`                             |
 | `BOARD_OWNER_CHANGED`        | Semua Admin Board, hanya untuk Board Official                    | `previousOwnerId`, `newOwnerId`           |
 | `BOARD_NEEDS_REVIEW`         | Semua Admin Board saat Board Official masuk Perlu Ditinjau Ulang | `status`                                  |
@@ -1419,7 +1422,7 @@ Socket.IO berjalan di server dan alamat yang sama, path `/socket.io`. Koneksi me
 Room:
 
 - `user:<id>`: otomatis untuk user yang login.
-- `board:<slug>`: klien mengirim `board:subscribe` dengan slug. Ditolak untuk Board beku kecuali Admin dan Admin Board.
+- `board:<slug>`: klien mengirim `board:subscribe` dengan slug. Ditolak untuk Board di-freeze kecuali Admin dan Admin Board.
 - `report:<id>`: klien mengirim `report:subscribe` dengan `{ id, trackingCode?, secret? }`. Laporan yang terlihat publik boleh untuk siapa saja. Laporan tersembunyi hanya untuk Penindak Board itu, Admin, pelapor, atau yang membawa Kode Lacak dan secret yang benar. Laporan yang dihapus hanya untuk Admin.
 
 Kedua event subscribe menerima callback `{ ok: true | false }`. `board:unsubscribe` dan `report:unsubscribe` keluar dari room.
@@ -1437,6 +1440,7 @@ Event dari server (dipancarkan setelah transaksi database berhasil):
 ### Job
 
 - Per jam: peringatan laporan Berbahaya yang `dueAt`-nya kurang dari 6 jam lagi (`Report.dueWarningSentAt` mencegah pengiriman ulang). Hasil `runScheduledJobs` menambah `dueWarnings`.
+- Per jam: unfreeze otomatis Board yang masa freeze-nya habis. Hasil `runScheduledJobs` menambah `unfrozenBoards`.
 - Harian: ringkasan rating untuk Penindak.
 
 ### Deploy satu link

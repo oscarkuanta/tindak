@@ -16,7 +16,7 @@ export function BlurredImage({ src, alt, isBlurred, className, style, wrapperCla
         style={style}
       />
       {hidden && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-text/40 p-4 text-center text-white">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-text/40 p-4 text-center text-surface">
           <p className="text-sm font-medium">Foto ini mungkin sensitif</p>
           <button
             type="button"
@@ -25,7 +25,7 @@ export function BlurredImage({ src, alt, isBlurred, className, style, wrapperCla
               event.stopPropagation();
               setRevealed(true);
             }}
-            className="rounded-base border border-white/70 px-3 py-1 text-sm font-semibold hover:bg-white/20"
+            className="rounded-base border border-surface/70 px-3 py-1 text-sm font-semibold hover:bg-surface/20"
           >
             Tampilkan foto
           </button>
