@@ -1,3 +1,4 @@
+import { ClockCountdown } from '@phosphor-icons/react';
 import { REPORT_HANDLING_STATUS_LABELS } from '@tindak/shared';
 import { cn } from '../../lib/cn.js';
 
@@ -23,5 +24,10 @@ export function StatusChip({ status, className }) {
 }
 
 export function LateChip({ className }) {
-  return <span className={cn('late-chip', className)}>⏰ Terlambat</span>;
+  return (
+    <span className={cn('late-chip', className)}>
+      <ClockCountdown aria-hidden="true" size={13} weight="bold" />
+      Terlambat
+    </span>
+  );
 }

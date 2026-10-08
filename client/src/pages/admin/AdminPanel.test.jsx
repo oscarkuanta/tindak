@@ -123,7 +123,7 @@ describe('Panel Admin', () => {
     );
   });
 
-  it('membekukan Board Official menampilkan peringatan pencabutan', async () => {
+  it('freeze Board Official memilih durasi dan menampilkan peringatan pencabutan', async () => {
     let freezeBody;
     mockApi({
       'GET /auth/me': () => [200, { data: admin }],
@@ -139,6 +139,7 @@ describe('Panel Admin', () => {
             data: {
               slug: 'pemkot-palsu',
               status: 'FROZEN',
+              frozenUntil: null,
               verification: 'COMMUNITY',
               verificationRevoked: true,
             },
@@ -149,16 +150,37 @@ describe('Panel Admin', () => {
     renderApp('/admin/board');
 
     expect(await screen.findByText(/4 tanda Board palsu/)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Bekukan' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Freeze' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText('Status Official Board ini akan ikut dicabut.')).toBeVisible();
-    await userEvent.type(within(dialog).getByLabelText('Alasan pembekuan'), 'Board palsu');
-    await userEvent.click(within(dialog).getByRole('button', { name: 'Bekukan' }));
+    await userEvent.selectOptions(within(dialog).getByLabelText('Durasi freeze'), 'permanent');
+    await userEvent.type(within(dialog).getByLabelText('Alasan freeze'), 'Board palsu');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Freeze Board' }));
 
-    await waitFor(() => expect(freezeBody).toEqual({ reason: 'Board palsu' }));
+    await waitFor(() =>
+      expect(freezeBody).toEqual({ reason: 'Board palsu', duration: 'permanent' }),
+    );
     expect(
-      await screen.findByText('Board dibekukan dan status Official dicabut'),
+      await screen.findByText('Board di-freeze permanen dan status Official dicabut'),
     ).toBeInTheDocument();
+  });
+
+  it('filter ?status=FROZEN menampilkan Board di-freeze dengan tombol Unfreeze', async () => {
+    const fetchMock = mockApi({
+      'GET /auth/me': () => [200, { data: admin }],
+      'GET /admin/boards': () => [
+        200,
+        {
+          data: [boardRow({ status: 'FROZEN', frozenUntil: '2026-10-15T03:00:00.000Z' })],
+          meta: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
+        },
+      ],
+    });
+    renderApp('/admin/board?status=FROZEN');
+
+    expect(await screen.findByText(/Otomatis aktif lagi/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Unfreeze' })).toBeInTheDocument();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes('status=FROZEN'))).toBe(true);
   });
 
   it('Board Komunitas tidak menampilkan peringatan pencabutan', async () => {
@@ -174,7 +196,7 @@ describe('Panel Admin', () => {
     });
     renderApp('/admin/board');
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Bekukan' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Freeze' }));
     const dialog = await screen.findByRole('dialog');
     expect(
       within(dialog).queryByText('Status Official Board ini akan ikut dicabut.'),

@@ -14,6 +14,7 @@ import {
   useUpdateBoard,
 } from '../../features/boards/hooks.js';
 import { VerificationTimeline } from '../../components/trust/VerificationTimeline.jsx';
+import { ArrowDown, ArrowLeft, ArrowUp } from '@phosphor-icons/react';
 
 function ForbiddenSettings() {
   return (
@@ -167,8 +168,12 @@ export function BoardSettingsPage() {
   return (
     <section className="mx-auto flex max-w-4xl flex-col gap-5">
       <header>
-        <Link to={`/b/${slug}`} className="text-sm font-medium text-brand hover:underline">
-          ← Kembali ke Board
+        <Link
+          to={`/b/${slug}`}
+          className="inline-flex items-center gap-1 text-sm font-medium text-mint-700 hover:underline"
+        >
+          <ArrowLeft aria-hidden="true" size={16} weight="bold" />
+          Kembali ke Board
         </Link>
         <h1 className="mt-3 text-2xl font-bold">Pengaturan Board</h1>
         <p className="mt-1 text-sm text-text-muted">{board.name}</p>
@@ -323,7 +328,7 @@ export function BoardSettingsPage() {
                     disabled={index === 0 || reorderMutation.isPending}
                     onClick={() => moveCategory(index, -1)}
                   >
-                    ↑
+                    <ArrowUp aria-hidden="true" size={16} weight="bold" />
                   </Button>
                   <Button
                     size="sm"
@@ -332,7 +337,7 @@ export function BoardSettingsPage() {
                     disabled={index === categories.length - 1 || reorderMutation.isPending}
                     onClick={() => moveCategory(index, 1)}
                   >
-                    ↓
+                    <ArrowDown aria-hidden="true" size={16} weight="bold" />
                   </Button>
                   <Button
                     size="sm"

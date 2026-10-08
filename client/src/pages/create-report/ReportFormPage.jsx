@@ -75,7 +75,7 @@ export function ReportFormPage() {
       return;
     }
     if (board?.status === 'FROZEN' || board?.isFrozen) {
-      setFormError('Board ini sedang dibekukan dan tidak menerima laporan baru.');
+      setFormError('Board ini sedang di-freeze dan tidak menerima laporan baru.');
       return;
     }
 
@@ -141,7 +141,7 @@ export function ReportFormPage() {
         </Alert>
       )}
       {frozen && (
-        <Alert className="mb-4">Board ini sedang dibekukan dan tidak menerima laporan baru.</Alert>
+        <Alert className="mb-4">Board ini sedang di-freeze dan tidak menerima laporan baru.</Alert>
       )}
       <Alert className="mb-4">Jangan menyebut nama orang. Laporkan masalah fisik saja.</Alert>
       <Card>

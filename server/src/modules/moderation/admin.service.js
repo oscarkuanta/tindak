@@ -1,5 +1,6 @@
 import {
   BAN_DURATIONS,
+  FREEZE_DURATIONS,
   ERROR_CODES,
   FLAG_REASON_ORDER,
   REPORT_ACTIVE_STATUSES,
@@ -480,6 +481,7 @@ export async function listAdminBoards({ q, status, page, pageSize }) {
         verification: board.verification,
         verifiedAt: board.verifiedAt,
         restoredByAdminCount: board.restoredByAdminCount,
+        frozenUntil: board.frozenUntil,
         owner: board.owner,
         reportCount: reportCount.get(board.id) ?? 0,
         openFlagCount: boardFlags.reduce((sum, row) => sum + row._count._all, 0),
@@ -499,17 +501,20 @@ async function findBoardBySlug(slug) {
   return board;
 }
 
-export async function freezeBoard(slug, admin, { reason }) {
+export async function freezeBoard(slug, admin, { reason, duration }, now = new Date()) {
   const board = await findBoardBySlug(slug);
   if (board.status === 'FROZEN') {
-    throw new AppError(409, ERROR_CODES.CONFLICT, 'Board sudah dibekukan');
+    throw new AppError(409, ERROR_CODES.CONFLICT, 'Board sudah di-freeze');
   }
+  const days = FREEZE_DURATIONS[duration];
+  const frozenUntil = days === null ? null : new Date(now.getTime() + days * DAY_MS);
   const wasOfficial = board.verification === 'OFFICIAL';
   await prisma.$transaction(async (tx) => {
     await tx.board.update({
       where: { id: board.id },
       data: {
         status: 'FROZEN',
+        frozenUntil,
         ...(wasOfficial && { verification: 'COMMUNITY', verifiedAt: null, verifiedById: null }),
       },
     });
@@ -520,16 +525,22 @@ export async function freezeBoard(slug, admin, { reason }) {
           boardId: board.id,
           action: 'REVOKED',
           actorUserId: null,
-          reason: 'Board dibekukan moderator',
+          reason: 'Board di-freeze moderator',
           snapshot: trustSnapshot(board),
         },
       });
     }
   });
   await recomputeBoardTrust(board.id);
-  await recordAudit('BOARD_FROZEN', { actorId: admin.id, boardId: board.id, reason });
+  await recordAudit('BOARD_FROZEN', {
+    actorId: admin.id,
+    boardId: board.id,
+    reason,
+    duration,
+    frozenUntil,
+  });
   const frozen = await prisma.board.findUnique({ where: { id: board.id } });
-  if (wasOfficial) await notifyBoardVerificationRevoked(frozen, 'Board dibekukan moderator');
+  if (wasOfficial) await notifyBoardVerificationRevoked(frozen, 'Board di-freeze moderator');
   else publishBoardUpdated(frozen);
   if (wasOfficial) {
     await recordAudit('BOARD_VERIFICATION_REVOKED_BY_FREEZE', {
@@ -542,19 +553,45 @@ export async function freezeBoard(slug, admin, { reason }) {
   return {
     slug: board.slug,
     status: 'FROZEN',
+    frozenUntil,
     verification: 'COMMUNITY',
     verificationRevoked: wasOfficial,
   };
 }
 
+async function activateFrozenBoard(board, actorId, now) {
+  const { count } = await prisma.board.updateMany({
+    where: { id: board.id, status: 'FROZEN' },
+    data: { status: 'ACTIVE', frozenUntil: null, lastHandlerActivityAt: now },
+  });
+  if (count === 0) return false;
+  await recordAudit('BOARD_UNFROZEN', {
+    actorId,
+    boardId: board.id,
+    automatic: actorId === null,
+  });
+  publishBoardUpdated(await recomputeBoardTrust(board.id, now));
+  return true;
+}
+
+export async function unfreezeExpiredBoards(now = new Date()) {
+  const boards = await prisma.board.findMany({
+    where: { status: 'FROZEN', frozenUntil: { lte: now } },
+    select: { id: true },
+  });
+  let unfrozen = 0;
+  for (const board of boards) {
+    if (await activateFrozenBoard(board, null, now)) unfrozen += 1;
+  }
+  return unfrozen;
+}
+
 export async function unfreezeBoard(slug, admin) {
   const board = await findBoardBySlug(slug);
   if (board.status !== 'FROZEN') {
-    throw new AppError(409, ERROR_CODES.CONFLICT, 'Board tidak sedang dibekukan');
+    throw new AppError(409, ERROR_CODES.CONFLICT, 'Board tidak sedang di-freeze');
   }
-  await prisma.board.update({ where: { id: board.id }, data: { status: 'ACTIVE' } });
-  await recordAudit('BOARD_UNFROZEN', { actorId: admin.id, boardId: board.id });
-  publishBoardUpdated(await recomputeBoardTrust(board.id));
+  await activateFrozenBoard(board, admin.id, new Date());
   return { slug: board.slug, status: 'ACTIVE', verification: board.verification };
 }
 
