@@ -96,8 +96,11 @@ describe('Lonceng notifikasi', () => {
       await within(panel).findByText('Status laporan "Lubang besar" berubah menjadi Diproses'),
     ).toBeInTheDocument();
     expect(within(panel).getByText('Kampus ITS sekarang Official')).toBeInTheDocument();
-    expect(within(panel).getByText('✔️')).toBeInTheDocument();
-    expect(within(panel).getByText('🏅')).toBeInTheDocument();
+    const icons = panel.querySelectorAll('.notif-icon');
+    expect(icons).toHaveLength(3);
+    expect(icons[1]).toHaveClass('notif-blue');
+    expect(icons[2]).toHaveClass('notif-amber');
+    expect(panel.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
     expect(within(panel).getAllByLabelText('Belum dibaca')).toHaveLength(2);
 
     await userEvent.click(within(panel).getByText(/Lubang besar/));

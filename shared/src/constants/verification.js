@@ -21,9 +21,9 @@ export const TRUST_RULES = Object.freeze({
 export const RATING_QUICK_TAGS = Object.freeze(['RESPONSIVE', 'SLOW', 'DOUBTFUL']);
 
 export const RATING_QUICK_TAG_META = Object.freeze({
-  RESPONSIVE: Object.freeze({ emoji: '👍', label: 'Tanggap' }),
-  SLOW: Object.freeze({ emoji: '🐢', label: 'Lambat' }),
-  DOUBTFUL: Object.freeze({ emoji: '❓', label: 'Diragukan' }),
+  RESPONSIVE: Object.freeze({ label: 'Tanggap' }),
+  SLOW: Object.freeze({ label: 'Lambat' }),
+  DOUBTFUL: Object.freeze({ label: 'Diragukan' }),
 });
 
 export const RATING_BLOCK_REASONS = Object.freeze({
@@ -31,7 +31,7 @@ export const RATING_BLOCK_REASONS = Object.freeze({
   BOARD_STAFF: 'Penindak tidak bisa memberi rating ke Board sendiri',
   NOT_FOLLOWING: 'Ikuti Board ini dulu untuk memberi rating',
   BANNED: 'Akun kamu sedang diblokir',
-  BOARD_FROZEN: 'Board ini sedang dibekukan',
+  BOARD_FROZEN: 'Board ini sedang di-freeze',
 });
 
 export const VERIFICATION_ACTIONS = Object.freeze(['GRANTED', 'REVOKED', 'SKIPPED']);
@@ -57,7 +57,7 @@ export const CANDIDATE_REQUIREMENT_LABELS = Object.freeze({
   RATING_COUNT: `Minimal ${VERIFICATION_RULES.MIN_RATING_COUNT} rating`,
   TRUST_SCORE: `Skor Kepercayaan minimal ${VERIFICATION_RULES.MIN_TRUST_SCORE.toFixed(1).replace('.', ',')}`,
   BOARD_AGE: `Umur Board minimal ${VERIFICATION_RULES.MIN_BOARD_AGE_DAYS} hari`,
-  ACTIVE: 'Board aktif (tidak 💤 Tidak Aktif atau dibekukan)',
+  ACTIVE: 'Board aktif (tidak berlabel Tidak Aktif dan tidak di-freeze)',
   NO_FAKE_BOARD_FLAG: 'Tidak ada tanda "Board Palsu" yang belum ditinjau',
   NO_SKIP_COOLDOWN: `Tidak dilewati dalam ${VERIFICATION_RULES.SKIP_COOLDOWN_DAYS} hari terakhir`,
 });

@@ -3,6 +3,7 @@ import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { ReportDetailContent } from '../../components/reports/ReportDetailContent.jsx';
 import { useReportDetail } from '../../features/handling/hooks.js';
+import { ShieldCheck } from '@phosphor-icons/react';
 
 export function ReportDetailPage() {
   const { id } = useParams();
@@ -43,9 +44,9 @@ export function ReportDetailPage() {
   if (report.isHidden && report.moderationNotice) {
     return (
       <Card className="mx-auto max-w-2xl bg-surface-muted text-center">
-        <p className="text-3xl" aria-hidden="true">
-          🛡️
-        </p>
+        <span className="mx-auto grid size-14 place-items-center rounded-full bg-slate-100 text-slate-700">
+          <ShieldCheck aria-hidden="true" size={30} weight="fill" />
+        </span>
         <h1 className="mt-2 text-lg font-semibold">{report.moderationNotice}</h1>
         <p className="mt-2 text-sm text-text-muted">
           Laporan ini disembunyikan sementara karena ditandai melanggar aturan komunitas.

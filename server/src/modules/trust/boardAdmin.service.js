@@ -189,7 +189,7 @@ export async function verifyBoard(slug, admin, { note }, now = new Date()) {
     throw new AppError(
       409,
       ERROR_CODES.CONFLICT,
-      'Board yang dibekukan tidak bisa dijadikan Official',
+      'Board yang sedang di-freeze tidak bisa dijadikan Official',
     );
   }
   if (board.verification === 'OFFICIAL') {

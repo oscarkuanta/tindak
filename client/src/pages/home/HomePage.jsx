@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AlertCircle, Heart, ListChecks } from 'lucide-react';
+import { ArrowFatUp, ClipboardText, WarningOctagon } from '@phosphor-icons/react';
 import { Alert, Button, Spinner, StatCard, Tabs } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
@@ -40,21 +40,22 @@ function Feed({ tab }) {
           label="Laporan tampil"
           value={reports.length}
           note="Di halaman ini"
-          icon={ListChecks}
+          icon={ClipboardText}
+          tone="blue"
         />
         <StatCard
           label="Berbahaya"
           value={dangerousCount}
           note="Di halaman ini"
-          icon={AlertCircle}
-          tone="cream"
+          icon={WarningOctagon}
+          tone="red"
         />
         <StatCard
           label="Total dukungan"
           value={supportCount}
           note="Di halaman ini"
-          icon={Heart}
-          tone="sky"
+          icon={ArrowFatUp}
+          tone="mint"
         />
       </div>
     </section>

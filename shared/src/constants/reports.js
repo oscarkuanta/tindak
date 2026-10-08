@@ -73,17 +73,14 @@ export const REACTION_TYPES = Object.freeze(['DANGEROUS', 'LONG_STANDING', 'ANNO
 
 export const REACTION_META = Object.freeze({
   DANGEROUS: Object.freeze({
-    emoji: '🚨',
     label: 'Berbahaya',
     description: 'Bisa melukai orang',
   }),
   LONG_STANDING: Object.freeze({
-    emoji: '⏳',
     label: 'Sudah Lama',
     description: 'Masalah dibiarkan lama',
   }),
   ANNOYING: Object.freeze({
-    emoji: '😤',
     label: 'Mengganggu',
     description: 'Mengganggu aktivitas',
   }),

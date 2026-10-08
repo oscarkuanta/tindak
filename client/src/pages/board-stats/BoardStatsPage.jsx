@@ -1,5 +1,12 @@
 import { useState } from 'react';
-import { Activity, BadgeCheck, Clock3, Gauge, ListChecks, Siren } from 'lucide-react';
+import {
+  ClipboardText,
+  Lightning,
+  SealCheck,
+  Timer,
+  Gauge,
+  WarningOctagon,
+} from '@phosphor-icons/react';
 import { Link, useParams } from 'react-router';
 import {
   REPORT_SEVERITY_LABELS,
@@ -57,23 +64,23 @@ function formatWeekStart(value, options = { day: 'numeric', month: 'short' }) {
   return new Intl.DateTimeFormat('id-ID', { ...options, timeZone: 'Asia/Jakarta' }).format(date);
 }
 
-const STAT_ICONS = {
-  'Total laporan': ListChecks,
-  'Laporan aktif': Activity,
-  'Laporan selesai': BadgeCheck,
-  'Rata-rata waktu penanganan': Clock3,
-  'Tingkat tanggap': Gauge,
-  'Berbahaya tepat waktu': Siren,
+const STAT_STYLE = {
+  'Total laporan': [ClipboardText, 'blue'],
+  'Laporan aktif': [Lightning, 'amber'],
+  'Laporan selesai': [SealCheck, 'mint'],
+  'Rata-rata waktu penanganan': [Timer, 'violet'],
+  'Tingkat tanggap': [Gauge, 'mint'],
+  'Berbahaya tepat waktu': [WarningOctagon, 'red'],
 };
 
-function StatCard({ label, value, tone = 'brand' }) {
-  const colorTone = tone === 'success' ? 'sky' : tone === 'danger' ? 'cream' : 'mint';
+function StatCard({ label, value }) {
+  const [icon, tone] = STAT_STYLE[label];
   return (
     <BaseStatCard
       label={label}
       value={value}
-      tone={colorTone}
-      icon={STAT_ICONS[label]}
+      tone={tone}
+      icon={icon}
       valueTestId={`stat-${label}`}
       className="min-w-0"
     />
@@ -136,7 +143,7 @@ function RatingSummary({ rating }) {
         <span className="text-sm text-text-muted">
           {formatNumber(rating.ratingCount)} rating
           {typeof rating.averageStars === 'number' &&
-            ` · rata-rata ${rating.averageStars.toLocaleString('id-ID')} ★`}
+            ` · rata-rata ${rating.averageStars.toLocaleString('id-ID')} dari 5`}
         </span>
       </div>
       <StarDistribution distribution={rating.distribution} total={rating.ratingCount} />
@@ -185,21 +192,13 @@ function StatsContent({ data, slug }) {
       <section aria-label="Angka utama" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Total laporan" value={formatNumber(data.totals.total)} />
         <StatCard label="Laporan aktif" value={formatNumber(data.totals.active)} />
-        <StatCard
-          label="Laporan selesai"
-          value={formatNumber(data.totals.resolved)}
-          tone="success"
-        />
+        <StatCard label="Laporan selesai" value={formatNumber(data.totals.resolved)} />
         <StatCard
           label="Rata-rata waktu penanganan"
           value={formatHours(data.handling.averageHours)}
         />
-        <StatCard label="Tingkat tanggap" value={formatPercent(data.responseRate)} tone="success" />
-        <StatCard
-          label="Berbahaya tepat waktu"
-          value={formatPercent(data.dangerous.onTimeRate)}
-          tone={data.dangerous.onTimeRate === null ? 'brand' : 'danger'}
-        />
+        <StatCard label="Tingkat tanggap" value={formatPercent(data.responseRate)} />
+        <StatCard label="Berbahaya tepat waktu" value={formatPercent(data.dangerous.onTimeRate)} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-2">
