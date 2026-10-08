@@ -18,8 +18,8 @@ Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan me
 
 Karya ini dibuat untuk tema PRISMA 2026 **"Inspiring Digital Experiences: Illuminating the Web for Future Solutions"** (LUMINE).
 
-- **Subtema utama: Lingkungan & Manajemen Berkelanjutan (Smart Environment).** T!ndak memfasilitasi pelaporan isu lingkungan dan kerusakan ruang publik oleh warga, lalu mengukur seberapa cepat penanganannya.
-- **Subtema pendukung: Transformasi Digital & Layanan Publik (Govtech).** Kelurahan, sekolah, dan pengelola fasilitas mendapat antrean kerja digital yang transparan tanpa birokrasi kertas.
+- **Subtema utama: Transformasi Digital & Layanan Publik (Smart Village/Govtech).** Kelurahan, sekolah, dan pengelola fasilitas mendapat antrean kerja digital yang transparan tanpa birokrasi kertas, dan warga bisa memantau penanganan laporannya secara real-time.
+- **Subtema pendukung: Lingkungan & Manajemen Berkelanjutan (Smart Environment).** T!ndak memfasilitasi pelaporan isu lingkungan dan kerusakan ruang publik oleh warga, lalu mengukur seberapa cepat penanganannya.
 - **Lighting (mencerahkan):** setiap laporan punya status dan riwayat yang bisa dilihat publik, jadi warga tahu masalahnya sedang ditangani atau belum.
 - **Inspire (menginspirasi):** dukungan, reaksi, dan rating mengajak warga ikut menjaga lingkungannya, bukan hanya mengeluh.
 
