@@ -255,6 +255,7 @@
   .brand-wordmark {
     display: inline-flex;
     align-items: center;
+    gap: 0.015em;
     color: inherit;
     font-weight: 800;
     letter-spacing: 0.06em;
@@ -266,31 +267,12 @@
     font-size: 1.25rem;
   }
 
-  .brand-mark {
-    position: relative;
-    display: inline-block;
-    margin-inline: 0.12rem;
-  }
-
-  .brand-mark::before,
-  .brand-mark::after {
-    position: absolute;
-    top: -0.3rem;
-    width: 2px;
-    height: 6px;
-    border-radius: 2px;
-    background: currentColor;
-    content: '';
-  }
-
-  .brand-mark::before {
-    left: -4px;
-    transform: rotate(-30deg);
-  }
-
-  .brand-mark::after {
-    right: -4px;
-    transform: rotate(30deg);
+  .brand-wordmark__symbol {
+    width: 0.68em;
+    height: 1.12em;
+    flex: 0 0 auto;
+    overflow: visible;
+    transform: translateY(0.04em);
   }
 
   .official-badge {
