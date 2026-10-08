@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Search } from 'lucide-react';
+import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router';
 import { TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { useBoardSearch } from '../../features/boards/hooks.js';
@@ -74,9 +74,10 @@ export function BoardSearch() {
       <label className="sr-only" htmlFor="header-board-search">
         Cari Board
       </label>
-      <Search
+      <MagnifyingGlass
         className="pointer-events-none absolute top-1/2 left-4 z-10 -translate-y-1/2 text-text-subtle"
         size={18}
+        weight="bold"
         aria-hidden="true"
       />
       <input

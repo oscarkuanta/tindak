@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { BadgeCheck, Building2, ClipboardCheck, RotateCcw } from 'lucide-react';
+import { ArrowCounterClockwise, Medal, MagnifyingGlass, SealCheck } from '@phosphor-icons/react';
+import { BoardTypeIcon } from '../../components/icons/AppIcons.jsx';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { BOARD_TYPE_LABELS } from '@tindak/shared';
 import { Button, Card, Input, StatCard, Tabs } from '../../components/ui/index.js';
@@ -31,19 +32,19 @@ function StatsRow() {
   const stats = query.data?.data;
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <Stat label="Kandidat Official" value={stats?.candidates} icon={BadgeCheck} tone="mint" />
-      <Stat label="Board Official" value={stats?.official} icon={Building2} tone="sky" />
+      <Stat label="Kandidat Official" value={stats?.candidates} icon={Medal} tone="amber" />
+      <Stat label="Board Official" value={stats?.official} icon={SealCheck} tone="blue" />
       <Stat
         label="Dicabut 30 hari"
         value={stats?.revokedLast30Days}
-        icon={RotateCcw}
-        tone="cream"
+        icon={ArrowCounterClockwise}
+        tone="red"
       />
       <Stat
         label="Perlu Ditinjau Ulang"
         value={stats?.needsReview}
-        icon={ClipboardCheck}
-        tone="mint"
+        icon={MagnifyingGlass}
+        tone="violet"
       />
     </div>
   );
@@ -88,7 +89,12 @@ function CandidatesTab() {
                       </Link>
                       <span className="block text-xs text-text-muted">{board.city}</span>
                     </td>
-                    <td className={TD}>{BOARD_TYPE_LABELS[board.type]}</td>
+                    <td className={TD}>
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700">
+                        <BoardTypeIcon type={board.type} size={16} />
+                        {BOARD_TYPE_LABELS[board.type]}
+                      </span>
+                    </td>
                     <td className={TD}>{board.ratingCount}</td>
                     <td className={TD}>{formatScore(board.trustScore)}</td>
                     <td className={TD}>{formatPercent(board.responseRate)}</td>
@@ -179,6 +185,7 @@ function OfficialTab() {
                       </td>
                       <td className={`${TD} text-right`}>
                         <Button variant="danger" size="sm" onClick={() => setRevoking(board)}>
+                          <ArrowCounterClockwise size={16} weight="bold" aria-hidden="true" />
                           Cabut
                         </Button>
                       </td>

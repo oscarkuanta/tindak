@@ -8,6 +8,7 @@ import {
 import { Alert, Button, Modal } from '../ui/index.js';
 import { useCreateFlag } from '../../features/moderation/hooks.js';
 import { apiErrorMessage } from '../../features/auth/formErrors.js';
+import { FlagReasonIcon } from '../icons/AppIcons.jsx';
 
 export function FlagModal({ open, onClose, targetType, targetId, onFlagged }) {
   const reasons = targetType === 'BOARD' ? BOARD_FLAG_REASONS : REPORT_FLAG_REASONS;
@@ -64,7 +65,7 @@ export function FlagModal({ open, onClose, targetType, targetId, onFlagged }) {
                 onChange={() => setReason(value)}
                 className="accent-brand"
               />
-              <span aria-hidden="true">{FLAG_REASON_META[value].emoji}</span>
+              <FlagReasonIcon reason={value} className="text-danger" />
               <span>{FLAG_REASON_META[value].label}</span>
             </label>
           ))}

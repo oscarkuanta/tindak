@@ -1,8 +1,9 @@
 import { Link } from 'react-router';
-import { NOTIFICATION_ICONS, notificationLink } from '@tindak/shared';
+import { notificationLink } from '@tindak/shared';
 import { notificationText } from '../../features/notifications/notificationText.js';
 import { relativeTime } from '../../lib/relativeTime.js';
 import { cn } from '../../lib/cn.js';
+import { NotificationIcon } from '../icons/AppIcons.jsx';
 
 export function NotificationItem({ notification, onOpen, className }) {
   return (
@@ -15,9 +16,7 @@ export function NotificationItem({ notification, onOpen, className }) {
         className,
       )}
     >
-      <span aria-hidden="true" className="text-lg leading-6">
-        {NOTIFICATION_ICONS[notification.type] ?? '🔔'}
-      </span>
+      <NotificationIcon type={notification.type} />
       <span className="min-w-0 flex-1">
         <span className={cn('block', !notification.isRead && 'font-semibold')}>
           {notificationText(notification)}

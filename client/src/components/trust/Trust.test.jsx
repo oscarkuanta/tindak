@@ -113,7 +113,7 @@ describe('Modal rating', () => {
     });
     renderApp('/b/kampus-its');
 
-    await userEvent.click(await screen.findByRole('button', { name: '⭐ Beri Rating' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Beri Rating' }));
 
     const dialog = await screen.findByRole('dialog');
     expect(
@@ -139,7 +139,7 @@ describe('Modal rating', () => {
     });
     renderApp('/b/kampus-its');
 
-    await userEvent.click(await screen.findByRole('button', { name: '⭐ Beri Rating' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Beri Rating' }));
     const dialog = await screen.findByRole('dialog');
     await userEvent.click(await within(dialog).findByRole('button', { name: '4 bintang' }));
     await userEvent.click(within(dialog).getByRole('button', { name: /Tanggap/ }));

@@ -1,22 +1,20 @@
 export const FLAG_TARGET_TYPES = Object.freeze(['REPORT', 'BOARD']);
 
 export const FLAG_REASON_META = Object.freeze({
-  SEXUAL: Object.freeze({ emoji: '🔞', label: 'Konten seksual', severe: true }),
-  VIOLENCE: Object.freeze({ emoji: '🩸', label: 'Kekerasan', severe: true }),
-  HATE: Object.freeze({ emoji: '🗯️', label: 'SARA/ujaran kebencian', severe: false }),
+  SEXUAL: Object.freeze({ label: 'Konten seksual', severe: true }),
+  VIOLENCE: Object.freeze({ label: 'Kekerasan', severe: true }),
+  HATE: Object.freeze({ label: 'SARA/ujaran kebencian', severe: false }),
   PERSONAL_ATTACK: Object.freeze({
-    emoji: '👤',
     label: 'Menyerang atau menyebut nama orang',
     severe: false,
   }),
-  SPAM: Object.freeze({ emoji: '📢', label: 'Spam/iklan', severe: false }),
+  SPAM: Object.freeze({ label: 'Spam/iklan', severe: false }),
   NOT_COMPLAINT: Object.freeze({
-    emoji: '🚫',
     label: 'Bukan pengaduan masalah fisik',
     severe: false,
   }),
-  FAKE_BOARD: Object.freeze({ emoji: '🏚️', label: 'Board palsu', severe: false }),
-  SYSTEM_NSFW: Object.freeze({ emoji: '🤖', label: 'Deteksi otomatis foto', severe: true }),
+  FAKE_BOARD: Object.freeze({ label: 'Board palsu', severe: false }),
+  SYSTEM_NSFW: Object.freeze({ label: 'Deteksi otomatis foto', severe: true }),
 });
 
 export const FLAG_REASON_ORDER = Object.freeze([
@@ -81,3 +79,11 @@ export const BAN_DURATION_LABELS = Object.freeze({
 });
 
 export const IP_BAN_DURATIONS = Object.freeze(['1d', '7d']);
+
+export const FREEZE_DURATIONS = Object.freeze({ '7d': 7, '30d': 30, permanent: null });
+
+export const FREEZE_DURATION_LABELS = Object.freeze({
+  '7d': '7 hari',
+  '30d': '30 hari',
+  permanent: 'Permanen (sampai di-unfreeze manual)',
+});
