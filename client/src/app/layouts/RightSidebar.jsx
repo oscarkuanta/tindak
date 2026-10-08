@@ -1,17 +1,28 @@
 import { Card } from '../../components/ui/index.js';
 import { Link, useLocation } from 'react-router';
 import { useMe } from '../../features/auth/hooks.js';
-import { useMyFollows } from '../../features/boards/hooks.js';
+import { useBoardSearch, useMyFollows } from '../../features/boards/hooks.js';
+import { useMyCity } from '../../features/location/myCity.js';
 import { usePopularBoards } from '../../features/feed/hooks.js';
 import { VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 
 function PopularBoards() {
-  const query = usePopularBoards();
-  const boards = query.data?.data ?? [];
+  const { city } = useMyCity();
+  const popularQuery = usePopularBoards();
+  const cityQuery = useBoardSearch(
+    { q: '', city, page: 1, pageSize: 6 },
+    { enabled: Boolean(city) },
+  );
+  const cityBoards = cityQuery.data?.data ?? [];
+  const showCity = Boolean(city) && cityBoards.length > 0;
+  const query = showCity ? cityQuery : popularQuery;
+  const boards = showCity ? cityBoards : (popularQuery.data?.data ?? []);
   if (query.isPending || !boards.length) return null;
   return (
     <Card>
-      <h2 className="font-heading text-base font-bold">Board Populer</h2>
+      <h2 className="font-heading text-base font-bold">
+        {showCity ? `Board Populer di ${city}` : 'Board Populer'}
+      </h2>
       <ul className="mt-3 divide-y divide-border">
         {boards.map((board) => (
           <li key={board.id} className="py-3 first:pt-0 last:pb-0">

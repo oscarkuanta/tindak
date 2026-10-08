@@ -7,6 +7,9 @@ const VARIANTS = {
   white: 'bg-surface text-mint-700 shadow-sm hover:bg-mint-50',
   ghost: 'text-text hover:bg-surface-muted',
   danger: 'bg-danger text-danger-contrast hover:opacity-90',
+  accent:
+    'bg-yellow font-extrabold text-text shadow-md ring-2 ring-surface/60 hover:-translate-y-0.5 hover:brightness-105',
+  outlineLight: 'border border-surface/70 text-surface hover:bg-surface/15',
 };
 
 const SIZES = {

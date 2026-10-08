@@ -14,6 +14,9 @@ import {
   TRACKING_CODE_ALPHABET,
   TRACKING_CODE_LENGTH,
 } from '../constants/reports.js';
+import { CITY_NAMES } from '../constants/cities.js';
+
+const CITY_NAME_SET = new Set(CITY_NAMES);
 
 export const createReportSchema = z.object({
   title: z
@@ -119,7 +122,21 @@ export const reactionRequestSchema = z.strictObject({
   type: z.enum(REACTION_TYPES, { error: 'Pilih reaksi yang valid' }),
 });
 
-export const homeFeedQuerySchema = z.object({
-  tab: emptyToUndefined(z.enum(HOME_FEED_TABS, { error: 'Tab tidak dikenal' }).default('hot')),
-  ...reportPageSchema,
-});
+export const homeFeedQuerySchema = z
+  .object({
+    tab: emptyToUndefined(z.enum(HOME_FEED_TABS, { error: 'Tab tidak dikenal' }).default('hot')),
+    city: emptyToUndefined(
+      z
+        .string()
+        .trim()
+        .refine((value) => CITY_NAME_SET.has(value), {
+          message: 'Kota tidak dikenal, pilih dari daftar kota',
+        })
+        .optional(),
+    ),
+    ...reportPageSchema,
+  })
+  .refine((value) => value.tab !== 'nearby' || value.city, {
+    message: 'Pilih kotamu dulu untuk melihat laporan di sekitarmu',
+    path: ['city'],
+  });

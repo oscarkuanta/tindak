@@ -85,7 +85,7 @@ describe('Lonceng notifikasi', () => {
       },
       'GET /reports/7': () => [200, { data: report() }],
     });
-    const { router } = renderApp('/');
+    const { router } = renderApp('/lacak');
 
     const bell = await screen.findByRole('button', { name: 'Notifikasi, 2 belum dibaca' });
     expect(screen.getByTestId('notification-badge')).toHaveTextContent('2');
@@ -123,7 +123,7 @@ describe('Lonceng notifikasi', () => {
         return [200, { data: { updated: 2 } }];
       },
     });
-    renderApp('/');
+    renderApp('/lacak');
 
     await userEvent.click(await screen.findByRole('button', { name: /Notifikasi, 2/ }));
     await userEvent.click(await screen.findByRole('button', { name: 'Tandai semua dibaca' }));
@@ -134,7 +134,7 @@ describe('Lonceng notifikasi', () => {
 
   it('tamu tidak melihat lonceng', async () => {
     mockApi({ 'GET /auth/me': guestMe });
-    renderApp('/');
+    renderApp('/lacak');
 
     expect(await screen.findByRole('link', { name: 'Masuk' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Notifikasi/ })).not.toBeInTheDocument();
@@ -148,7 +148,7 @@ describe('Realtime', () => {
       'GET /auth/me': () => [200, { data: user }],
       'GET /notifications/unread-count': () => [200, { data: { count } }],
     });
-    renderApp('/');
+    renderApp('/lacak');
     await screen.findByRole('button', { name: 'Notifikasi' });
 
     count = 1;

@@ -1089,8 +1089,9 @@ Auth: Login. Menghapus reaksi. Idempoten. Sukses `200` dengan bentuk yang sama.
 
 ### GET /api/feed/home
 
-Auth: opsional. Query: `tab` (`hot` default, atau `following`), `page`, `pageSize` (default 10, maks 50).
+Auth: opsional. Query: `tab` (`hot` default, `nearby`, atau `following`), `city` (wajib untuk `nearby`, nama resmi dari `GET /api/meta/cities`), `page`, `pageSize` (default 10, maks 50).
 
+- `nearby`: laporan dari Board di kota `city` yang tidak di-freeze, urut `hotScore` lalu terbaru. Tanpa `city` membalas `400` dengan pesan "Pilih kotamu dulu untuk melihat laporan di sekitarmu". Kota pilihan user disimpan di browser, bukan di server.
 - `hot`: laporan dari semua Board yang tidak di-freeze, urut `hotScore` lalu terbaru.
 - `following`: wajib login (`401` untuk tamu). Laporan dari Board yang diikuti, terbaru dulu.
 

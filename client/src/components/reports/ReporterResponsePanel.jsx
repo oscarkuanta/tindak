@@ -6,6 +6,7 @@ import {
 } from '@tindak/shared';
 import { BeforeAfterSlider } from './BeforeAfterSlider.jsx';
 import { Alert, Button, Input, Modal } from '../ui/index.js';
+import { compressImages } from '../../lib/compressImage.js';
 
 function guestFields(credentials) {
   return credentials?.trackingCode && credentials?.secret
@@ -22,7 +23,7 @@ function validateExtraPhotos(files) {
         file.size > 5 * 1024 * 1024,
     )
   ) {
-    return 'Foto harus JPEG, PNG, atau WebP dan berukuran maksimal 5 MB.';
+    return 'Foto tidak bisa diproses. Coba foto lain dalam format JPG, PNG, atau WebP.';
   }
   return null;
 }
@@ -176,17 +177,18 @@ export function ReporterResponsePanel({ report, credentials, onAction, isPending
           <Input
             type="file"
             label="Foto tambahan (opsional, maksimal 4)"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/*"
             multiple
-            onChange={(event) => {
+            onChange={async (event) => {
               const selectedFiles = Array.from(event.target.files ?? []);
               if (selectedFiles.length > 4) {
                 setFiles([]);
                 setFormError('Maksimal 4 foto tambahan.');
                 return;
               }
-              setFiles(selectedFiles);
-              setFormError('');
+              const { files: ready, errors } = await compressImages(selectedFiles);
+              setFiles(ready);
+              setFormError(errors.join(' '));
             }}
           />
           {files.length > 0 && (

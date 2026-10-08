@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
+import { Info } from '@phosphor-icons/react';
+import { AUTH_PATHS } from '@tindak/shared';
 import { Alert, Button, Card } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { normalizeTrackingCode } from '../../features/reports/trackingStorage.js';
@@ -71,8 +73,24 @@ export function ReportSuccessPage() {
             {trackingCode}
           </p>
         </div>
-        <Alert>
-          Catat dan simpan kode atau tautan rahasia ini. Kode dibutuhkan untuk memantau laporan.
+        <div className="flex gap-3 rounded-card border border-blue-200 bg-blue-100 p-4 text-left text-sm text-blue-700">
+          <Info size={22} weight="fill" className="mt-0.5 shrink-0" aria-hidden="true" />
+          <div>
+            <h2 className="font-semibold">Kenapa kamu mendapat Kode Lacak?</h2>
+            <p className="mt-1">
+              Kamu melapor tanpa masuk akun, jadi laporan ini tidak tersimpan di akun mana pun. Kode
+              Lacak dan tautan rahasianya adalah satu-satunya cara untuk memantau status, menjawab
+              pertanyaan Penindak, dan mengonfirmasi laporan selesai.
+            </p>
+            <p className="mt-1">
+              Kode ini juga disimpan di browser perangkat ini, tetapi bisa hilang jika riwayat
+              browser dihapus. Salin dan simpan di tempat aman.
+            </p>
+          </div>
+        </div>
+        <Alert tone="warning" className="mt-3">
+          Jangan bagikan tautan rahasia ke orang lain. Siapa pun yang memegangnya bisa menanggapi
+          laporan ini atas namamu.
         </Alert>
         <div className="mt-4 flex flex-col justify-center gap-2 sm:flex-row">
           <Button onClick={() => copy(trackingCode, 'Kode')}>Salin Kode</Button>
@@ -91,7 +109,13 @@ export function ReportSuccessPage() {
             {copyStatus}
           </p>
         )}
-        <div className="mt-5 flex flex-wrap justify-center gap-4 text-sm">
+        <p className="mt-5 text-sm text-text-muted">
+          Ingin laporan berikutnya tersimpan otomatis?{' '}
+          <Link to={AUTH_PATHS.REGISTER} className="font-semibold text-brand hover:underline">
+            Daftar akun gratis
+          </Link>
+        </p>
+        <div className="mt-3 flex flex-wrap justify-center gap-4 text-sm">
           <Link to="/laporan-perangkat-ini" className="font-semibold text-brand">
             Laporan di Perangkat Ini
           </Link>
