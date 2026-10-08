@@ -1,8 +1,71 @@
-# T!indak
+# T!ndak
 
-Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan melaporkan jalan rusak, sampah, toilet rusak, atau lampu mati ke sebuah **Board** (mirip subreddit). Komunitas memberi dukungan dan reaksi, lalu **Penindak** board menindaklanjuti sampai pelapor mengonfirmasi selesai.
+Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan melaporkan jalan berlubang, sampah menumpuk, toilet rusak, atau lampu mati ke sebuah **Board** milik tempat itu. Komunitas memberi dukungan dan reaksi agar masalah paling mendesak naik ke atas, lalu **Penindak** Board menindaklanjuti sampai pelapor mengonfirmasi selesai.
 
-**Demo:** link diisi setelah deploy (lihat [docs/DEPLOY.md](docs/DEPLOY.md)). Akun demo ada di [docs/DEMO.md](docs/DEMO.md).
+- **Website:** link diisi setelah deploy (lihat [docs/DEPLOY.md](docs/DEPLOY.md))
+- **Video demo:** link YouTube diisi setelah unggah
+- **Akun demo:** [docs/DEMO.md](docs/DEMO.md)
+
+## Tim
+
+| Nama                            | Peran                     |
+| ------------------------------- | ------------------------- |
+| Ascarino Ahza Kuanta            | Backend Developer         |
+| Akmal Maulana Ghani             | Frontend Developer        |
+| Muhammad Izzudin Al Qosam Yahya | UI/UX Designer dan Tester |
+
+## Tema dan Subtema
+
+Karya ini dibuat untuk tema PRISMA 2026 **"Inspiring Digital Experiences: Illuminating the Web for Future Solutions"** (LUMINE).
+
+- **Subtema utama: Lingkungan & Manajemen Berkelanjutan (Smart Environment).** T!ndak memfasilitasi pelaporan isu lingkungan dan kerusakan ruang publik oleh warga, lalu mengukur seberapa cepat penanganannya.
+- **Subtema pendukung: Transformasi Digital & Layanan Publik (Govtech).** Kelurahan, sekolah, dan pengelola fasilitas mendapat antrean kerja digital yang transparan tanpa birokrasi kertas.
+- **Lighting (mencerahkan):** setiap laporan punya status dan riwayat yang bisa dilihat publik, jadi warga tahu masalahnya sedang ditangani atau belum.
+- **Inspire (menginspirasi):** dukungan, reaksi, dan rating mengajak warga ikut menjaga lingkungannya, bukan hanya mengeluh.
+
+## Latar Belakang
+
+Masalah fisik di sekitar kita sering dibiarkan lama: jalan berlubang, selokan tersumbat, lampu jalan mati, atau toilet sekolah rusak. Biasanya keluhan disampaikan lewat grup WhatsApp, kotak saran, atau mulut ke mulut. Akibatnya:
+
+1. Laporan tenggelam di antara pesan lain dan tidak jelas siapa yang harus menangani.
+2. Pelapor tidak tahu apakah laporannya dibaca, sedang dikerjakan, atau diabaikan.
+3. Pengelola sulit menentukan mana yang paling mendesak dan berbahaya.
+4. Warga yang mengalami masalah yang sama mengirim laporan berulang.
+5. Tidak ada data untuk menilai seberapa cepat pengelola merespons.
+
+## Solusi
+
+T!ndak memberi setiap tempat sebuah Board seperti forum, misalnya Board sekolah, kampus, jalan, RT/RW, atau fasilitas umum.
+
+1. **Lapor mudah:** cukup judul, kategori, tingkat bahaya, lokasi, dan foto. Bisa tanpa akun (dengan Kode Lacak) atau anonim.
+2. **Prioritas dari warga:** warga lain menekan Dukung atau memberi reaksi Berbahaya, Sudah Lama, dan Mengganggu, sehingga laporan mendesak naik ke atas dan laporan ganda berkurang.
+3. **Penindakan transparan:** Penindak bekerja lewat antrean atau kanban dengan status Baru, Perlu Info, Diproses, Menunggu Konfirmasi, Selesai, Dibuka Ulang, Ditolak, atau Duplikat. Setiap perubahan tercatat dan pelapor yang mengonfirmasi selesai.
+4. **Kepercayaan terukur:** rating warga dan tingkat tanggap membentuk Skor Kepercayaan Board. Board resmi bisa diverifikasi menjadi Official oleh Admin Board.
+5. **Aman dari penyalahgunaan:** Tandai Pelanggaran, sembunyi otomatis, filter foto tidak pantas, ban, dan Freeze Board.
+
+## Dampak yang Bisa Diukur
+
+Dashboard Statistik setiap Board menghitung indikator berikut secara otomatis, sehingga dampak T!ndak bisa dibuktikan dengan angka:
+
+| Indikator                            | Arti                                                          |
+| ------------------------------------ | ------------------------------------------------------------- |
+| Tingkat tanggap                      | Persentase laporan yang direspons Penindak                    |
+| Rata-rata waktu penanganan           | Waktu dari laporan masuk sampai selesai                       |
+| Berbahaya tepat waktu                | Persentase laporan Berbahaya yang selesai sebelum batas waktu |
+| Laporan masuk dan selesai per minggu | Tren partisipasi warga dan penyelesaian                       |
+| Kinerja per Penindak                 | Jumlah laporan yang ditangani setiap Penindak                 |
+| Laporan per kategori                 | Jenis masalah yang paling sering muncul di tempat itu         |
+
+## Inovasi Dibanding Cara yang Sudah Ada
+
+| Grup chat, kotak saran, formulir online | T!ndak                                                                                             |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Laporan bercampur dengan obrolan lain   | Satu Board per tempat, laporan berkategori                                                         |
+| Pelapor tidak tahu kelanjutannya        | Status dan riwayat terbuka, notifikasi realtime, Kode Lacak untuk tamu                             |
+| Laporan sama dikirim berkali-kali       | Warga cukup Dukung, Penindak bisa menandai Duplikat                                                |
+| Tidak ada urutan prioritas              | Skor prioritas dari dukungan, reaksi, dan tingkat bahaya, plus batas waktu untuk laporan Berbahaya |
+| Tidak jelas mana kanal resmi            | Skor Kepercayaan dan verifikasi Official                                                           |
+| Selesai atau tidak hanya kata pengelola | Pelapor yang mengonfirmasi, dan bisa membuka ulang jika belum beres                                |
 
 ## Screenshot
 
@@ -16,13 +79,14 @@ Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan me
 
 - **Board per tempat:** sekolah, kampus, kantor, jalan, RT/RW, fasilitas umum. Siapa pun bisa membuat Board, semua mulai sebagai Komunitas.
 - **Lapor tanpa akun:** tamu melapor dengan foto dan captcha, lalu memantau lewat Kode Lacak. Bisa juga melapor anonim saat login.
-- **Penindakan berstatus:** Baru, Perlu Info, Diproses, Menunggu Konfirmasi, Selesai, Dibuka Ulang, Ditolak, Duplikat. Penindak bekerja lewat antrean daftar atau kanban, pelapor mengonfirmasi hasilnya.
-- **Prioritas dari warga:** dukungan dan reaksi (🚨 Berbahaya, ⏳ Sudah Lama, 😤 Mengganggu) membentuk skor prioritas dan feed Ramai. Laporan Berbahaya punya batas waktu.
+- **Penindakan berstatus:** antrean daftar atau kanban, permintaan info ke pelapor, foto sebelum dan sesudah, konfirmasi oleh pelapor.
+- **Prioritas dari warga:** Dukung dan reaksi (Berbahaya, Sudah Lama, Mengganggu) membentuk skor prioritas dan feed Ramai. Laporan Berbahaya punya batas waktu.
 - **Kepercayaan Board:** rating bintang dan tingkat tanggap menghasilkan Skor Kepercayaan otomatis (Baru, Terpercaya, Perlu Waspada).
 - **Verifikasi Official:** Board yang memenuhi syarat masuk antrean, lalu Admin Board memutuskan Jadikan Official, Lewati, atau Cabut. Semua keputusan tercatat.
-- **Moderasi:** Tandai Pelanggaran, sembunyi otomatis, foto tidak pantas diburamkan, ban akun/perangkat/IP, bekukan Board, audit log.
+- **Moderasi:** Tandai Pelanggaran, sembunyi otomatis, foto tidak pantas diburamkan, ban akun/perangkat/IP, Freeze Board dengan durasi dan unfreeze otomatis, audit log.
 - **Notifikasi dan realtime:** lonceng notifikasi, antrean dan status berubah tanpa refresh (Socket.IO).
 - **Dashboard Penindak:** statistik per status, waktu penanganan, Berbahaya tepat waktu, tren mingguan, kinerja per Penindak, ekspor CSV.
+- **Responsif:** nyaman di desktop, tablet, dan HP, dengan navigasi bawah di HP.
 
 ## Arsitektur
 
@@ -40,7 +104,7 @@ Express 5 (satu proses Node.js)
         └─ folder upload (volume permanen di production)
 ```
 
-Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Status pengerjaan ada di [docs/PROGRESS.md](docs/PROGRESS.md). Dokumen rilis: [docs/DEPLOY.md](docs/DEPLOY.md), [docs/DEMO.md](docs/DEMO.md), [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md), [docs/QA-CHECKLIST.md](docs/QA-CHECKLIST.md).
+Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Struktur database ada di [docs/DATABASE.md](docs/DATABASE.md). Status pengerjaan ada di [docs/PROGRESS.md](docs/PROGRESS.md). Dokumen rilis: [docs/DEPLOY.md](docs/DEPLOY.md), [docs/DEMO.md](docs/DEMO.md), [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md), [docs/QA-CHECKLIST.md](docs/QA-CHECKLIST.md).
 
 ## Stack
 
@@ -56,11 +120,26 @@ Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada d
 
 ```
 tindak/
-  client/   React + Vite (port 5173)
-  server/   Express + Prisma (port 3000)
-  shared/   Zod, enum, konstanta
-  docs/     produk, kontrak API, progres, laporan fase
+  client/                 React + Vite (port 5173)
+    src/app/              router dan layout (header, panel kiri, navigasi bawah)
+    src/pages/            satu folder per halaman
+    src/features/         hook TanStack Query dan API per fitur
+    src/components/       komponen per fitur dan komponen dasar (ui/, icons/)
+  server/                 Express + Prisma (port 3000)
+    prisma/               schema.prisma, migrasi, seed, foto demo
+    src/modules/          satu folder per fitur: routes, controller, service
+    src/middlewares/      auth, validasi, rate limit, penanganan error
+    src/jobs/             job terjadwal
+    tests/                tes integrasi Supertest dan unit test
+  shared/                 skema Zod, enum, konstanta, rumus skor
+  docs/                   produk, kontrak API, database, deploy, demo, laporan fase
 ```
+
+Alur di server selalu routes → controller → service. Prisma hanya dipanggil di service, dan semua input divalidasi skema Zod dari folder `shared` yang juga dipakai form di client.
+
+## Database
+
+MySQL 8 dengan 18 tabel yang saling berelasi. Diagram relasi (ERD), aturan penamaan, dan alasan desainnya ada di [docs/DATABASE.md](docs/DATABASE.md).
 
 ## Setup Lokal Langkah demi Langkah
 
