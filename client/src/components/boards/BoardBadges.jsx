@@ -1,6 +1,7 @@
 import { Moon, SealCheck, Sparkle, Star, UsersThree, Warning } from '@phosphor-icons/react';
 import { BOARD_TYPE_LABELS, TRUST_LABEL_TEXT } from '@tindak/shared';
 import { BoardTypeIcon } from '../icons/AppIcons.jsx';
+import { OfficialCheckIcon } from '../icons/BrandAssets.jsx';
 import { TRUST_TOOLTIP, formatScore } from './trustFormat.js';
 
 export function OfficialBadge({ size = 'md', withLabel = true }) {
@@ -11,12 +12,7 @@ export function OfficialBadge({ size = 'md', withLabel = true }) {
       title="Diverifikasi manual oleh Admin Board"
       className={`official-badge inline-flex items-center gap-1 font-semibold ${small ? 'text-[11px]' : 'text-xs'}`}
     >
-      <SealCheck
-        aria-hidden="true"
-        weight="fill"
-        size={small ? 15 : 19}
-        className="verified-badge"
-      />
+      <OfficialCheckIcon size={small ? 15 : 19} />
       {withLabel && <span>Official</span>}
     </span>
   );
