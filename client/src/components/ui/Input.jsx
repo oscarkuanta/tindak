@@ -7,6 +7,7 @@ export function Input({
   hint,
   id,
   className,
+  trailing,
   'aria-describedby': describedBy,
   ...props
 }) {
@@ -22,20 +23,24 @@ export function Input({
           {label}
         </label>
       )}
-      <input
-        id={inputId}
-        aria-invalid={Boolean(error)}
-        aria-describedby={
-          [message && messageId, describedBy].filter(Boolean).join(' ') || undefined
-        }
-        className={cn(
-          'h-11 w-full rounded-full border-[1.5px] bg-surface px-4 text-sm text-text placeholder:text-text-muted',
-          'focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20',
-          error ? 'border-danger focus:border-danger' : 'border-border',
-          className,
-        )}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          id={inputId}
+          aria-invalid={Boolean(error)}
+          aria-describedby={
+            [message && messageId, describedBy].filter(Boolean).join(' ') || undefined
+          }
+          className={cn(
+            'h-11 w-full rounded-full border-[1.5px] bg-surface px-4 text-sm text-text placeholder:text-text-muted',
+            'focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20',
+            error ? 'border-danger focus:border-danger' : 'border-border',
+            trailing && 'pr-12',
+            className,
+          )}
+          {...props}
+        />
+        {trailing && <div className="absolute inset-y-0 right-1 flex items-center">{trailing}</div>}
+      </div>
       {message && (
         <p id={messageId} className={cn('text-xs', error ? 'text-danger' : 'text-text-muted')}>
           {message}

@@ -1,16 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { guestMe, mockApi, renderApp } from '../../test/renderApp.jsx';
 import { safeReturnTo } from './returnTo.js';
 
 describe('RequireAuth', () => {
-  it('mengarahkan tamu ke /masuk dengan returnTo halaman yang diminta', async () => {
+  it('tamu melihat pesan dan popup login, bukan langsung dialihkan', async () => {
     mockApi({ 'GET /auth/me': guestMe });
-    const { router } = renderApp('/profil?tab=akun');
+    const { router } = renderApp('/board-diikuti?tab=semua');
 
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      within(dialog).getByRole('heading', { name: 'Masuk untuk melihat Board yang kamu ikuti' }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/board-diikuti');
+    const loginLinks = screen.getAllByRole('link', { name: 'Masuk', hidden: true });
+    expect(loginLinks[0]).toHaveAttribute('href', '/masuk?returnTo=%2Fboard-diikuti%3Ftab%3Dsemua');
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Masuk dengan email' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/masuk'));
-    expect(router.state.location.search).toBe('?returnTo=%2Fprofil%3Ftab%3Dakun');
-    expect(await screen.findByRole('heading', { name: 'Masuk' })).toBeInTheDocument();
+    expect(router.state.location.search).toBe('?returnTo=%2Fboard-diikuti%3Ftab%3Dsemua');
   });
 
   it('menampilkan halaman untuk user yang sudah login', async () => {
