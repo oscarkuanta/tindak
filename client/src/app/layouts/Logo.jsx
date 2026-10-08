@@ -11,7 +11,7 @@ export function Logo({ className, tone = 'light' }) {
       className={cn('brand-link shrink-0', TONES[tone], className)}
     >
       <span className="brand-wordmark">
-        T<span className="brand-mark">!</span>INDAK
+        T<span className="brand-mark">!</span>NDAK
       </span>
     </Link>
   );

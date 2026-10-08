@@ -1,26 +1,42 @@
-function patchItem(item, payload) {
+function patchItem(item, payload, pick) {
   if (!item || typeof item !== 'object' || item.id !== payload.id) return item;
-  return {
-    ...item,
-    status: payload.status,
-    supportCount: payload.supportCount,
-    reactionCounts: payload.reactionCounts,
-  };
+  return { ...item, ...pick(payload) };
 }
 
-export function patchReportData(value, payload) {
+const pickPublic = (payload) => ({
+  status: payload.status,
+  supportCount: payload.supportCount,
+  reactionCounts: payload.reactionCounts,
+});
+
+const pickEngagement = (payload) => ({
+  supportCount: payload.supportCount,
+  reactionCounts: payload.reactionCounts,
+  mySupport: payload.mySupport,
+  myReaction: payload.myReaction,
+});
+
+export function patchReportData(value, payload, pick = pickPublic) {
   if (!value || typeof value !== 'object') return value;
   if (Array.isArray(value.pages)) {
-    return { ...value, pages: value.pages.map((page) => patchReportData(page, payload)) };
+    return { ...value, pages: value.pages.map((page) => patchReportData(page, payload, pick)) };
   }
   if (Array.isArray(value.data)) {
-    return { ...value, data: value.data.map((item) => patchItem(item, payload)) };
+    return { ...value, data: value.data.map((item) => patchItem(item, payload, pick)) };
   }
-  if (value.data?.id === payload.id) return { ...value, data: patchItem(value.data, payload) };
+  if (value.data?.id === payload.id) {
+    return { ...value, data: patchItem(value.data, payload, pick) };
+  }
   return value;
 }
 
 const LIST_ROOTS = new Set(['boards', 'feed', 'me']);
+
+export function applyMyEngagement(queryClient, reportId, engagement) {
+  queryClient.setQueriesData({ predicate: (query) => LIST_ROOTS.has(query.queryKey[0]) }, (value) =>
+    patchReportData(value, { ...engagement, id: reportId }, pickEngagement),
+  );
+}
 
 export function applyReportUpdated(queryClient, payload) {
   queryClient.setQueriesData({ predicate: (query) => LIST_ROOTS.has(query.queryKey[0]) }, (value) =>
