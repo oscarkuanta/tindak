@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { readFile } from 'node:fs/promises';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { prisma } from '../src/lib/prisma.js';
@@ -229,6 +230,29 @@ describe('Header keamanan dan session', () => {
     expect(res.headers['strict-transport-security']).toBeDefined();
     expect(res.headers['x-powered-by']).toBeUndefined();
     expect(res.headers.ratelimit).toBeDefined();
+  });
+
+  it('CSP mengizinkan semua sumber luar yang dipakai frontend', async () => {
+    const files = [
+      new URL('../../client/index.html', import.meta.url),
+      new URL('../../client/src/index.css', import.meta.url),
+      new URL('../../client/src/components/reports/TurnstileWidget.jsx', import.meta.url),
+    ];
+    const origins = new Set();
+    for (const file of files) {
+      const text = await readFile(file, 'utf8');
+      for (const match of text.matchAll(/https:\/\/[a-z0-9.-]+/g)) origins.add(match[0]);
+    }
+    const res = await request(app).get('/api/health');
+    const policy = res.headers['content-security-policy'];
+
+    expect([...origins].sort()).toEqual([
+      'https://challenges.cloudflare.com',
+      'https://fonts.googleapis.com',
+    ]);
+    for (const origin of origins) expect(policy).toContain(origin);
+    expect(policy).toMatch(/font-src[^;]*https:\/\/fonts\.gstatic\.com/);
+    expect(policy).toMatch(/style-src[^;]*https:\/\/fonts\.googleapis\.com/);
   });
 
   it('cookie session httpOnly dan SameSite Lax', async () => {
