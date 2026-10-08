@@ -1,14 +1,23 @@
 import { Link } from 'react-router';
-import { Card } from '../../components/ui/index.js';
+import {
+  Activity,
+  Ban,
+  ClipboardCheck,
+  Flag,
+  FileCheck2,
+  FileText,
+  LayoutGrid,
+  ShieldAlert,
+  Users,
+  BadgeCheck,
+} from 'lucide-react';
+import { StatCard } from '../../components/ui/index.js';
 import { useAdminStats } from '../../features/moderation/hooks.js';
 import { QueryState } from './adminShared.jsx';
 
-function Stat({ label, value, to }) {
+function Stat({ label, value, to, icon, tone = 'mint' }) {
   const content = (
-    <Card className="h-full">
-      <p className="text-sm text-text-muted">{label}</p>
-      <p className="mt-1 text-2xl font-bold">{value}</p>
-    </Card>
+    <StatCard className="h-full" label={label} value={value} icon={icon} tone={tone} />
   );
   return to ? (
     <Link to={to} className="block hover:opacity-90">
@@ -29,18 +38,41 @@ export function AdminDashboardPage() {
             label="Konten menunggu tinjauan"
             value={stats.moderation.openTargets}
             to="/admin/moderasi"
+            icon={ClipboardCheck}
+            tone="cream"
           />
-          <Stat label="Tanda pelanggaran terbuka" value={stats.moderation.openFlags} />
-          <Stat label="Ban aktif" value={stats.bans.active} to="/admin/ban" />
-          <Stat label="User" value={stats.users.total} to="/admin/user" />
-          <Stat label="Board" value={stats.boards.total} to="/admin/board" />
-          <Stat label="Board Official" value={stats.boards.official} />
-          <Stat label="Board dibekukan" value={stats.boards.frozen} />
-          <Stat label="Laporan" value={stats.reports.total} />
-          <Stat label="Laporan aktif" value={stats.reports.active} />
-          <Stat label="Laporan selesai" value={stats.reports.resolved} />
-          <Stat label="Laporan disembunyikan" value={stats.reports.hidden} />
-          <Stat label="Laporan dihapus" value={stats.reports.removed} />
+          <Stat
+            label="Tanda pelanggaran terbuka"
+            value={stats.moderation.openFlags}
+            icon={Flag}
+            tone="sky"
+          />
+          <Stat
+            label="Ban aktif"
+            value={stats.bans.active}
+            to="/admin/ban"
+            icon={Ban}
+            tone="cream"
+          />
+          <Stat label="User" value={stats.users.total} to="/admin/user" icon={Users} tone="sky" />
+          <Stat label="Board" value={stats.boards.total} to="/admin/board" icon={LayoutGrid} />
+          <Stat label="Board Official" value={stats.boards.official} icon={BadgeCheck} tone="sky" />
+          <Stat
+            label="Board dibekukan"
+            value={stats.boards.frozen}
+            icon={ShieldAlert}
+            tone="cream"
+          />
+          <Stat label="Laporan" value={stats.reports.total} icon={FileText} />
+          <Stat label="Laporan aktif" value={stats.reports.active} icon={Activity} tone="sky" />
+          <Stat label="Laporan selesai" value={stats.reports.resolved} icon={FileCheck2} />
+          <Stat
+            label="Laporan disembunyikan"
+            value={stats.reports.hidden}
+            icon={ShieldAlert}
+            tone="cream"
+          />
+          <Stat label="Laporan dihapus" value={stats.reports.removed} icon={FileText} tone="sky" />
         </div>
       )}
     </QueryState>

@@ -53,10 +53,10 @@ export function BeforeAfterSlider({ before, after }) {
             style={{ width: `${10000 / position}%` }}
           />
         </div>
-        <span className="absolute top-3 left-3 rounded-full bg-text/75 px-2.5 py-1 text-xs font-semibold text-white">
+        <span className="absolute top-3 left-3 rounded-full bg-text/75 px-2.5 py-1 text-xs font-semibold text-surface">
           Sesudah
         </span>
-        <span className="absolute top-3 right-3 rounded-full bg-text/75 px-2.5 py-1 text-xs font-semibold text-white">
+        <span className="absolute top-3 right-3 rounded-full bg-text/75 px-2.5 py-1 text-xs font-semibold text-surface">
           Sebelum
         </span>
       </div>
