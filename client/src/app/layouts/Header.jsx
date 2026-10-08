@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router';
+import { Megaphone, PlusCircle } from '@phosphor-icons/react';
 import { AUTH_PATHS } from '@tindak/shared';
 import { ButtonLink } from '../../components/ui/index.js';
 import { Button } from '../../components/ui/Button.jsx';
@@ -17,7 +18,8 @@ function CreateBoardAction() {
   if (user)
     return (
       <ButtonLink to="/buat-board" variant="white" size="sm" data-slot="create-board">
-        + Buat Board
+        <PlusCircle size={18} weight="bold" aria-hidden="true" />
+        Buat Board
       </ButtonLink>
     );
   return (
@@ -27,7 +29,8 @@ function CreateBoardAction() {
       data-slot="create-board"
       onClick={() => openLoginPrompt({ title: 'Masuk untuk membuat Board' })}
     >
-      + Buat Board
+      <PlusCircle size={18} weight="bold" aria-hidden="true" />
+      Buat Board
     </Button>
   );
 }
@@ -77,6 +80,7 @@ export function Header() {
         </div>
         <div className="flex shrink-0 items-center gap-2" data-slot="actions">
           <ButtonLink to={reportPath} variant="white" size="sm" data-slot="top-report">
+            <Megaphone size={18} weight="fill" aria-hidden="true" />
             Laporkan Masalah
           </ButtonLink>
           <CreateBoardAction />

@@ -128,31 +128,27 @@ describe('EngagementBar', () => {
     });
     renderApp('/laporan/7');
 
-    await userEvent.click(await screen.findByRole('button', { name: /Reaksi/ }));
-    const group = screen.getByRole('group', { name: 'Pilih reaksi' });
-    expect(within(group).getByText('Sudah Lama')).toBeInTheDocument();
-    expect(within(group).getByRole('button', { name: /Berbahaya/ })).toHaveAttribute(
-      'title',
-      'Bisa melukai orang',
+    const group = await screen.findByRole('group', { name: 'Reaksi' });
+    const dangerous = within(group).getByRole('button', { name: 'Berbahaya, 2 reaksi' });
+    expect(dangerous).toHaveAttribute('title', 'Berbahaya: Bisa melukai orang');
+    expect(within(group).getByRole('button', { name: 'Sudah Lama, 1 reaksi' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
     );
+    expect(dangerous.textContent).not.toMatch(/\p{Extended_Pictographic}/u);
 
-    await userEvent.click(within(group).getByRole('button', { name: /Berbahaya/ }));
+    await userEvent.click(dangerous);
 
-    const chosen = await screen.findByRole('button', { name: 'Berbahaya', expanded: false });
-    expect(chosen).toHaveTextContent('🚨');
-    expect(screen.getByLabelText('Jumlah reaksi')).toHaveTextContent('🚨 3 · ⏳ 1 · 😤 0');
+    const chosen = await within(group).findByRole('button', { name: 'Berbahaya, 3 reaksi' });
+    expect(chosen).toHaveAttribute('aria-pressed', 'true');
+    expect(within(group).getByRole('button', { name: 'Mengganggu, 0 reaksi' })).toBeInTheDocument();
 
     await userEvent.click(chosen);
-    await userEvent.click(
-      within(screen.getByRole('group', { name: 'Pilih reaksi' })).getByRole('button', {
-        name: /Berbahaya/,
-      }),
-    );
 
     await waitFor(() => expect(calls).toEqual([['PUT', 'DANGEROUS'], ['DELETE']]));
     expect(
-      await screen.findByRole('button', { name: 'Reaksi', expanded: false }),
-    ).toHaveTextContent('😊');
+      await within(group).findByRole('button', { name: 'Berbahaya, 2 reaksi' }),
+    ).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('menonaktifkan tombol dengan alasan saat laporan terkunci atau milik sendiri', async () => {
@@ -165,7 +161,11 @@ describe('EngagementBar', () => {
     const button = await supportButton();
     expect(button).toBeDisabled();
     expect(button).toHaveAttribute('title', 'Laporan sudah ditutup, dukungan dan reaksi dikunci');
-    expect(screen.getByRole('button', { name: /Reaksi/ })).toBeDisabled();
+    for (const reaction of within(screen.getByRole('group', { name: 'Reaksi' })).getAllByRole(
+      'button',
+    )) {
+      expect(reaction).toBeDisabled();
+    }
   });
 
   it('tamu diminta masuk dan aksinya disimpan', async () => {

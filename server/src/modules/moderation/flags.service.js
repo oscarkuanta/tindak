@@ -47,6 +47,16 @@ export function hideDecision(flags, { flaggedByHandler = false } = {}) {
   return null;
 }
 
+async function assertNotOwnBoard(boardId, userId) {
+  if (await getBoardMembership(boardId, userId)) {
+    throw new AppError(
+      403,
+      ERROR_CODES.FORBIDDEN,
+      'Penindak tidak bisa menandai Board yang dikelolanya sendiri',
+    );
+  }
+}
+
 async function loadTarget(targetType, targetId) {
   if (targetType === 'REPORT') {
     const report = await prisma.report.findUnique({
@@ -112,6 +122,7 @@ async function maybeHideReport(report, flaggerId, weight) {
 
 export async function createFlag(user, { targetType, targetId, reason, note }, now = new Date()) {
   const target = await loadTarget(targetType, targetId);
+  if (targetType === 'BOARD') await assertNotOwnBoard(target.id, user.id);
   await assertDailyLimit(user.id, now);
   const weight = await flagWeightFor(user.id, now);
 
