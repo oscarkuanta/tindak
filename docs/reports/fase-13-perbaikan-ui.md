@@ -3,7 +3,7 @@
 - Branch: `feat/f13-perbaikan-ui`
 - Pemilik: Oscar
 - Tanggal: 2026-10-08
-- PR: (diisi setelah PR dibuat)
+- PR: [#35](https://github.com/oscarkuanta/tindak/pull/35)
 
 ## Ringkasan
 
@@ -99,3 +99,8 @@ Tidak ada endpoint baru. Perubahan kontrak di `docs/API.md`:
 - Ikon baru ditambahkan lewat `AppIcons.jsx` agar warnanya konsisten. Jangan menambah emoji di teks UI atau di `shared`.
 - Warna baru untuk kelas Tailwind harus didaftarkan di blok `@theme static` (`--color-*`) di `index.css`.
 - Freeze wajib mengirim `duration`. Klien lama yang hanya mengirim `reason` akan mendapat 400.
+
+## Perbaikan Setelah Merge (#35)
+
+- Bug tombol Dukung di halaman Board: setelah Dukung, update realtime menimpa data daftar laporan dengan jumlah baru tetapi `mySupport` lama (`false`). Tombol lalu menyamakan diri dengan data itu, sehingga membatalkan dukungan butuh dua klik. Sekarang hasil Dukung atau reaksi milik sendiri juga disimpan ke cache daftar (`applyMyEngagement` di `client/src/features/realtime/cacheUpdates.js`), dan update realtime hanya mengubah angka publik. Bug dipastikan muncul tanpa perbaikan dan hilang dengan perbaikan lewat uji browser, ditambah unit test `cacheUpdates.test.js`.
+- Logo header diganti dari `T!INDAK` menjadi `T!NDAK`: tanda seru menggantikan huruf i.

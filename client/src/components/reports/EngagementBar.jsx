@@ -17,6 +17,7 @@ import {
   toggleSupport,
 } from '../../features/engagement/engagementState.js';
 import { savePendingAction, takePendingAction } from '../../features/engagement/pendingAction.js';
+import { applyMyEngagement } from '../../features/realtime/cacheUpdates.js';
 import { ReactionIcon } from '../icons/AppIcons.jsx';
 
 const LOGIN_TITLE = 'Masuk untuk mendukung laporan ini';
@@ -58,7 +59,9 @@ export function EngagementBar({ report, className }) {
     setError('');
     try {
       const response = await request();
-      setState(fromServer(response.data));
+      const saved = fromServer(response.data);
+      setState(saved);
+      applyMyEngagement(queryClient, report.id, saved);
       queryClient.invalidateQueries({ queryKey: ['reports', report.id] });
     } catch (requestError) {
       setState(previous);
