@@ -8,6 +8,16 @@ import { LoginPromptProvider } from '../../features/auth/LoginPromptProvider.jsx
 import { ToastProvider } from '../../features/boards/ToastProvider.jsx';
 
 describe('Badge Board', () => {
+  it('memakai centang Official sederhana berbentuk lingkaran', () => {
+    render(<OfficialBadge />);
+
+    const icon = screen.getByTestId('official-check-icon');
+
+    expect(icon).toHaveAttribute('viewBox', '0 0 20 20');
+    expect(icon.querySelector('circle')).toHaveAttribute('r', '10');
+    expect(icon.querySelector('path')).toHaveAttribute('stroke', 'var(--surface)');
+  });
+
   it('membedakan status Official dari Komunitas dan trust label', () => {
     vi.stubGlobal(
       'fetch',
