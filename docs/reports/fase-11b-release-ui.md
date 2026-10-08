@@ -1,8 +1,8 @@
 # Laporan Fase 11B: Data Demo, QA, Deploy (Frontend)
 
 - Branch: `chore/f11b-release-ui`
-- Pemilik: Akmal
-- Tanggal: 2026-10-07
+- Pemilik: Akmal (2026-10-07), dilanjutkan Oscar (2026-10-08)
+- Tanggal: 2026-10-07, lanjutan 2026-10-08
 - PR: [#32 (draft)](https://github.com/oscarkuanta/tindak/pull/32)
 
 ## Ringkasan
@@ -67,12 +67,48 @@ Tidak ada. Tidak ada perubahan kontrak API.
 - Kolom checklist tetap memakai ✅/❌ untuk semua baris sesuai permintaan. Baris yang hanya diuji sebagian dijelaskan dalam sel atau bagian ini, agar tanda tersebut tidak menyatakan bahwa semua kombinasi sudah tercakup.
 - Screenshot PNG disiapkan dengan ukuran lebar 1280px, tetapi dicatat bahwa sumbernya bukan viewport browser langsung 1280px.
 
+## Lanjutan 2026-10-08 (Oscar)
+
+Branch ini dibuat sebelum redesign Fase 12 masuk ke `dev`, sehingga PR #32 konflik dan screenshot-nya masih tampilan lama. Pekerjaan yang tersisa diselesaikan di branch yang sama.
+
+### Konflik dan kebersihan repo
+
+- `dev` (berisi Fase 10B, referensi desain, dan redesign Fase 12) digabung ke branch ini. `Header.jsx` memakai versi Fase 12, karena header lama dua baris dari Fase 11B sudah digantikan header baru dengan navigasi bawah di HP. `PROGRESS.md` digabung dan dirapikan: 2B–5B (#14–#17), 10B (#31), dan 11A (#29) ternyata sudah di-merge, jadi statusnya diubah menjadi Selesai.
+- Salinan ganda `ui-reference.html` di root dihapus. Rujukan tunggal sekarang `docs/design/ui-reference.html` (isinya identik).
+- Soal "staging": tidak ada server staging. GitHub tidak punya environment maupun deployment. Pemeriksaan sebelumnya memakai database demo lokal di laptop (`tindak_demo_f11b`).
+
+### QA browser setelah redesign
+
+Seluruh baris yang sebelumnya ❌ diuji ulang di browser dengan data demo, memakai Chrome headless yang dikendalikan lewat Chrome DevTools Protocol. Setiap akun memakai profil browser terpisah, jadi realtime benar-benar diuji antar-profil, bukan antar-tab. Hasil penting juga dicocokkan dengan isi database. Semua lolos (rincian di `docs/QA-CHECKLIST.md`, tanda **✅ 8 Okt**):
+
+- Tamu: lapor dengan foto dan captcha, Kode Lacak, status Lacak berubah tanpa refresh, konfirmasi Sudah Beres.
+- User: lapor anonim, tandai pelanggaran laporan dan Board, lonceng notifikasi, jawab Perlu Info, Belum Beres, buat Board, dukungan realtime antar-profil.
+- Penindak Utama dan Penindak: kanban realtime, Proses, Minta Info, Tolak dengan alasan, Duplikat, Tandai Selesai dengan foto, undang, terima undangan, cabut, alihkan kepemilikan, tidak bisa memberi rating Board sendiri, notifikasi Penindak.
+- Admin: Pulihkan, Hapus + Ban, peringatan pencabutan Official, bekukan Board palsu, cabut ban, cari user, audit log.
+- Admin Board: Cabut Official menolak alasan pendek.
+
+### Bug yang ditemukan dan diperbaiki
+
+- **Halaman meluber ke samping di HP dan tablet** (bisa digeser horizontal):
+  - Masuk dan Lapor: lingkaran hiasan `.blobs` diletakkan di luar wadah. Diperbaiki dengan `overflow-x: clip` pada `.blobs`.
+  - Dashboard Statistik: tabel laporan terlambat dan paling lama (lebar 38rem) melebarkan item grid induknya. Diperbaiki dengan `min-w-0` pada section tabel.
+  - Cari Board: kotak pilihan kota melebar mengikuti nama kota terpanjang. Diperbaiki dengan `w-full min-w-0`.
+  - Panel Admin: kotak pilihan alasan lebih lebar 7px dari layar. `SELECT_CLASS` diberi `max-w-full`.
+  - Setelah perbaikan, 13 halaman di 390px dan 768px tidak lagi meluber dan tidak ada error console.
+- **Logo putih hampir tak terlihat di halaman Masuk dan Daftar** (latar mint pucat). `Logo` sekarang punya `tone`; layout autentikasi memakai `brand` (`mint-600`), sesuai referensi desain.
+- **Font diblokir CSP di production** (bug backend). Diperbaiki terpisah di branch `fix/f11-csp-fonts`. Sudah diverifikasi di server mode production: tanpa perbaikan tidak ada font yang termuat; dengan perbaikan Poppins dan Montserrat termuat.
+
+### Screenshot
+
+Enam screenshot README diambil ulang dari tampilan baru dengan viewport langsung 1280 × 900, dari data demo yang baru diisi ulang.
+
 ## Hal yang Belum Selesai
 
-- Ambil ulang enam screenshot menggunakan viewport browser langsung 1280px; PNG saat ini berukuran 1280px tetapi sumbernya berasal dari viewport yang lebih kecil.
-- Uji realtime dengan dua profil browser, bukan hanya dua tab dalam satu profil.
-- Selesaikan uji laporan tamu dengan CAPTCHA secara manual, konfirmasi selesai oleh tamu, dan alur role lain yang bertanda ❌ di `docs/QA-CHECKLIST.md`.
-- Latih naskah demo secara penuh di browser.
+- Ukuran bundle JavaScript sekitar 1,49 MB (peringatan Vite). Tidak memblokir rilis, tetapi halaman Admin, Verifikasi, dan Dashboard bisa dimuat belakangan (`React.lazy`) agar halaman pertama lebih cepat.
+- Di lebar 1280px, teks pilihan filter antrean terpotong ("Semua kategor…"). Hanya kosmetik.
+- Pemeriksaan lintas browser baru Chrome (dan Brave dari Fase 12). Edge dan Firefox belum dicoba.
+- Login Google belum dikonfigurasi, jadi tombolnya belum diuji dengan akun sungguhan.
+- Latihan naskah demo secara manual oleh orang yang akan merekam video.
 
 ## Catatan untuk Fase Berikutnya
 
