@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AUTH_PATHS, ERROR_CODES, GOOGLE_LOGIN_ERRORS, loginSchema } from '@tindak/shared';
-import { Alert, Button, Input } from '../../components/ui/index.js';
+import { Alert, Button, Input, PasswordInput } from '../../components/ui/index.js';
 import { useLogin } from '../../features/auth/hooks.js';
 import { GoogleButton } from '../../features/auth/GoogleButton.jsx';
 import { AuthDivider } from '../../features/auth/AuthDivider.jsx';
@@ -82,10 +82,9 @@ export function LoginPage() {
           onChange={handleChange}
           error={fieldErrors.email}
         />
-        <Input
+        <PasswordInput
           label="Password"
           name="password"
-          type="password"
           autoComplete="current-password"
           value={values.password}
           onChange={handleChange}

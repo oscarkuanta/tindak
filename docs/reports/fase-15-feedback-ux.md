@@ -25,6 +25,7 @@ Fase ini menindaklanjuti hasil testing UI/UX dari anggota tim. Ada delapan temua
   - Halaman Jelajahi Board dan kotak Board Populer di samping juga otomatis memakai kota itu, dengan pilihan "Tampilkan semua kota".
 - **Foto laporan tidak terpotong.** Foto ditampilkan utuh (`object-fit: contain`) di atas salinan dirinya yang diburamkan sebagai latar, seperti Reddit dan Twitter. Berlaku di kartu feed, detail laporan, dan perbandingan sebelum/sesudah.
 - **Hierarki navigasi.** Laporkan Masalah tetap berisi putih, dengan teks hijau tema yang tebal, ukuran lebih besar, dan cincin putih, sehingga paling menonjol di header. Tombol tengah navigasi bawah HP memakai gaya yang sama. Buat Board menjadi tombol garis, Masuk dan Daftar tetap putih.
+- **Tombol mata di kolom password.** Halaman Daftar (password dan konfirmasi) dan halaman Masuk punya tombol untuk menampilkan atau menyembunyikan password, lewat komponen `PasswordInput`.
 
 ## File Penting
 
@@ -67,7 +68,7 @@ Tidak ada endpoint baru. Perubahan kontrak di `docs/API.md`:
 ## Hasil Tes
 
 - `npm run lint`: lolos.
-- `npm test`: server 23 file, 413 tes lolos. Client 25 file, 92 tes lolos.
+- `npm test`: server 23 file, 413 tes lolos. Client 26 file, 93 tes lolos.
 - Cek di browser: navigasi Beranda ke Jelajahi Board dan ke Board Diikuti lancar. Tidak ada scroll horizontal di lebar 390 px.
 
 ## Keputusan dan Alasan
