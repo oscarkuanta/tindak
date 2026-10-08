@@ -86,7 +86,7 @@ function StatusBadge({ status }) {
 
 function ReportTable({ title, description, reports, columns, empty }) {
   return (
-    <section className="space-y-3">
+    <section className="min-w-0 space-y-3">
       <div>
         <h2 className="text-lg font-semibold">{title}</h2>
         <p className="mt-1 text-sm text-text-muted">{description}</p>
@@ -341,7 +341,7 @@ function StatsContent({ data, slug }) {
       </section>
 
       {Array.isArray(data.handlers) && (
-        <section className="space-y-3">
+        <section className="min-w-0 space-y-3">
           <div>
             <h2 className="text-lg font-semibold">Kinerja Penindak</h2>
             <p className="mt-1 text-sm text-text-muted">
