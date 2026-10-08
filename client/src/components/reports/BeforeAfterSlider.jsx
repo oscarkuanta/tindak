@@ -15,13 +15,13 @@ export function BeforeAfterSlider({ before, after }) {
           src={before.url}
           alt="Foto sebelum penindakan"
           isBlurred={before.isBlurred}
-          className="aspect-[4/3] w-full rounded-card object-cover"
+          frameClassName="aspect-[4/3] w-full rounded-card"
         />
         <BlurredImage
           src={after.url}
           alt="Foto sesudah penindakan"
           isBlurred={after.isBlurred}
-          className="aspect-[4/3] w-full rounded-card object-cover"
+          frameClassName="aspect-[4/3] w-full rounded-card"
         />
         <button
           type="button"
@@ -36,11 +36,12 @@ export function BeforeAfterSlider({ before, after }) {
 
   return (
     <figure className="space-y-3">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-card bg-surface-muted">
+      <div className="photo-frame aspect-[4/3] rounded-card">
+        <img src={before.url} alt="" aria-hidden="true" className="photo-frame__backdrop" />
         <img
           src={before.url}
           alt="Foto sebelum penindakan"
-          className={`absolute inset-0 size-full object-cover`}
+          className="absolute inset-0 size-full object-contain"
         />
         <div
           className="absolute inset-y-0 left-0 overflow-hidden"
@@ -49,7 +50,7 @@ export function BeforeAfterSlider({ before, after }) {
           <img
             src={after.url}
             alt="Foto sesudah penindakan"
-            className={`absolute inset-0 size-full max-w-none object-cover`}
+            className="absolute inset-0 size-full max-w-none object-contain"
             style={{ width: `${10000 / position}%` }}
           />
         </div>

@@ -8,6 +8,9 @@ import { BoardCardSkeleton } from '../../components/boards/Skeleton.jsx';
 import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
 import { useMe } from '../../features/auth/hooks.js';
 import { useCities, useBoardSearch } from '../../features/boards/hooks.js';
+import { useMyCity } from '../../features/location/myCity.js';
+
+const ALL_CITIES = 'semua';
 
 const PAGE_SIZE = 20;
 
@@ -41,17 +44,21 @@ export function SearchBoardsPage() {
   const { openLoginPrompt } = useLoginPrompt();
   const { data: user } = useMe();
   const { data: citiesResponse } = useCities();
+  const { city: myCity } = useMyCity();
+  const cityParam = searchParams.get('city');
+  const usingMyCity = cityParam === null && Boolean(myCity);
+  const city = cityParam === null ? (myCity ?? '') : cityParam === ALL_CITIES ? '' : cityParam;
 
   const params = useMemo(
     () => ({
       q: searchParams.get('q') ?? '',
-      city: searchParams.get('city') ?? '',
+      city,
       scopeType: searchParams.get('scopeType') ?? '',
       verification: searchParams.get('verification') ?? '',
       page: Number(searchParams.get('page') || 1),
       pageSize: PAGE_SIZE,
     }),
-    [searchParams],
+    [searchParams, city],
   );
   const searchQuery = useBoardSearch(params);
   const boards = searchQuery.data?.data ?? [];
@@ -90,7 +97,7 @@ export function SearchBoardsPage() {
               <select
                 aria-label="Filter kota"
                 value={params.city}
-                onChange={(event) => updateFilters({ city: event.target.value })}
+                onChange={(event) => updateFilters({ city: event.target.value || ALL_CITIES })}
                 className="h-10 w-full min-w-0 rounded-base border border-border bg-surface px-3 text-sm font-normal"
               >
                 <option value="">Semua kota</option>
@@ -155,6 +162,19 @@ export function SearchBoardsPage() {
             <>
               <p className="text-sm text-text-muted">
                 {meta?.total ?? boards.length} Board ditemukan
+                {params.city && ` di ${params.city}`}
+                {usingMyCity && (
+                  <>
+                    {' · '}
+                    <button
+                      type="button"
+                      onClick={() => updateFilters({ city: ALL_CITIES })}
+                      className="font-semibold text-brand hover:underline"
+                    >
+                      Tampilkan semua kota
+                    </button>
+                  </>
+                )}
               </p>
               {boards.map((board) => (
                 <BoardCard key={board.id} board={board} />
@@ -187,7 +207,11 @@ export function SearchBoardsPage() {
           ) : (
             <EmptyState
               title="Belum ada Board yang cocok"
-              description="Coba ubah filter, atau mulai Board baru untuk lingkunganmu."
+              description={
+                params.city
+                  ? `Belum ada Board yang cocok di ${params.city}. Coba ubah filter, pilih Semua kota, atau mulai Board baru untuk lingkunganmu.`
+                  : 'Coba ubah filter, atau mulai Board baru untuk lingkunganmu.'
+              }
               action={
                 <Link
                   to="/buat-board"

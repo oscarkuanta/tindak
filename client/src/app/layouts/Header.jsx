@@ -17,7 +17,7 @@ function CreateBoardAction() {
   if (isPending) return null;
   if (user)
     return (
-      <ButtonLink to="/buat-board" variant="white" size="sm" data-slot="create-board">
+      <ButtonLink to="/buat-board" variant="outlineLight" size="sm" data-slot="create-board">
         <PlusCircle size={18} weight="bold" aria-hidden="true" />
         Buat Board
       </ButtonLink>
@@ -25,7 +25,7 @@ function CreateBoardAction() {
   return (
     <Button
       size="sm"
-      variant="white"
+      variant="outlineLight"
       data-slot="create-board"
       onClick={() => openLoginPrompt({ title: 'Masuk untuk membuat Board' })}
     >
@@ -79,7 +79,7 @@ export function Header() {
           <BoardSearch />
         </div>
         <div className="flex shrink-0 items-center gap-2" data-slot="actions">
-          <ButtonLink to={reportPath} variant="white" size="sm" data-slot="top-report">
+          <ButtonLink to={reportPath} variant="accent" size="md" data-slot="top-report">
             <Megaphone size={18} weight="fill" aria-hidden="true" />
             Laporkan Masalah
           </ButtonLink>

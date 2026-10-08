@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { registerSchema, z } from '@tindak/shared';
-import { Alert, Button, Input } from '../../components/ui/index.js';
+import { Alert, Button, Input, PasswordInput } from '../../components/ui/index.js';
 import { useRegister } from '../../features/auth/hooks.js';
 import { GoogleButton } from '../../features/auth/GoogleButton.jsx';
 import { AuthDivider } from '../../features/auth/AuthDivider.jsx';
@@ -85,10 +85,9 @@ export function RegisterPage() {
           error={fieldErrors.email}
         />
         <div className="flex flex-col gap-2">
-          <Input
+          <PasswordInput
             label="Password"
             name="password"
-            type="password"
             autoComplete="new-password"
             value={values.password}
             onChange={handleChange}
@@ -97,10 +96,9 @@ export function RegisterPage() {
           />
           <PasswordChecklist id="password-rules" value={values.password} />
         </div>
-        <Input
+        <PasswordInput
           label="Konfirmasi password"
           name="confirmPassword"
-          type="password"
           autoComplete="new-password"
           value={values.confirmPassword}
           onChange={handleChange}

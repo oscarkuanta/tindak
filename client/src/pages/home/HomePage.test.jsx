@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { guestMe, mockApi, renderApp } from '../../test/renderApp.jsx';
@@ -41,7 +41,48 @@ const popular = {
   ],
 };
 
+afterEach(() => {
+  localStorage.clear();
+});
+
 describe('Beranda', () => {
+  it('tamu memilih kota lalu melihat laporan di sekitarnya', async () => {
+    const urls = [];
+    const fetchMock = mockApi({
+      'GET /auth/me': guestMe,
+      'GET /boards/popular': () => [200, popular],
+      'GET /meta/cities': () => [
+        200,
+        { data: [{ name: 'Kota Surabaya', province: 'Jawa Timur' }] },
+      ],
+      'GET /feed/home': () => {
+        const tab = urls.length === 0 ? 'Ramai' : 'Surabaya';
+        urls.push(tab);
+        return page([card(urls.length, `Laporan ${tab}`)]);
+      },
+    });
+    renderApp('/');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Di kota mana kamu tinggal?' }),
+    ).toBeVisible();
+    expect(await screen.findByText('Laporan Ramai')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Kotamu' }));
+    await userEvent.click(await screen.findByRole('option', { name: /Kota Surabaya/ }));
+
+    expect(await screen.findByText('Laporan Surabaya')).toBeInTheDocument();
+    expect(screen.getByText('Kota Surabaya', { selector: 'strong' })).toBeInTheDocument();
+    const feedUrls = fetchMock.mock.calls
+      .map(([url]) => String(url))
+      .filter((url) => url.includes('/feed/home'));
+    expect(feedUrls.at(-1)).toContain('tab=nearby');
+    expect(feedUrls.at(-1)).toContain(
+      `city=${encodeURIComponent('Kota Surabaya').replace(/%20/g, '+')}`,
+    );
+    expect(localStorage.getItem('tindak:kota')).toBe('Kota Surabaya');
+  });
+
   it('tamu melihat laporan Ramai dan Board populer dengan badge', async () => {
     const calls = [];
     mockApi({

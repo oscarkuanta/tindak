@@ -277,7 +277,7 @@ export async function listMyReports(user, query) {
   return paginate({ userId: user.id, removedAt: null }, query, { user });
 }
 
-export async function listHomeFeed(user, { tab, page, pageSize }) {
+export async function listHomeFeed(user, { tab, city, page, pageSize }) {
   if (tab === 'following' && !user) {
     throw new AppError(
       401,
@@ -290,6 +290,7 @@ export async function listHomeFeed(user, { tab, page, pageSize }) {
     board: {
       status: { not: 'FROZEN' },
       ...(tab === 'following' && { followers: { some: { userId: user.id } } }),
+      ...(tab === 'nearby' && { city }),
     },
   };
   return paginate(
