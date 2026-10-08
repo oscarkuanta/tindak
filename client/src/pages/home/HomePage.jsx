@@ -53,6 +53,15 @@ function CityPicker({ city, isGuess, onChange }) {
           setEditing(false);
         }}
       />
+      {city && (
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className="self-start text-sm font-semibold text-text-muted hover:underline"
+        >
+          Batal, tetap di {city}
+        </button>
+      )}
     </Card>
   );
 }

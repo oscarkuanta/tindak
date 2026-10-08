@@ -6,6 +6,7 @@ import { EngagementBar } from './EngagementBar.jsx';
 import { VerificationBadge } from '../boards/BoardBadges.jsx';
 import { FlagButton } from '../moderation/FlagButton.jsx';
 import { BlurredImage } from './BlurredImage.jsx';
+import { cn } from '../../lib/cn.js';
 import { relativeTime } from '../../lib/relativeTime.js';
 
 export function ReportCard({ report, showBoard = false }) {
@@ -13,7 +14,7 @@ export function ReportCard({ report, showBoard = false }) {
   const reportUrl = `/laporan/${report.id}`;
 
   return (
-    <Card className="overflow-hidden p-0">
+    <Card className="p-0">
       {showBoard && report.board && (
         <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs">
           <Link to={`/b/${report.board.slug}`} className="font-semibold text-text hover:text-brand">
@@ -31,7 +32,10 @@ export function ReportCard({ report, showBoard = false }) {
             src={photo.url}
             alt={`Foto laporan: ${report.title}`}
             isBlurred={photo.isBlurred}
-            frameClassName="aspect-[4/3] w-full sm:aspect-[16/10]"
+            frameClassName={cn(
+              'aspect-[4/3] w-full sm:aspect-[16/10]',
+              !(showBoard && report.board) && 'rounded-t-card',
+            )}
           />
         )}
         <div className="p-4 sm:p-5">
