@@ -5,7 +5,3 @@ export function getHomeFeed({ tab, city, page, pageSize }) {
   if (city) query.set('city', city);
   return api.get(`/feed/home?${query.toString()}`);
 }
-
-export function getPopularBoards(limit) {
-  return api.get(`/boards/popular?limit=${limit}`);
-}
