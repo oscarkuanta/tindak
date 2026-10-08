@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { createReportSchema } from '@tindak/shared';
-import { Alert, Button, Card, Input, Spinner } from '../../components/ui/index.js';
+import {
+  Alert,
+  Button,
+  Card,
+  Input,
+  Select,
+  Spinner,
+  Textarea,
+} from '../../components/ui/index.js';
 import { PhotoUploader } from '../../components/reports/PhotoUploader.jsx';
 import { SeveritySelector } from '../../components/reports/SeveritySelector.jsx';
 import { TurnstileWidget } from '../../components/reports/TurnstileWidget.jsx';
@@ -121,7 +129,7 @@ export function ReportFormPage() {
   const frozen = board.status === 'FROZEN' || board.isFrozen;
 
   return (
-    <section className="mx-auto max-w-3xl">
+    <section className="blobs mx-auto max-w-3xl">
       <header className="mb-5">
         <p className="text-sm font-semibold text-brand">Laporan untuk {board.name}</p>
         <h1 className="mt-1 text-2xl font-bold">Laporkan Masalah</h1>
@@ -145,25 +153,20 @@ export function ReportFormPage() {
             onChange={(event) => updateValue('title', event.target.value)}
             error={fieldErrors.title}
           />
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Kategori
-            <select
-              aria-label="Kategori"
-              value={values.categoryId || String(board.categories?.[0]?.id ?? '')}
-              onChange={(event) => updateValue('categoryId', event.target.value)}
-              className={`h-10 rounded-base border bg-surface px-3 text-sm ${fieldErrors.categoryId ? 'border-danger' : 'border-border'}`}
-            >
-              <option value="">Pilih kategori</option>
-              {(board.categories ?? []).map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.categoryId && (
-              <span className="text-xs text-danger">{fieldErrors.categoryId}</span>
-            )}
-          </label>
+          <Select
+            label="Kategori"
+            aria-label="Kategori"
+            value={values.categoryId || String(board.categories?.[0]?.id ?? '')}
+            onChange={(event) => updateValue('categoryId', event.target.value)}
+            error={fieldErrors.categoryId}
+          >
+            <option value="">Pilih kategori</option>
+            {(board.categories ?? []).map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </Select>
           <SeveritySelector
             value={values.severity}
             onChange={(value) => updateValue('severity', value)}
@@ -176,22 +179,18 @@ export function ReportFormPage() {
             onChange={(event) => updateValue('locationDetail', event.target.value)}
             error={fieldErrors.locationDetail}
           />
-          <label className="flex flex-col gap-1 text-sm font-medium">
-            Deskripsi masalah
-            <textarea
+          <div className="flex flex-col gap-1.5">
+            <Textarea
+              label="Deskripsi masalah"
               value={values.description}
               onChange={(event) => updateValue('description', event.target.value)}
               rows={5}
-              aria-invalid={Boolean(fieldErrors.description)}
-              className={`w-full rounded-base border bg-surface px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 ${fieldErrors.description ? 'border-danger' : 'border-border'}`}
+              error={fieldErrors.description}
             />
             <span className="text-xs text-text-muted">
               Minimal 20 karakter · {values.description.length} karakter
             </span>
-            {fieldErrors.description && (
-              <span className="text-xs text-danger">{fieldErrors.description}</span>
-            )}
-          </label>
+          </div>
           <PhotoUploader files={photos} onChange={setPhotos} error={photoError} />
           {user ? (
             <label className="flex items-center gap-2 text-sm">

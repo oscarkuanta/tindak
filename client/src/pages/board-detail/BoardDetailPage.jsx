@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
+import { Alert, Button, Card, Chip, Spinner, Tabs } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { ScopeBadge, TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { TrustPanel } from '../../components/trust/TrustPanel.jsx';
@@ -12,10 +12,10 @@ import { FlagButton } from '../../components/moderation/FlagButton.jsx';
 import { useBoardChannel } from '../../features/realtime/socketContext.js';
 
 const FEED_TABS = [
-  { label: 'Ramai', sort: 'hot' },
-  { label: 'Prioritas', sort: 'priority' },
-  { label: 'Terbaru', sort: 'new' },
-  { label: 'Selesai', sort: 'resolved' },
+  { value: 'hot', label: 'Ramai', sort: 'hot' },
+  { value: 'priority', label: 'Prioritas', sort: 'priority' },
+  { value: 'new', label: 'Terbaru', sort: 'new' },
+  { value: 'resolved', label: 'Selesai', sort: 'resolved' },
 ];
 
 function getInitials(name = '') {
@@ -97,11 +97,8 @@ function BoardInformation({ board }) {
         {board.categories?.length ? (
           <ul className="mt-3 flex flex-wrap gap-2">
             {board.categories.map((category) => (
-              <li
-                key={category.id}
-                className="rounded-full bg-surface-muted px-2.5 py-1 text-xs text-text-muted"
-              >
-                {category.name}
+              <li key={category.id}>
+                <Chip>{category.name}</Chip>
               </li>
             ))}
           </ul>
@@ -172,36 +169,30 @@ export function BoardDetailPage() {
   const isHandler = board.viewer?.role === 'HANDLER';
 
   return (
-    <div className="grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
+    <div className="board-detail-grid grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
       <main className="min-w-0">
         <Card className="overflow-visible p-0">
-          {board.coverImageUrl ? (
-            <img
-              src={board.coverImageUrl}
-              alt=""
-              className="h-32 w-full rounded-t-base object-cover sm:h-44"
-            />
-          ) : (
-            <div
-              className="flex h-32 items-center justify-center rounded-t-base bg-brand-soft text-4xl font-bold text-brand sm:h-44"
-              aria-hidden="true"
-            >
-              {getInitials(board.name)}
-            </div>
-          )}
+          <div className="board-cover">
+            {board.coverImageUrl && <img src={board.coverImageUrl} alt="" />}
+          </div>
           <div className="p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold">{board.name}</h1>
-              <VerificationBadge verification={board.verification} />
-              <TrustBadge label={board.trustLabel} score={board.trustScore} />
-              <div className="ml-auto">
-                <FlagButton targetType="BOARD" targetId={board.id} label="Opsi Board" />
+            <div className="flex min-w-0 flex-wrap items-end gap-3">
+              <div className="board-avatar -mt-11" aria-hidden="true">
+                {getInitials(board.name)}
               </div>
-            </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-muted">
-              <span>{board.city}</span>
-              <span aria-hidden="true">·</span>
-              <ScopeBadge type={board.type} />
+              <div className="min-w-0 flex-1 pb-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold">{board.name}</h1>
+                  <VerificationBadge verification={board.verification} />
+                  <TrustBadge label={board.trustLabel} score={board.trustScore} />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-text-muted">
+                  <span>{board.city}</span>
+                  <span aria-hidden="true">·</span>
+                  <ScopeBadge type={board.type} />
+                </div>
+              </div>
+              <FlagButton targetType="BOARD" targetId={board.id} label="Opsi Board" />
             </div>
             {board.managerTitle && (
               <p className="mt-2 text-sm text-text-muted">{board.managerTitle}</p>
@@ -242,27 +233,16 @@ export function BoardDetailPage() {
           </div>
         </Card>
 
-        <nav
-          role="tablist"
-          aria-label="Urutkan laporan"
-          className="mt-5 flex gap-1 overflow-x-auto border-b border-border"
-        >
-          {FEED_TABS.map((tab) => (
-            <button
-              key={tab.label}
-              type="button"
-              role="tab"
-              aria-selected={activeTab.label === tab.label}
-              onClick={() => {
-                setActiveTab(tab);
-                setPage(1);
-              }}
-              className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium ${activeTab.label === tab.label ? 'border-brand text-brand' : 'border-transparent text-text-muted hover:text-text'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+        <Tabs
+          items={FEED_TABS}
+          value={activeTab.sort}
+          label="Urutkan laporan"
+          className="mt-5"
+          onChange={(_, tab) => {
+            setActiveTab(tab);
+            setPage(1);
+          }}
+        />
         <div className="mt-4 flex flex-col gap-3" aria-live="polite">
           {reportsQuery.isPending ? (
             Array.from({ length: 3 }, (_, index) => (
