@@ -65,11 +65,19 @@ const boardRow = (overrides = {}) => ({
 });
 
 describe('Panel Admin', () => {
-  it('menolak Admin Board', async () => {
+  it('Admin Board diarahkan ke Beranda', async () => {
     mockApi({ 'GET /auth/me': () => [200, { data: boardAdmin }] });
-    renderApp('/admin');
+    const { router } = renderApp('/admin');
 
-    expect(await screen.findByText('403 · Akses ditolak')).toBeInTheDocument();
+    expect(await screen.findByText('Panel Admin hanya untuk Admin platform.')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/');
+  });
+
+  it('login sebagai user biasa dengan returnTo Panel Admin diarahkan ke Beranda', async () => {
+    mockApi({ 'GET /auth/me': () => [200, { data: { ...boardAdmin, role: 'USER' } }] });
+    const { router } = renderApp('/masuk?returnTo=%2Fadmin');
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/'));
   });
 
   it('tamu diminta masuk dan tidak melihat isi Panel Admin', async () => {

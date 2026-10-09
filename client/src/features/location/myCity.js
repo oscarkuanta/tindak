@@ -1,27 +1,41 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useMe } from '../auth/hooks.js';
 import { useMyFollows } from '../boards/hooks.js';
 
-const STORAGE_KEY = 'tindak:kota';
+const GUEST_KEY = 'tindak:kota';
 const listeners = new Set();
-let memoryCity = null;
+const memory = new Map();
 
-function readCity() {
+function keyFor(userId) {
+  return userId ? `${GUEST_KEY}:u${userId}` : GUEST_KEY;
+}
+
+function readCity(userId) {
+  const key = keyFor(userId);
   try {
-    return window.localStorage.getItem(STORAGE_KEY);
+    return window.localStorage.getItem(key);
   } catch {
-    return memoryCity;
+    return memory.get(key) ?? null;
   }
 }
 
-export function saveMyCity(city) {
+function writeCity(userId, city) {
+  const key = keyFor(userId);
   try {
-    if (city) window.localStorage.setItem(STORAGE_KEY, city);
-    else window.localStorage.removeItem(STORAGE_KEY);
+    if (city) window.localStorage.setItem(key, city);
+    else window.localStorage.removeItem(key);
   } catch {
-    memoryCity = city || null;
+    if (city) memory.set(key, city);
+    else memory.delete(key);
   }
   listeners.forEach((listener) => listener());
+}
+
+export function moveGuestCityTo(userId) {
+  const guestCity = readCity(null);
+  if (!guestCity) return;
+  if (!readCity(userId)) writeCity(userId, guestCity);
+  writeCity(null, null);
 }
 
 function subscribe(listener) {
@@ -42,10 +56,17 @@ function mostCommonCity(follows) {
 }
 
 export function useMyCity() {
-  const [stored, setStored] = useState(readCity);
-  useEffect(() => subscribe(() => setStored(readCity())), []);
   const { data: user } = useMe();
+  const userId = user?.id ?? null;
+  const [, setVersion] = useState(0);
+  useEffect(() => subscribe(() => setVersion((value) => value + 1)), []);
+  const stored = readCity(userId);
   const followsQuery = useMyFollows({ enabled: Boolean(user) && !stored });
   const guessed = stored ? null : mostCommonCity(followsQuery.data?.data ?? []);
-  return { city: stored ?? guessed, isGuess: !stored && Boolean(guessed), setCity: saveMyCity };
+  const setCity = useCallback((city) => writeCity(userId, city), [userId]);
+  return {
+    city: stored ?? guessed,
+    isGuess: !stored && Boolean(guessed),
+    setCity,
+  };
 }
