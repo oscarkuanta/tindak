@@ -89,6 +89,12 @@ export function ReportDetailContent({ report, credentials }) {
             </>
           )}
         </p>
+        {report.trackingCode && (
+          <p className="text-xs text-text-muted">
+            Kode Lacak laporanmu:{' '}
+            <span className="font-mono font-semibold text-text">TND-{report.trackingCode}</span>
+          </p>
+        )}
         <p className="whitespace-pre-wrap text-sm leading-6">{report.description}</p>
         {!credentials && <EngagementBar report={report} />}
         {report.parent && (

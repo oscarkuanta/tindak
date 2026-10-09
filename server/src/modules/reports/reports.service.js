@@ -273,8 +273,39 @@ export async function listBoardReports(slug, user, query) {
   return paginate(where, query, { user, orderBy: REPORT_SORT_ORDER[query.sort] });
 }
 
-export async function listMyReports(user, query) {
-  return paginate({ userId: user.id, removedAt: null }, query, { user });
+export async function listMyReports(user, { q, ...query }) {
+  const code = q?.toUpperCase().replace(/^TND-/, '').replace(/[s-]/g, '');
+  const where = {
+    userId: user.id,
+    removedAt: null,
+    ...(q && {
+      OR: [
+        { title: { contains: q } },
+        { description: { contains: q } },
+        { locationDetail: { contains: q } },
+        { trackingCode: code },
+      ],
+    }),
+  };
+  return paginate(where, query, { user });
+}
+
+export async function claimGuestReports(user, items) {
+  const reports = await prisma.report.findMany({
+    where: { trackingCode: { in: items.map((item) => item.trackingCode) }, userId: null },
+    select: { id: true, trackingCode: true, trackingSecretHash: true },
+  });
+  const secrets = new Map(items.map((item) => [item.trackingCode, item.secret]));
+  const ids = reports
+    .filter((report) => matchesTrackingSecret(report, secrets.get(report.trackingCode)))
+    .map((report) => report.id);
+  if (ids.length) {
+    await prisma.report.updateMany({
+      where: { id: { in: ids }, userId: null },
+      data: { userId: user.id, isAnonymous: true },
+    });
+  }
+  return { claimed: ids.length, reportIds: ids };
 }
 
 export async function listHomeFeed(user, { tab, city, page, pageSize }) {

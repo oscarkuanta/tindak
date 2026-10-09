@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMe, login, logout, register } from './api.js';
+import { clearPendingAction } from '../engagement/pendingAction.js';
 
 export const meQueryKey = ['me'];
 
@@ -14,10 +15,10 @@ export function useMe() {
 function useSetMe() {
   const queryClient = useQueryClient();
   return (user) => {
-    queryClient.setQueryData(meQueryKey, user);
     queryClient.removeQueries({
-      predicate: (query) => query.queryKey[0] === meQueryKey[0] && query.queryKey.length > 1,
+      predicate: (query) => !(query.queryKey.length === 1 && query.queryKey[0] === meQueryKey[0]),
     });
+    queryClient.setQueryData(meQueryKey, user);
     queryClient.invalidateQueries({
       predicate: (query) => query.queryKey[0] !== meQueryKey[0],
     });
@@ -36,5 +37,11 @@ export function useRegister() {
 
 export function useLogout() {
   const setMe = useSetMe();
-  return useMutation({ mutationFn: logout, onSuccess: () => setMe(null) });
+  return useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      clearPendingAction();
+      setMe(null);
+    },
+  });
 }

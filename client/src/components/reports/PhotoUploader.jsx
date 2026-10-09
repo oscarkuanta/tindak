@@ -15,7 +15,14 @@ function PhotoPreview({ file }) {
   return <img ref={imageRef} alt={`Pratinjau ${file.name}`} className="h-24 w-full object-cover" />;
 }
 
-export function PhotoUploader({ files, onChange, error }) {
+export function PhotoUploader({
+  files,
+  onChange,
+  error,
+  label = 'Foto masalah',
+  hint = 'Wajib 1 foto, maksimal 4 foto. Langsung pakai foto dari kamera HP, ukurannya otomatis diperkecil.',
+  inputLabel = 'Unggah foto laporan',
+}) {
   const [notice, setNotice] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -38,18 +45,15 @@ export function PhotoUploader({ files, onChange, error }) {
 
   return (
     <div>
-      <span className="text-sm font-medium">Foto masalah</span>
-      <p className="mt-1 text-xs text-text-muted">
-        Wajib 1 foto, maksimal {REPORT_MAX_PHOTOS} foto. Langsung pakai foto dari kamera HP,
-        ukurannya otomatis diperkecil.
-      </p>
+      <span className="text-sm font-medium">{label}</span>
+      <p className="mt-1 text-xs text-text-muted">{hint}</p>
       <label
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();
           addFiles(event.dataTransfer.files);
         }}
-        className="mt-3 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-card border border-dashed border-border bg-surface-muted px-4 py-5 text-center hover:border-brand"
+        className={`mt-3 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-card border border-dashed bg-surface-muted px-4 py-5 text-center hover:border-brand ${error ? 'border-danger' : 'border-border'}`}
       >
         <span className="text-sm font-semibold">
           {processing ? 'Memperkecil foto...' : 'Pilih foto atau jatuhkan di sini'}
@@ -58,7 +62,7 @@ export function PhotoUploader({ files, onChange, error }) {
           {files.length} dari {REPORT_MAX_PHOTOS} foto
         </span>
         <input
-          aria-label="Unggah foto laporan"
+          aria-label={inputLabel}
           type="file"
           accept="image/*"
           multiple
