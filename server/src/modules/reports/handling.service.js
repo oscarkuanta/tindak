@@ -155,7 +155,14 @@ export async function processReport(id, user, { assigneeId }) {
         );
       }
     }
-    const nextAssignee = assigneeId === undefined ? report.assigneeId : assigneeId;
+    const nextAssignee = assigneeId ?? report.assigneeId;
+    if (!nextAssignee) {
+      throw new AppError(
+        400,
+        ERROR_CODES.VALIDATION_ERROR,
+        'Pilih penanggung jawab dulu sebelum memproses laporan',
+      );
+    }
     await applyTransition(tx, report, {
       to: 'IN_PROGRESS',
       actorType: 'HANDLER',

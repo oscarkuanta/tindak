@@ -148,7 +148,10 @@ describe('Perubahan status', () => {
     const reporter = await createUser({ email: 'reporter@example.com' });
     const report = await insertReport(board, { userId: reporter.id });
 
-    await owner.agent.post(`/api/reports/${report.id}/process`).send({}).expect(200);
+    await owner.agent
+      .post(`/api/reports/${report.id}/process`)
+      .send({ assigneeId: owner.user.id })
+      .expect(200);
     await owner.agent
       .post(`/api/reports/${report.id}/reject`)
       .send({ reason: 'OUT_OF_SCOPE', note: 'Bukan wewenang' })

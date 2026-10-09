@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { Info } from '@phosphor-icons/react';
+import { CheckCircle, Info } from '@phosphor-icons/react';
 import { AUTH_PATHS } from '@tindak/shared';
 import { Alert, Button, Card } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { normalizeTrackingCode } from '../../features/reports/trackingStorage.js';
+import { useMe } from '../../features/auth/hooks.js';
 
 async function copyText(value) {
   if (navigator.clipboard?.writeText) {
@@ -25,6 +26,7 @@ async function copyText(value) {
 
 export function ReportSuccessPage() {
   const { state } = useLocation();
+  const { data: user } = useMe();
   const [copyStatus, setCopyStatus] = useState('');
   const trackingCode = state?.trackingCode;
   const trackingUrl = state?.trackingUrl;
@@ -57,6 +59,43 @@ export function ReportSuccessPage() {
     } catch {
       setCopyStatus('Tidak dapat menyalin. Silakan salin secara manual.');
     }
+  }
+
+  if (user) {
+    return (
+      <section className="mx-auto max-w-2xl">
+        <Card className="flex flex-col items-center gap-3 text-center">
+          <span className="grid size-14 place-items-center rounded-full bg-brand-soft text-brand">
+            <CheckCircle size={32} weight="fill" aria-hidden="true" />
+          </span>
+          <h1 className="text-2xl font-bold">Laporan berhasil dikirim</h1>
+          {state.reportTitle && <p className="text-sm text-text-muted">{state.reportTitle}</p>}
+          <p className="max-w-md text-sm text-text-muted">
+            Laporan ini tersimpan di akunmu. Kamu akan mendapat notifikasi saat Penindak
+            menanggapinya, dan bisa memantaunya kapan saja di Laporan Saya.
+          </p>
+          <p className="text-xs text-text-muted">
+            Kode Lacak: <span className="font-mono font-semibold text-text">{trackingCode}</span>
+          </p>
+          <div className="mt-2 flex flex-col justify-center gap-2 sm:flex-row">
+            {state.reportId && (
+              <Link
+                to={`/laporan/${state.reportId}`}
+                className="inline-flex h-10 items-center justify-center rounded-base bg-brand px-4 text-sm font-semibold text-brand-contrast hover:bg-brand-hover"
+              >
+                Lihat detail laporan
+              </Link>
+            )}
+            <Link
+              to="/laporan-saya"
+              className="inline-flex h-10 items-center justify-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
+            >
+              Buka Laporan Saya
+            </Link>
+          </div>
+        </Card>
+      </section>
+    );
   }
 
   return (

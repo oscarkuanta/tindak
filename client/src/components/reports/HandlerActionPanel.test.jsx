@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HandlerActionPanel } from './HandlerActionPanel.jsx';
@@ -77,6 +77,58 @@ describe('HandlerActionPanel penanggung jawab', () => {
     );
 
     const options = screen.getAllByRole('option').map((option) => option.textContent);
-    expect(options).toEqual(['Belum ditentukan', 'Budi (Penindak Utama)', 'Siti']);
+    expect(options).toEqual(['Pilih penanggung jawab', 'Budi (Penindak Utama)', 'Siti']);
+  });
+});
+
+describe('HandlerActionPanel validasi', () => {
+  const board = { slug: 'b', owner: { id: 1, name: 'Budi' } };
+
+  it('tombol Proses nonaktif sampai penanggung jawab dipilih', async () => {
+    const user = userEvent.setup();
+    const onAction = vi.fn().mockResolvedValue({});
+    renderPanel({ id: 4, allowedActions: ['PROCESS'], board }, onAction);
+
+    const processButton = screen.getByRole('button', { name: 'Proses laporan' });
+    expect(processButton).toBeDisabled();
+    expect(screen.getByText('Wajib dipilih sebelum laporan bisa diproses.')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Penanggung jawab'), '1');
+    expect(processButton).toBeEnabled();
+    await user.click(processButton);
+
+    await waitFor(() => expect(onAction).toHaveBeenCalledWith('PROCESS', { assigneeId: 1 }));
+  });
+
+  it('Tandai Selesai menampilkan error di kolom catatan dan foto ditambahkan, bukan diganti', async () => {
+    const user = userEvent.setup();
+    const onAction = vi.fn().mockResolvedValue({});
+    renderPanel({ id: 4, allowedActions: ['RESOLVE'], board }, onAction);
+
+    await user.click(screen.getByRole('button', { name: 'Tandai Selesai' }));
+    await user.click(screen.getByRole('button', { name: 'Kirim bukti dan tandai selesai' }));
+
+    const noteField = screen.getByLabelText('Catatan penyelesaian');
+    expect(await screen.findByText('Catatan wajib diisi')).toBeInTheDocument();
+    expect(noteField).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText('Unggah minimal 1 foto sesudah')).toBeInTheDocument();
+    expect(onAction).not.toHaveBeenCalled();
+
+    const upload = screen.getByLabelText('Unggah foto sesudah');
+    const photo = (name) => new File(['x'], name, { type: 'image/png' });
+    fireEvent.change(upload, { target: { files: [photo('a.png')] } });
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /^Hapus foto/ })).toHaveLength(1),
+    );
+    fireEvent.change(upload, { target: { files: [photo('b.png'), photo('c.png')] } });
+    await waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /^Hapus foto/ })).toHaveLength(3),
+    );
+
+    await user.type(noteField, 'Lubang sudah ditambal.');
+    await user.click(screen.getByRole('button', { name: 'Kirim bukti dan tandai selesai' }));
+
+    await waitFor(() => expect(onAction).toHaveBeenCalledWith('RESOLVE', expect.any(FormData)));
+    expect(onAction.mock.calls[0][1].getAll('photos')).toHaveLength(3);
   });
 });

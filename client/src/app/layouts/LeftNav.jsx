@@ -15,6 +15,7 @@ import { cn } from '../../lib/cn.js';
 import { useMe } from '../../features/auth/hooks.js';
 import { useMyFollows } from '../../features/boards/hooks.js';
 import { useMyInvitations } from '../../features/invitations/hooks.js';
+import { useUnreadCount } from '../../features/notifications/hooks.js';
 
 function NavItem({ item }) {
   return (
@@ -33,7 +34,7 @@ function NavItem({ item }) {
           <item.icon size={20} weight={isActive ? 'fill' : 'regular'} aria-hidden="true" />
           <span className="flex-1">{item.label}</span>
           {item.badge > 0 && (
-            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-brand px-1.5 py-0.5 text-xs font-semibold text-brand-contrast">
+            <span className="notif-badge" aria-label={`${item.badge} baru`}>
               {item.badge > 99 ? '99+' : item.badge}
             </span>
           )}
@@ -65,6 +66,8 @@ export function LeftNav() {
   const invitationsQuery = useMyInvitations({ enabled: Boolean(user) });
   const follows = followsQuery.data?.data ?? [];
   const invitationCount = invitationsQuery.data?.data?.length ?? 0;
+  const unreadQuery = useUnreadCount({ enabled: Boolean(user) });
+  const unreadCount = unreadQuery.data?.data?.count ?? 0;
   const navItems = [
     { to: '/', label: 'Beranda', end: true, icon: House },
     ...(user ? [{ to: '/board-saya', label: 'Board Saya', icon: SquaresFour }] : []),
@@ -74,7 +77,7 @@ export function LeftNav() {
   const accountItems = user
     ? [
         { to: '/laporan-saya', label: 'Laporan Saya', icon: ClipboardText },
-        { to: '/notifikasi', label: 'Notifikasi', icon: BellSimple },
+        { to: '/notifikasi', label: 'Notifikasi', icon: BellSimple, badge: unreadCount },
         {
           to: '/undangan',
           label: 'Undangan Penindak',
