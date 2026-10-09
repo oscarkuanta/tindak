@@ -655,5 +655,13 @@ describe('Laporan tamu pindah ke akun dan cari Laporan Saya', () => {
     expect(byWord.body.data.map((item) => item.title)).toEqual(['Lampu jalan mati total']);
     expect(byCode.body.data.map((item) => item.title)).toEqual(['Lampu jalan mati total']);
     expect(tooShort.status).toBe(400);
+    expect(byCode.body.data[0].trackingCode).toBe(code);
+    const reportId = lamp.body.data.report.id;
+    expect((await budi.agent.get(`/api/reports/${reportId}`)).body.data.trackingCode).toBe(code);
+    const other = await loginAs('siti@example.com', { name: 'Siti' });
+    const seen = await other.agent.get(`/api/reports/${reportId}`);
+    expect(seen.body.data).not.toHaveProperty('trackingCode');
+    const guestView = await request(app).get(`/api/reports/${reportId}`);
+    expect(guestView.body.data).not.toHaveProperty('trackingCode');
   });
 });

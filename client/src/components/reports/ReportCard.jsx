@@ -49,6 +49,7 @@ export function ReportCard({ report, showBoard = false }) {
             {report.category?.name && <span>{report.category.name}</span>}
             {report.locationDetail && <span>{report.locationDetail}</span>}
             <time dateTime={report.createdAt}>{relativeTime(report.createdAt)}</time>
+            {report.trackingCode && <span className="font-mono">TND-{report.trackingCode}</span>}
           </div>
         </div>
       </Link>

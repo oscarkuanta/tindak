@@ -26,3 +26,27 @@ describe('Halaman laporan terkirim', () => {
     );
   });
 });
+
+describe('Halaman laporan terkirim untuk akun', () => {
+  it('tidak menampilkan penjelasan tamu dan ajakan daftar', async () => {
+    mockApi({
+      'GET /auth/me': () => [
+        200,
+        { data: { id: 3, name: 'Siti', email: 's@x.com', role: 'USER' } },
+      ],
+    });
+    const { router } = renderApp('/lacak');
+    await router.navigate('/laporan-terkirim', {
+      state: { trackingCode: 'TND-K7M2P9QX', reportId: 9, reportTitle: 'Lampu mati' },
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Laporan berhasil dikirim' })).toBeVisible();
+    expect(screen.getByText(/tersimpan di akunmu/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Buka Laporan Saya' })).toHaveAttribute(
+      'href',
+      '/laporan-saya',
+    );
+    expect(screen.queryByText('Kenapa kamu mendapat Kode Lacak?')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Daftar akun gratis' })).not.toBeInTheDocument();
+  });
+});

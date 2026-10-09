@@ -630,7 +630,10 @@ describe('Audit log dan job', () => {
   it('mencatat aksi Penindak dan bisa difilter', async () => {
     const { owner, admin, board } = await setup();
     const report = await insertReport(board);
-    await owner.agent.post(`/api/reports/${report.id}/process`).send({}).expect(200);
+    await owner.agent
+      .post(`/api/reports/${report.id}/process`)
+      .send({ assigneeId: owner.user.id })
+      .expect(200);
 
     const res = await admin.agent.get('/api/admin/audit-logs?action=REPORT_PROCESSED');
 
