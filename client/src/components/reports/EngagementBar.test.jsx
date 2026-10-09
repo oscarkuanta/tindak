@@ -168,6 +168,32 @@ describe('EngagementBar', () => {
     }
   });
 
+  it.each([
+    [
+      'RESOLVED',
+      'Laporan sudah selesai ditangani. Dukungan dan reaksi dikunci.',
+      'lock-notice--resolved',
+    ],
+    ['REJECTED', 'Laporan ditolak Penindak. Dukungan dan reaksi dikunci.', 'lock-notice--rejected'],
+    [
+      'DUPLICATE',
+      'Laporan ini duplikat. Beri dukungan di laporan induknya.',
+      'lock-notice--duplicate',
+    ],
+  ])(
+    'menjelaskan kenapa laporan %s dikunci dengan warna sesuai alasan',
+    async (status, text, tone) => {
+      mockApi({
+        'GET /auth/me': () => [200, { data: user }],
+        'GET /reports/7': () => [200, { data: report({ status, isEngagementLocked: true }) }],
+      });
+      renderApp('/laporan/7');
+
+      const notice = await screen.findByText(text);
+      expect(notice.closest('[role=note]')).toHaveClass(tone);
+    },
+  );
+
   it('tamu diminta masuk dan aksinya disimpan', async () => {
     mockApi({
       'GET /auth/me': guestMe,

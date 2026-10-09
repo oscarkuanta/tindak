@@ -8,9 +8,10 @@ import { FollowButton } from '../../components/boards/FollowButton.jsx';
 import { useBoard } from '../../features/boards/hooks.js';
 import { useBoardReports } from '../../features/reports/hooks.js';
 import { ReportCard } from '../../components/reports/ReportCard.jsx';
-import { FlagButton } from '../../components/moderation/FlagButton.jsx';
+import { BoardMenu } from '../../components/boards/BoardMenu.jsx';
+import { RoleChip } from '../../components/boards/RoleChip.jsx';
 import { useBoardChannel } from '../../features/realtime/socketContext.js';
-import { Megaphone } from '@phosphor-icons/react';
+import { Kanban, Megaphone } from '@phosphor-icons/react';
 
 const FEED_TABS = [
   { value: 'hot', label: 'Ramai', sort: 'hot' },
@@ -182,6 +183,11 @@ export function BoardDetailPage() {
                 {getInitials(board.name)}
               </div>
               <div className="min-w-0 flex-1 pb-1">
+                {(isOwner || isHandler) && (
+                  <div className="mb-1">
+                    <RoleChip role={board.viewer.role} />
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold">{board.name}</h1>
                   <VerificationBadge verification={board.verification} />
@@ -193,7 +199,7 @@ export function BoardDetailPage() {
                   <ScopeBadge type={board.type} />
                 </div>
               </div>
-              <FlagButton targetType="BOARD" targetId={board.id} label="Opsi Board" />
+              <BoardMenu board={board} />
             </div>
             {board.managerTitle && (
               <p className="mt-2 text-sm text-text-muted">{board.managerTitle}</p>
@@ -209,26 +215,11 @@ export function BoardDetailPage() {
               <FollowButton board={board} />
               {(isOwner || isHandler) && (
                 <Link
-                  className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
+                  className="inline-flex h-10 items-center gap-2 rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
                   to={`/b/${slug}/antrean`}
                 >
+                  <Kanban size={18} weight="duotone" className="text-brand" aria-hidden="true" />
                   Antrean Laporan
-                </Link>
-              )}
-              {(isOwner || isHandler) && (
-                <Link
-                  className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
-                  to={`/b/${slug}/dashboard`}
-                >
-                  Dashboard
-                </Link>
-              )}
-              {isOwner && (
-                <Link
-                  className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
-                  to={`/b/${slug}/pengaturan`}
-                >
-                  Pengaturan Board
                 </Link>
               )}
             </div>
