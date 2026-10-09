@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { screen } from '@testing-library/react';
 import { guestMe, mockApi, renderApp } from '../../test/renderApp.jsx';
 
@@ -68,9 +69,14 @@ describe('Feed laporan Board', () => {
       'href',
       '/b/jalan-melati/antrean',
     );
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+    expect(screen.getByLabelText('Kamu Penindak Board ini')).toHaveTextContent('Penindak');
+    expect(screen.queryByRole('link', { name: /Dashboard/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Opsi Board' }));
+    expect(screen.getByRole('menuitem', { name: 'Dashboard Statistik' })).toHaveAttribute(
       'href',
       '/b/jalan-melati/dashboard',
     );
+    expect(screen.queryByRole('menuitem', { name: 'Pengaturan Board' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Tandai Pelanggaran' })).not.toBeInTheDocument();
   });
 });
