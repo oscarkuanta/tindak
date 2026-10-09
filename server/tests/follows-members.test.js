@@ -418,3 +418,47 @@ describe('Alih kepemilikan', () => {
     );
   });
 });
+
+describe('Cari calon Penindak dan undang lewat akun', () => {
+  it('mencari lewat nama atau email, menyamarkan email, dan melewatkan anggota', async () => {
+    const { owner, board, base } = await setup();
+    const ikan = await createUser({ email: 'ikanterbangoff@gmail.com', name: 'Ikanterbang' });
+    await createUser({ email: 'lain@gmail.com', name: 'bukan_Ikanterbang' });
+    const member = await createUser({ email: 'ikan.member@gmail.com', name: 'Ikan Member' });
+    await addHandler(board.id, member.id);
+
+    const byName = await owner.agent.get(`${base}/handlers/candidates?q=ikan`);
+    const byEmail = await owner.agent.get(`${base}/handlers/candidates?q=lain@gmail`);
+    const short = await owner.agent.get(`${base}/handlers/candidates?q=i`);
+
+    expect(byName.status).toBe(200);
+    expect(byName.body.data.map((user) => user.name)).toEqual(['bukan_Ikanterbang', 'Ikanterbang']);
+    expect(byName.body.data.find((user) => user.id === ikan.id).email).toBe(
+      'ik••••••••••••@gmail.com',
+    );
+    expect(JSON.stringify(byName.body)).not.toContain('ikanterbangoff@gmail.com');
+    expect(byEmail.body.data.map((user) => user.name)).toEqual(['bukan_Ikanterbang']);
+    expect(short.status).toBe(400);
+  });
+
+  it('OWNER mengundang lewat userId, selain OWNER ditolak mencari', async () => {
+    const { owner, base } = await setup();
+    const dewi = await loginAs('dewi@example.com', { name: 'Dewi Lestari' });
+
+    const invited = await owner.agent.post(`${base}/handlers`).send({ userId: dewi.user.id });
+    const both = await owner.agent
+      .post(`${base}/handlers`)
+      .send({ userId: dewi.user.id, email: 'dewi@example.com' });
+    const neither = await owner.agent.post(`${base}/handlers`).send({});
+    const search = await dewi.agent.get(`${base}/handlers/candidates?q=dewi`);
+    const guest = await request(app).get(`${base}/handlers/candidates?q=dewi`);
+
+    expect(invited.status).toBe(201);
+    expect(invited.body.data).toMatchObject({ userId: dewi.user.id, status: 'INVITED' });
+    expect(both.status).toBe(400);
+    expect(neither.status).toBe(400);
+    expect(neither.body.error.details[0].message).toBe('Pilih akun dari daftar atau isi email');
+    expect(search.status).toBe(403);
+    expect(guest.status).toBe(401);
+  });
+});

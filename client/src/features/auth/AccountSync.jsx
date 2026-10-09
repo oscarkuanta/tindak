@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMe } from './hooks.js';
-import { useToast } from '../boards/toastContext.js';
+import { ToastContext } from '../boards/toastContext.js';
 import { moveGuestCityTo } from '../location/myCity.js';
 import { claimGuestReports } from '../reports/api.js';
 import {
@@ -13,7 +13,8 @@ import {
 export function AccountSync() {
   const { data: user } = useMe();
   const queryClient = useQueryClient();
-  const { showToast } = useToast();
+  const toast = useContext(ToastContext);
+  const showToast = toast?.showToast;
   const syncedFor = useRef(null);
   const userId = user?.id ?? null;
 
@@ -39,7 +40,9 @@ export function AccountSync() {
         const claimed = response.data?.claimed ?? 0;
         if (claimed > 0) {
           queryClient.invalidateQueries({ queryKey: ['me', 'reports'] });
-          showToast(`${claimed} laporan yang kamu kirim sebagai tamu sekarang ada di Laporan Saya`);
+          showToast?.(
+            `${claimed} laporan yang kamu kirim sebagai tamu sekarang ada di Laporan Saya`,
+          );
         }
       })
       .catch(() => {

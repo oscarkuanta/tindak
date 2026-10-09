@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   BOARD_MEMBER_STATUS_LABELS,
@@ -9,29 +9,88 @@ import { Alert, Button, Card, Input, Modal, Spinner } from '../ui/index.js';
 import { useToast } from '../../features/boards/toastContext.js';
 import {
   useBoardHandlers,
+  useHandlerCandidates,
   useInviteBoardHandler,
   useRemoveBoardHandler,
   useTransferBoardOwnership,
 } from '../../features/boards/hooks.js';
 
+const AVATAR_TONES = [
+  'avatar-tone-blue',
+  'avatar-tone-red',
+  'avatar-tone-violet',
+  'avatar-tone-amber',
+  'avatar-tone-mint',
+];
+
+function CandidateAvatar({ name }) {
+  const tone = AVATAR_TONES[[...name].reduce((sum, char) => sum + char.charCodeAt(0), 0) % 5];
+  return (
+    <span aria-hidden="true" className={`candidate-avatar ${tone}`}>
+      {name.trim().charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
 export function HandlerInviteForm({ slug, disabled = false }) {
   const inviteMutation = useInviteBoardHandler(slug);
-  const [email, setEmail] = useState('');
+  const [text, setText] = useState('');
+  const [debounced, setDebounced] = useState('');
+  const [selected, setSelected] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const rootRef = useRef(null);
+  const listId = useId();
+  const candidatesQuery = useHandlerCandidates(slug, selected ? '' : debounced);
+  const candidates = candidatesQuery.data?.data ?? [];
+  const showList = open && !selected && debounced.length >= 2;
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(text.trim()), 250);
+    return () => window.clearTimeout(timer);
+  }, [text]);
+
+  useEffect(() => {
+    function closeOnOutsideClick(event) {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick);
+  }, []);
+
+  function choose(candidate) {
+    setSelected(candidate);
+    setText(candidate.name);
+    setOpen(false);
+    setActiveIndex(-1);
+    setMessage('');
+  }
 
   async function submit(event) {
     event.preventDefault();
-    const result = inviteHandlerSchema.safeParse({ email });
-    if (!result.success) {
-      setMessage(result.error.issues[0].message);
-      setIsError(true);
-      return;
+    let payload;
+    if (selected) {
+      payload = { userId: selected.id };
+    } else {
+      const result = inviteHandlerSchema.safeParse({ email: text });
+      if (!result.success) {
+        setMessage(
+          text.includes('@')
+            ? result.error.issues[0].message
+            : 'Pilih akun dari daftar atau ketik email lengkap',
+        );
+        setIsError(true);
+        return;
+      }
+      payload = result.data;
     }
     setMessage('');
     try {
-      await inviteMutation.mutateAsync(result.data);
-      setEmail('');
+      await inviteMutation.mutateAsync(payload);
+      setText('');
+      setSelected(null);
       setMessage('Undangan Penindak berhasil dikirim.');
       setIsError(false);
     } catch (error) {
@@ -40,22 +99,93 @@ export function HandlerInviteForm({ slug, disabled = false }) {
     }
   }
 
+  function handleKeyDown(event) {
+    if (!showList || !candidates.length) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveIndex((index) => (index + 1) % candidates.length);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveIndex((index) => (index <= 0 ? candidates.length - 1 : index - 1));
+    } else if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      choose(candidates[activeIndex]);
+    } else if (event.key === 'Escape') {
+      setOpen(false);
+    }
+  }
+
   return (
-    <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={submit} noValidate>
-      <Input
-        label="Email akun yang akan diundang"
-        type="email"
-        autoComplete="email"
-        value={email}
-        error={isError ? message : undefined}
-        hint={!isError ? message : undefined}
-        disabled={disabled || inviteMutation.isPending}
-        onChange={(event) => {
-          setEmail(event.target.value);
-          setMessage('');
-        }}
-      />
-      <Button type="submit" loading={inviteMutation.isPending} disabled={disabled}>
+    <form className="flex flex-col gap-3 sm:flex-row sm:items-start" onSubmit={submit} noValidate>
+      <div ref={rootRef} className="relative min-w-0 flex-1">
+        <Input
+          label="Nama atau email akun yang akan diundang"
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          autoComplete="off"
+          placeholder="Contoh: Dewi atau dewi@example.com"
+          value={text}
+          error={isError ? message : undefined}
+          hint={
+            !isError
+              ? message || (selected ? `Akun dipilih: ${selected.name}` : undefined)
+              : undefined
+          }
+          disabled={disabled || inviteMutation.isPending}
+          onFocus={() => setOpen(true)}
+          onKeyDown={handleKeyDown}
+          onChange={(event) => {
+            setText(event.target.value);
+            setSelected(null);
+            setOpen(true);
+            setActiveIndex(-1);
+            setMessage('');
+            setIsError(false);
+          }}
+        />
+        {showList && (
+          <ul id={listId} role="listbox" className="candidate-list">
+            {candidatesQuery.isPending ? (
+              <li className="px-3 py-3 text-sm text-text-muted">Mencari akun...</li>
+            ) : candidates.length ? (
+              candidates.map((candidate, index) => (
+                <li key={candidate.id}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={index === activeIndex}
+                    onMouseEnter={() => setActiveIndex(index)}
+                    onClick={() => choose(candidate)}
+                    className={`candidate-option ${index === activeIndex ? 'is-active' : ''}`}
+                  >
+                    <CandidateAvatar name={candidate.name} />
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-text">
+                        {candidate.name}
+                      </span>
+                      <span className="block truncate text-xs text-text-muted">
+                        {candidate.email}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))
+            ) : (
+              <li className="px-3 py-3 text-sm text-text-muted">
+                Akun tidak ditemukan. Ketik email lengkapnya untuk mengundang.
+              </li>
+            )}
+          </ul>
+        )}
+      </div>
+      <Button
+        type="submit"
+        className="sm:mt-6"
+        loading={inviteMutation.isPending}
+        disabled={disabled}
+      >
         Undang Penindak
       </Button>
     </form>

@@ -12,7 +12,19 @@ export const transferOwnershipSchema = z.object({
   userId: z.coerce.number().int().positive({ error: 'Penindak tujuan tidak valid' }),
 });
 
-export const inviteHandlerRequestSchema = z.strictObject({ email: emailSchema });
+export const inviteHandlerRequestSchema = z
+  .strictObject({
+    email: emailSchema.optional(),
+    userId: z.coerce.number().int().positive({ error: 'Akun tidak valid' }).optional(),
+  })
+  .refine((value) => Boolean(value.email) !== Boolean(value.userId), {
+    message: 'Pilih akun dari daftar atau isi email',
+    path: ['email'],
+  });
+
+export const handlerCandidateQuerySchema = z.object({
+  q: z.string().trim().min(2, 'Ketik minimal 2 karakter').max(80, 'Maksimal 80 karakter'),
+});
 
 export const followNotifyLevelRequestSchema = z.strictObject({
   notifyLevel: followNotifyLevelSchema.shape.notifyLevel,
