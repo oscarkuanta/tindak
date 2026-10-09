@@ -35,8 +35,33 @@ export async function listHandlers(board) {
   return members.map(toBoardMember);
 }
 
-export async function inviteHandler(board, owner, { email }) {
-  const invitee = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+function maskEmail(email) {
+  const [local, domain] = email.split('@');
+  return `${local.slice(0, 2)}${'•'.repeat(Math.max(3, local.length - 2))}@${domain}`;
+}
+
+export async function searchHandlerCandidates(board, q) {
+  const members = await prisma.boardMember.findMany({
+    where: { boardId: board.id },
+    select: { userId: true },
+  });
+  const users = await prisma.user.findMany({
+    where: {
+      id: { notIn: members.map((member) => member.userId) },
+      OR: [{ name: { contains: q } }, { email: { contains: q } }],
+    },
+    select: { id: true, name: true, email: true, avatarUrl: true },
+    orderBy: { name: 'asc' },
+    take: 6,
+  });
+  return users.map((user) => ({ ...user, email: maskEmail(user.email) }));
+}
+
+export async function inviteHandler(board, owner, { email, userId }) {
+  const invitee = await prisma.user.findUnique({
+    where: userId ? { id: userId } : { email },
+    select: { id: true },
+  });
   if (!invitee) {
     throw new AppError(404, ERROR_CODES.USER_NOT_FOUND, 'Belum ada akun dengan email ini', [
       { field: 'email', message: 'Minta orang tersebut mendaftar terlebih dahulu' },

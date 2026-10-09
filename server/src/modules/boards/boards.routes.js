@@ -10,6 +10,7 @@ import {
   createCategoryRequestSchema,
   followNotifyLevelRequestSchema,
   invitationParamSchema,
+  handlerCandidateQuerySchema,
   inviteHandlerRequestSchema,
   reorderCategoriesRequestSchema,
   similarBoardQuerySchema,
@@ -40,6 +41,7 @@ import { follow, myFollows, unfollow, updateNotifyLevel } from '../follows/follo
 import {
   accept,
   decline,
+  candidates,
   handlers,
   invitations,
   invite,
@@ -115,7 +117,20 @@ export function createBoardsRouter() {
     message: 'Terlalu banyak undangan. Coba lagi dalam 1 jam.',
   });
 
+  const candidateLimiter = createRateLimiter({
+    windowMs: 60_000,
+    limit: 60,
+    message: 'Terlalu banyak pencarian. Coba lagi sebentar.',
+  });
+
   router.get('/:slug/handlers', boardStaff, handlers);
+  router.get(
+    '/:slug/handlers/candidates',
+    ownerOnly,
+    candidateLimiter,
+    validate(handlerCandidateQuerySchema, 'query'),
+    candidates,
+  );
   router.post(
     '/:slug/handlers',
     ownerOnly,
