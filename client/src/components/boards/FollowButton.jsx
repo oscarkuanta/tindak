@@ -4,7 +4,8 @@ import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
 import { useMe } from '../../features/auth/hooks.js';
 import { useFollowBoard, useUpdateFollowNotifyLevel } from '../../features/boards/hooks.js';
 import { useToast } from '../../features/boards/toastContext.js';
-import { Badge, Button } from '../ui/index.js';
+import { Button } from '../ui/index.js';
+import { RoleChip } from './RoleChip.jsx';
 import { CaretDown, Check, Plus } from '@phosphor-icons/react';
 
 export function FollowButton({ board, compact = false }) {
@@ -73,11 +74,7 @@ export function FollowButton({ board, compact = false }) {
   }
 
   if (memberRole === 'OWNER' || memberRole === 'HANDLER') {
-    return (
-      <Badge tone="neutral" aria-label="Kamu merupakan Penindak Board ini">
-        {memberRole === 'OWNER' ? 'Penindak Utama' : 'Penindak'}
-      </Badge>
-    );
+    return compact ? <RoleChip role={memberRole} /> : null;
   }
 
   if (!isFollowing) {

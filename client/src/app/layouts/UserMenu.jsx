@@ -4,6 +4,7 @@ import { Avatar } from '../../components/ui/index.js';
 import { USER_ROLES } from '@tindak/shared';
 import { useLogout } from '../../features/auth/hooks.js';
 import { useMyInvitations } from '../../features/invitations/hooks.js';
+import { useLoginPrompt } from '../../features/auth/loginPromptContext.js';
 
 const ITEM_CLASS =
   'block w-full rounded-base px-3 py-2 text-left text-sm hover:bg-surface-muted focus-visible:bg-surface-muted focus-visible:outline-none';
@@ -14,6 +15,7 @@ export function UserMenu({ user }) {
   const menuId = useId();
   const navigate = useNavigate();
   const logoutMutation = useLogout();
+  const { closeLoginPrompt } = useLoginPrompt();
   const invitationsQuery = useMyInvitations({ enabled: Boolean(user) && open });
   const invitationCount = invitationsQuery.data?.data?.length ?? 0;
 
@@ -34,9 +36,10 @@ export function UserMenu({ user }) {
   }, [open]);
 
   async function handleLogout() {
-    await logoutMutation.mutateAsync();
     setOpen(false);
-    navigate('/');
+    navigate('/', { replace: true });
+    await logoutMutation.mutateAsync();
+    closeLoginPrompt();
   }
 
   return (

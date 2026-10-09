@@ -3,7 +3,7 @@
 - Branch: `fix/f16-bug-uiux`
 - Pemilik: Oscar
 - Tanggal: 2026-10-08
-- PR: (diisi setelah PR dibuat)
+- PR: [#45](https://github.com/oscarkuanta/tindak/pull/45)
 
 ## Ringkasan
 
@@ -57,7 +57,7 @@ Tidak ada. Tidak ada perubahan kontrak API.
 
 ## Hal yang Belum Selesai
 
-- Branch ini akan dilanjutkan dengan perbaikan lain sebelum dibuat PR.
+- Tidak ada. Perbaikan berikutnya dikerjakan di Fase 17.
 
 ## Catatan untuk Fase Berikutnya
 

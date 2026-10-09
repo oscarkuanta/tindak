@@ -150,11 +150,14 @@ describe('Modal rating', () => {
 });
 
 describe('Dashboard Verifikasi', () => {
-  it('menolak selain Admin Board', async () => {
+  it('selain Admin Board diarahkan ke Beranda', async () => {
     mockApi({ 'GET /auth/me': () => [200, { data: { ...user, role: 'ADMIN' } }] });
-    renderApp('/verifikasi');
+    const { router } = renderApp('/verifikasi');
 
-    expect(await screen.findByText('403 · Akses ditolak')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Dashboard Verifikasi hanya untuk Admin Board.'),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/');
   });
 
   it('menampilkan kandidat dan statistik', async () => {

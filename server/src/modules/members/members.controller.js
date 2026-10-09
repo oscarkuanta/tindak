@@ -6,11 +6,16 @@ import {
   listHandlers,
   listInvitations,
   removeHandler,
+  searchHandlerCandidates,
   transferOwnership,
 } from './members.service.js';
 
 export async function handlers(req, res) {
   sendData(res, await listHandlers(req.board));
+}
+
+export async function candidates(req, res) {
+  sendData(res, await searchHandlerCandidates(req.board, req.validated.query.q));
 }
 
 export async function invite(req, res) {

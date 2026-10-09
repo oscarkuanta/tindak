@@ -11,6 +11,7 @@ import {
   getSimilarBoards,
   followBoard,
   inviteBoardHandler,
+  searchHandlerCandidates,
   renameBoardCategory,
   removeBoardHandler,
   reorderBoardCategories,
@@ -302,5 +303,14 @@ export function useReorderBoardCategories(slug) {
   return useMutation({
     mutationFn: (categoryIds) => reorderBoardCategories(slug, categoryIds),
     onSuccess: () => invalidate(slug),
+  });
+}
+
+export function useHandlerCandidates(slug, q) {
+  return useQuery({
+    queryKey: ['boards', slug, 'handler-candidates', q],
+    queryFn: () => searchHandlerCandidates(slug, q),
+    enabled: q.length >= 2,
+    staleTime: 30_000,
   });
 }

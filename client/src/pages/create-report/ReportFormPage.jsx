@@ -90,7 +90,7 @@ export function ReportFormPage() {
       const trackingCode = created.trackingCode ?? report.trackingCode ?? '';
       const trackingUrl = created.trackingUrl ?? report.trackingUrl ?? '';
       const secret = getSecretFromTrackingUrl(trackingUrl);
-      if (trackingCode) {
+      if (trackingCode && !user) {
         saveTrackedReport({
           trackingCode,
           trackingUrl,
