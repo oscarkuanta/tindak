@@ -91,7 +91,17 @@ export const boardReportsQuerySchema = z.object({
   ...reportPageSchema,
 });
 
-export const myReportsQuerySchema = z.object(reportPageSchema);
+export const myReportsQuerySchema = z.object({
+  q: emptyToUndefined(
+    z
+      .string()
+      .trim()
+      .min(2, 'Kata kunci minimal 2 karakter')
+      .max(80, 'Kata kunci maksimal 80 karakter')
+      .optional(),
+  ),
+  ...reportPageSchema,
+});
 
 export const reportIdParamSchema = z.object({
   id: z.coerce.number().int().positive({ error: 'ID laporan tidak valid' }),
@@ -112,6 +122,18 @@ export const trackReportParamSchema = z.object({
           'Kode Lacak tidak valid',
         ),
     ),
+});
+
+export const claimReportsRequestSchema = z.strictObject({
+  items: z
+    .array(
+      z.strictObject({
+        trackingCode: trackReportParamSchema.shape.code,
+        secret: z.string().trim().min(1).max(200),
+      }),
+    )
+    .min(1, 'Tidak ada laporan untuk dipindahkan')
+    .max(50, 'Maksimal 50 laporan sekali pindah'),
 });
 
 export const trackReportQuerySchema = z.object({

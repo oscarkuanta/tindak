@@ -575,3 +575,85 @@ describe('GET /api/track/:code', () => {
     expect(missing.status).toBe(400);
   });
 });
+
+describe('Laporan tamu pindah ke akun dan cari Laporan Saya', () => {
+  async function guestReport(board, categoryId, title) {
+    const created = await sendReport(request.agent(app), board.slug, { categoryId, title }).expect(
+      201,
+    );
+    const { trackingCode, trackingUrl, report } = created.body.data;
+    return { trackingCode, secret: new URL(trackingUrl).searchParams.get('secret'), id: report.id };
+  }
+
+  it('memindahkan laporan tamu dengan secret benar dan mengabaikan secret salah', async () => {
+    const { board, categoryId } = await createBoard();
+    const first = await guestReport(board, categoryId, 'Lampu jalan mati total');
+    const second = await guestReport(board, categoryId, 'Selokan tersumbat sampah');
+    const siti = await loginAs('siti@example.com', { name: 'Siti' });
+
+    const res = await siti.agent.post('/api/me/reports/claim').send({
+      items: [
+        { trackingCode: first.trackingCode, secret: first.secret },
+        { trackingCode: `tnd-${second.trackingCode.toLowerCase()}`, secret: 'salah' },
+      ],
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data).toEqual({ claimed: 1, reportIds: [first.id] });
+    expect(await prisma.report.findUnique({ where: { id: first.id } })).toMatchObject({
+      userId: siti.user.id,
+      isAnonymous: true,
+    });
+    expect((await prisma.report.findUnique({ where: { id: second.id } })).userId).toBeNull();
+    const mine = await siti.agent.get('/api/me/reports');
+    expect(mine.body.data.map((item) => item.id)).toEqual([first.id]);
+  });
+
+  it('laporan milik akun lain tidak bisa diambil, tamu ditolak, dan body divalidasi', async () => {
+    const { board, categoryId } = await createBoard();
+    const report = await guestReport(board, categoryId, 'Lampu jalan mati total');
+    const budi = await loginAs('budi@example.com');
+    const item = { trackingCode: report.trackingCode, secret: report.secret };
+    await budi.agent
+      .post('/api/me/reports/claim')
+      .send({ items: [item] })
+      .expect(200);
+    const siti = await loginAs('siti@example.com', { name: 'Siti' });
+
+    const stolen = await siti.agent.post('/api/me/reports/claim').send({ items: [item] });
+    const guest = await request(app)
+      .post('/api/me/reports/claim')
+      .send({ items: [item] });
+    const empty = await siti.agent.post('/api/me/reports/claim').send({ items: [] });
+
+    expect(stolen.body.data).toEqual({ claimed: 0, reportIds: [] });
+    expect((await prisma.report.findUnique({ where: { id: report.id } })).userId).toBe(
+      budi.user.id,
+    );
+    expect(guest.status).toBe(401);
+    expect(empty.status).toBe(400);
+  });
+
+  it('Laporan Saya bisa dicari dengan kata kunci atau Kode Lacak', async () => {
+    const { board, categoryId } = await createBoard();
+    const budi = await loginAs('budi@example.com');
+    const lamp = await sendReport(budi.agent, board.slug, {
+      categoryId,
+      title: 'Lampu jalan mati total',
+    }).expect(201);
+    const source = await prisma.report.findUnique({ where: { id: lamp.body.data.report.id } });
+    await cloneReport(source, 1, {
+      title: 'Selokan tersumbat',
+      description: 'Air meluap ke jalan.',
+    });
+    const code = lamp.body.data.trackingCode;
+
+    const byWord = await budi.agent.get('/api/me/reports?q=lampu');
+    const byCode = await budi.agent.get(`/api/me/reports?q=TND-${code}`);
+    const tooShort = await budi.agent.get('/api/me/reports?q=a');
+
+    expect(byWord.body.data.map((item) => item.title)).toEqual(['Lampu jalan mati total']);
+    expect(byCode.body.data.map((item) => item.title)).toEqual(['Lampu jalan mati total']);
+    expect(tooShort.status).toBe(400);
+  });
+});

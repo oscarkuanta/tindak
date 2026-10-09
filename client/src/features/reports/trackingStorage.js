@@ -43,3 +43,11 @@ export function findTrackedReport(code) {
     (entry) => normalizeTrackingCode(entry.trackingCode) === normalized,
   );
 }
+
+export function clearTrackedReports() {
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    return;
+  }
+}

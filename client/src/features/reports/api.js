@@ -23,3 +23,7 @@ export function createBoardReport(slug, { fields, photos }) {
 export function getMyReports(params = {}) {
   return api.get(withQuery('/me/reports', params));
 }
+
+export function claimGuestReports(items) {
+  return api.post('/me/reports/claim', { items });
+}
