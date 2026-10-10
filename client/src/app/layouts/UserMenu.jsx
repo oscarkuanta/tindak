@@ -60,7 +60,7 @@ export function UserMenu({ user }) {
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 mt-2 w-64 rounded-card border border-border bg-surface p-2 shadow-card"
+          className="absolute right-0 mt-2 w-64 rounded-card border border-border bg-surface p-2 text-text shadow-card"
         >
           <div className="flex items-center gap-3 border-b border-border px-3 pt-2 pb-3">
             <Avatar name={user.name} src={user.avatarUrl} />

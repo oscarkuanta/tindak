@@ -3,7 +3,7 @@
 - Branch: `fix/f17-revisi-tester`
 - Pemilik: Oscar
 - Tanggal: 2026-10-09
-- PR: (diisi setelah PR dibuat)
+- PR: [#46](https://github.com/oscarkuanta/tindak/pull/46)
 
 ## Ringkasan
 
