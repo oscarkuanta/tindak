@@ -118,11 +118,13 @@ describe('Alur lengkap', () => {
       'DUPLICATE',
     ]);
 
-    const processed = await ctx.handler.agent.post(path(report, 'process')).send({});
+    const processed = await ctx.handler.agent
+      .post(path(report, 'process'))
+      .send({ assigneeId: ctx.handler.user.id });
     expect(processed.status).toBe(200);
     expect(processed.body.data).toMatchObject({
       status: 'IN_PROGRESS',
-      assignee: null,
+      assignee: expect.objectContaining({ id: ctx.handler.user.id }),
       allowedActions: ['RESOLVE', 'REJECT', 'DUPLICATE'],
     });
 
@@ -192,7 +194,10 @@ describe('Alur lengkap', () => {
     expect(again.body.error.code).toBe('INFO_ALREADY_ANSWERED');
 
     for (const round of [1, 2]) {
-      await ctx.handler.agent.post(path(report, 'process')).send({}).expect(200);
+      await ctx.handler.agent
+        .post(path(report, 'process'))
+        .send({ assigneeId: ctx.handler.user.id })
+        .expect(200);
       await resolveWithPhoto(ctx.handler.agent, report).expect(200);
       const reopened = await request(app)
         .post(path(report, 'confirm'))
@@ -205,7 +210,10 @@ describe('Alur lengkap', () => {
       expect(reopened.body.data).toMatchObject({ status: 'REOPENED', reopenCount: round });
     }
 
-    await ctx.handler.agent.post(path(report, 'process')).send({}).expect(200);
+    await ctx.handler.agent
+      .post(path(report, 'process'))
+      .send({ assigneeId: ctx.handler.user.id })
+      .expect(200);
     await resolveWithPhoto(ctx.handler.agent, report).expect(200);
     const last = await request(app)
       .post(path(report, 'confirm'))
@@ -248,7 +256,7 @@ describe('Transisi tidak sah', () => {
     const ctx = await setup();
     const report = await insertReport(ctx, { status });
     const bodies = {
-      process: {},
+      process: { assigneeId: ctx.owner.user.id },
       'request-info': { question: 'Apa?' },
       reject: { reason: 'FALSE_REPORT' },
     };
@@ -279,8 +287,8 @@ describe('Transisi tidak sah', () => {
     const report = await insertReport(ctx);
 
     const results = await Promise.all([
-      ctx.owner.agent.post(path(report, 'process')).send({}),
-      ctx.handler.agent.post(path(report, 'process')).send({}),
+      ctx.owner.agent.post(path(report, 'process')).send({ assigneeId: ctx.owner.user.id }),
+      ctx.handler.agent.post(path(report, 'process')).send({ assigneeId: ctx.handler.user.id }),
     ]);
 
     expect(results.map((res) => res.status).sort()).toEqual([200, 409]);
@@ -326,7 +334,7 @@ describe('Hak akses', () => {
     expect(kept.body.data.assignee.id).toBe(ctx.handler.user.id);
     await prisma.report.update({ where: { id: report.id }, data: { status: 'REOPENED' } });
     const cleared = await ctx.owner.agent.post(path(report, 'process')).send({ assigneeId: null });
-    expect(cleared.body.data.assignee).toBeNull();
+    expect(cleared.status).toBe(400);
   });
 
   it('pelapor: secret salah 404, tanpa login 401, user lain 403', async () => {
@@ -554,7 +562,10 @@ describe('Job terjadwal', () => {
       trustLabel: 'INACTIVE',
     });
 
-    await ctx.owner.agent.post(path(report, 'process')).send({}).expect(200);
+    await ctx.owner.agent
+      .post(path(report, 'process'))
+      .send({ assigneeId: ctx.owner.user.id })
+      .expect(200);
     const active = await request(app).get(`/api/boards/${ctx.board.slug}`);
     expect(active.body.data.status).toBe('ACTIVE');
   });
@@ -569,5 +580,18 @@ describe('Job terjadwal', () => {
       dueWarnings: 0,
       unfrozenBoards: 0,
     });
+  });
+});
+
+describe('Proses wajib penanggung jawab', () => {
+  it('menolak proses tanpa penanggung jawab dengan pesan jelas', async () => {
+    const ctx = await setup();
+    const report = await insertReport(ctx);
+
+    const res = await ctx.owner.agent.post(path(report, 'process')).send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toBe('Pilih penanggung jawab dulu sebelum memproses laporan');
+    expect((await prisma.report.findUnique({ where: { id: report.id } })).status).toBe('NEW');
   });
 });

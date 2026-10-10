@@ -72,7 +72,10 @@ describe('Alur kritis', () => {
     const { report, trackingCode, trackingUrl } = created.body.data;
     const trackingSecret = new URL(trackingUrl, 'http://localhost').searchParams.get('secret');
     const queue = await owner.agent.get(`/api/boards/${board.slug}/queue`);
-    await owner.agent.post(`/api/reports/${report.id}/process`).send({}).expect(200);
+    await owner.agent
+      .post(`/api/reports/${report.id}/process`)
+      .send({ assigneeId: owner.user.id })
+      .expect(200);
     await owner.agent
       .post(`/api/reports/${report.id}/resolve`)
       .field('note', 'Sudah ditambal')

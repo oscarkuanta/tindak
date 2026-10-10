@@ -89,6 +89,12 @@ export function ReportDetailContent({ report, credentials }) {
             </>
           )}
         </p>
+        {report.trackingCode && (
+          <p className="text-xs text-text-muted">
+            Kode Lacak laporanmu:{' '}
+            <span className="font-mono font-semibold text-text">TND-{report.trackingCode}</span>
+          </p>
+        )}
         <p className="whitespace-pre-wrap text-sm leading-6">{report.description}</p>
         {!credentials && <EngagementBar report={report} />}
         {report.parent && (
@@ -120,7 +126,7 @@ export function ReportDetailContent({ report, credentials }) {
                 <BlurredImage
                   src={item.url}
                   isBlurred={item.isBlurred}
-                  wrapperClassName="rounded-base"
+
                   alt={
                     item.kind === 'AFTER'
                       ? 'Foto sesudah penindakan'
@@ -128,7 +134,7 @@ export function ReportDetailContent({ report, credentials }) {
                         ? 'Foto tambahan'
                         : 'Foto sebelum penindakan'
                   }
-                  className="aspect-[4/3] w-full rounded-base object-cover"
+                  frameClassName="aspect-[4/3] w-full rounded-base"
                 />
                 <figcaption className="text-xs text-text-muted">
                   {item.kind === 'AFTER'

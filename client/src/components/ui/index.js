@@ -13,3 +13,4 @@ export { StatusChip, LateChip } from './StatusChip.jsx';
 export { SeverityChip } from './SeverityChip.jsx';
 export { Tabs } from './Tabs.jsx';
 export { StatCard } from './StatCard.jsx';
+export { PasswordInput } from './PasswordInput.jsx';

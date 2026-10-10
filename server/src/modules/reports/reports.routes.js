@@ -7,6 +7,7 @@ import {
   reportIdParamSchema,
   trackReportParamSchema,
   trackReportQuerySchema,
+  claimReportsRequestSchema,
   homeFeedQuerySchema,
   reactionRequestSchema,
   answerInfoRequestSchema,
@@ -24,7 +25,15 @@ import { guestToken } from '../../middlewares/guestToken.js';
 import { reportPhotosUpload } from '../../middlewares/upload.js';
 import { createRateLimiter } from '../../middlewares/rateLimit.js';
 import { rejectBanned } from '../../middlewares/rejectBanned.js';
-import { create, detail, homeFeed, listForBoard, mine, track } from './reports.controller.js';
+import {
+  claim,
+  create,
+  detail,
+  homeFeed,
+  listForBoard,
+  mine,
+  track,
+} from './reports.controller.js';
 import { react, support, unreact, unsupport } from '../engagement/engagement.controller.js';
 import { requireBoardRole } from '../../middlewares/boardAccess.js';
 import {
@@ -169,7 +178,19 @@ export function createTrackRouter() {
 
 export function createMeReportsRouter() {
   const router = Router();
+  const claimLimiter = createRateLimiter({
+    windowMs: 15 * 60_000,
+    limit: 20,
+    message: 'Terlalu banyak percobaan memindahkan laporan. Coba lagi nanti.',
+  });
   router.get('/reports', requireAuth, validate(myReportsQuerySchema, 'query'), mine);
+  router.post(
+    '/reports/claim',
+    requireAuth,
+    claimLimiter,
+    validate(claimReportsRequestSchema),
+    claim,
+  );
   return router;
 }
 

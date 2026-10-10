@@ -159,10 +159,12 @@ export function toHiddenReport(report) {
 }
 
 export function withViewerEngagement(json, report, user, engagement) {
+  const isOwnReport = Boolean(user && report.userId === user.id);
   return {
     ...json,
     mySupport: engagement.supports.has(report.id),
     myReaction: engagement.reactions.get(report.id) ?? null,
-    isOwnReport: Boolean(user && report.userId === user.id),
+    isOwnReport,
+    ...(isOwnReport && { trackingCode: report.trackingCode }),
   };
 }

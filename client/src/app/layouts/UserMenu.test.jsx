@@ -30,3 +30,40 @@ describe('Link menu role website', () => {
     expect(Boolean(screen.queryByRole('menuitem', { name: 'Panel Admin' }))).toBe(hasAdmin);
   });
 });
+
+describe('Keluar akun', () => {
+  it('Admin keluar dari Panel Admin langsung ke Beranda tanpa popup login dan cache lama hilang', async () => {
+    let loggedIn = true;
+    mockApi({
+      'GET /auth/me': () =>
+        loggedIn
+          ? [200, { data: { ...baseUser, role: 'ADMIN' } }]
+          : [401, { error: { code: 'UNAUTHENTICATED', message: 'Kamu belum masuk' } }],
+      'GET /admin/stats': () => [
+        200,
+        {
+          data: {
+            users: { total: 1 },
+            boards: { total: 0, active: 0, inactive: 0, frozen: 0, official: 0 },
+            reports: { total: 0, active: 0, resolved: 0, hidden: 0, removed: 0 },
+            moderation: { openFlags: 0, openTargets: 0 },
+            bans: { active: 0 },
+          },
+        },
+      ],
+      'POST /auth/logout': () => {
+        loggedIn = false;
+        return [200, { data: { ok: true } }];
+      },
+    });
+    const { router } = renderApp('/admin');
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Menu akun Budi Santoso' }));
+    await user.click(screen.getByRole('menuitem', { name: /Keluar/ }));
+
+    await screen.findAllByRole('link', { name: 'Masuk' });
+    expect(router.state.location.pathname).toBe('/');
+    expect(screen.getByRole('heading', { name: 'Beranda' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+});

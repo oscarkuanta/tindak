@@ -88,5 +88,5 @@ export const REACTION_META = Object.freeze({
 
 export const REPORT_LOCKED_STATUSES = Object.freeze(['RESOLVED', 'REJECTED', 'DUPLICATE']);
 
-export const HOME_FEED_TABS = Object.freeze(['following', 'hot']);
+export const HOME_FEED_TABS = Object.freeze(['following', 'nearby', 'hot']);
 export const POPULAR_BOARDS_LIMIT = 6;

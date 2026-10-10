@@ -152,7 +152,7 @@ describe('Socket.IO', () => {
     await request(server)
       .post(`/api/reports/${report.id}/process`)
       .set('Cookie', owner.cookie)
-      .send({})
+      .send({ assigneeId: owner.user.id })
       .expect(200);
 
     expect(await updated).toMatchObject({

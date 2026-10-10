@@ -52,6 +52,8 @@ export function BoardSettingsPage() {
   const [saveMessage, setSaveMessage] = useState('');
   const [categoryName, setCategoryName] = useState('');
   const [categoryError, setCategoryError] = useState('');
+  const [addError, setAddError] = useState('');
+  const [renameError, setRenameError] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingName, setEditingName] = useState('');
 
@@ -115,31 +117,31 @@ export function BoardSettingsPage() {
     event.preventDefault();
     const result = boardCategorySchema.safeParse({ name: categoryName });
     if (!result.success) {
-      setCategoryError(result.error.issues[0].message);
+      setAddError(result.error.issues[0].message);
       return;
     }
     try {
       await createCategoryMutation.mutateAsync(result.data);
       setCategoryName('');
-      setCategoryError('');
+      setAddError('');
     } catch (error) {
-      setCategoryError(error.message || 'Kategori belum dapat ditambahkan.');
+      setAddError(error.message || 'Kategori belum dapat ditambahkan.');
     }
   }
 
   async function saveCategoryName(category) {
     const result = boardCategorySchema.safeParse({ name: editingName });
     if (!result.success) {
-      setCategoryError(result.error.issues[0].message);
+      setRenameError(result.error.issues[0].message);
       return;
     }
     try {
       await renameCategoryMutation.mutateAsync({ id: category.id, name: result.data.name });
       setEditingId(null);
       setEditingName('');
-      setCategoryError('');
+      setRenameError('');
     } catch (error) {
-      setCategoryError(error.message || 'Nama kategori belum dapat diubah.');
+      setRenameError(error.message || 'Nama kategori belum dapat diubah.');
     }
   }
 
@@ -271,17 +273,24 @@ export function BoardSettingsPage() {
           Tambah, ubah nama, hapus, atau atur urutan kategori.
         </p>
         {categoryError && <Alert className="mt-3">{categoryError}</Alert>}
-        <form className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={addCategory}>
-          <Input
-            label="Nama kategori baru"
-            value={categoryName}
-            maxLength={40}
-            onChange={(event) => {
-              setCategoryName(event.target.value);
-              setCategoryError('');
-            }}
-          />
-          <Button type="submit" loading={createCategoryMutation.isPending}>
+        <form
+          className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-start"
+          onSubmit={addCategory}
+          noValidate
+        >
+          <div className="min-w-0 flex-1">
+            <Input
+              label="Nama kategori baru"
+              value={categoryName}
+              maxLength={40}
+              error={addError || undefined}
+              onChange={(event) => {
+                setCategoryName(event.target.value);
+                setAddError('');
+              }}
+            />
+          </div>
+          <Button type="submit" className="sm:mt-6" loading={createCategoryMutation.isPending}>
             Tambah Kategori
           </Button>
         </form>
@@ -293,13 +302,19 @@ export function BoardSettingsPage() {
             >
               <span className="w-7 shrink-0 text-sm text-text-muted">{index + 1}.</span>
               {editingId === category.id ? (
-                <div className="flex min-w-0 flex-1 gap-2">
-                  <Input
-                    aria-label={`Nama kategori ${category.name}`}
-                    value={editingName}
-                    maxLength={40}
-                    onChange={(event) => setEditingName(event.target.value)}
-                  />
+                <div className="flex min-w-0 flex-1 items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <Input
+                      aria-label={`Nama kategori ${category.name}`}
+                      value={editingName}
+                      maxLength={40}
+                      error={renameError || undefined}
+                      onChange={(event) => {
+                        setEditingName(event.target.value);
+                        setRenameError('');
+                      }}
+                    />
+                  </div>
                   <Button
                     size="sm"
                     loading={renameCategoryMutation.isPending}
@@ -307,16 +322,25 @@ export function BoardSettingsPage() {
                   >
                     Simpan
                   </Button>
-                  <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setEditingId(null);
+                      setRenameError('');
+                    }}
+                  >
                     Batal
                   </Button>
                 </div>
               ) : (
-                <span className="min-w-0 flex-1 text-sm font-medium">
+                <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2 text-sm font-medium">
                   {category.name}
-                  {category.isDefault && (
-                    <span className="ml-2 text-xs text-text-muted">Bawaan</span>
-                  )}
+                  <span
+                    className={`category-tag ${category.isDefault ? 'category-tag--default' : 'category-tag--extra'}`}
+                  >
+                    {category.isDefault ? 'Bawaan' : 'Tambahan'}
+                  </span>
                 </span>
               )}
               {editingId !== category.id && (

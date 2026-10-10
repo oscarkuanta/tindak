@@ -3,9 +3,14 @@ import { useCities } from '../../features/boards/hooks.js';
 
 const EMPTY_CITIES = [];
 
-export function CitySelect({ value, onChange, error, label = 'Kota' }) {
+export function CitySelect({ value, onChange, error, label = 'Kota', id = 'board-city' }) {
   const { data, isPending, error: loadError, refetch } = useCities();
   const [search, setSearch] = useState(value ?? '');
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (syncedValue !== value) {
+    setSyncedValue(value);
+    if (value) setSearch(value);
+  }
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const cities = data?.data ?? EMPTY_CITIES;
@@ -33,19 +38,22 @@ export function CitySelect({ value, onChange, error, label = 'Kota' }) {
 
   return (
     <div className="relative flex flex-col gap-1" ref={rootRef}>
-      <label htmlFor="board-city" className="text-sm font-medium text-text">
+      <label htmlFor={id} className="text-sm font-medium text-text">
         {label}
       </label>
       <input
-        id="board-city"
+        id={id}
         role="combobox"
         aria-expanded={open}
-        aria-controls="board-city-options"
+        aria-controls={`${id}-options`}
         aria-autocomplete="list"
         aria-invalid={Boolean(error)}
-        aria-describedby={error ? 'board-city-error' : undefined}
-        value={value || search}
-        onFocus={() => setOpen(true)}
+        aria-describedby={error ? `${id}-error` : undefined}
+        value={search}
+        onFocus={(event) => {
+          event.target.select();
+          setOpen(true);
+        }}
         onChange={(event) => {
           setSearch(event.target.value);
           setOpen(true);
@@ -55,7 +63,7 @@ export function CitySelect({ value, onChange, error, label = 'Kota' }) {
         className={`h-10 w-full rounded-base border bg-surface px-3 text-sm text-text placeholder:text-text-muted focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 ${error ? 'border-danger' : 'border-border'}`}
       />
       {error && (
-        <p id="board-city-error" className="text-xs text-danger">
+        <p id={`${id}-error`} className="text-xs text-danger">
           {error}
         </p>
       )}
@@ -69,7 +77,7 @@ export function CitySelect({ value, onChange, error, label = 'Kota' }) {
       )}
       {open && !loadError && (
         <ul
-          id="board-city-options"
+          id={`${id}-options`}
           role="listbox"
           className="absolute top-full z-20 mt-1 max-h-64 w-full overflow-auto rounded-base border border-border bg-surface p-1 shadow-card"
         >
