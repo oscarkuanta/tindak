@@ -109,7 +109,7 @@ export function BoardSearch() {
         <div
           id="header-board-suggestions"
           role="listbox"
-          className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-card border border-border bg-surface p-1 shadow-card"
+          className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-card border border-border bg-surface p-1 text-text shadow-card"
         >
           {!searching && suggestions.length > 0 && (
             <p className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">

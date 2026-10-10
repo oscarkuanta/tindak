@@ -72,7 +72,7 @@ export function NotificationBell() {
           id={panelId}
           role="dialog"
           aria-label="Notifikasi terbaru"
-          className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-surface p-2 shadow-card"
+          className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-card border border-border bg-surface p-2 text-text shadow-card"
         >
           <div className="flex items-center justify-between px-2 pb-2">
             <h2 className="text-sm font-semibold">Notifikasi</h2>

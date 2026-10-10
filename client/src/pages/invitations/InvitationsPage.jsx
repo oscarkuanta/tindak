@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import { ArrowRight } from '@phosphor-icons/react';
 import { Alert, Button, Card, Spinner } from '../../components/ui/index.js';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
 import { useToast } from '../../features/boards/toastContext.js';
@@ -61,18 +62,22 @@ export function InvitationsPage() {
               (declineMutation.isPending && declineMutation.variables === invitation.id);
             return (
               <li key={invitation.id}>
-                <Card className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
+                <Card className="invitation-card relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <p className="text-sm text-text-muted">Kamu diundang menjadi Penindak di</p>
                     <Link
                       to={`/b/${invitation.board.slug}`}
-                      className="font-semibold text-brand hover:underline"
+                      aria-label={`Buka Board ${invitation.board.name}`}
+                      className="invitation-card__link mt-0.5 inline-flex items-center gap-1 text-lg font-bold text-text hover:text-brand"
                     >
                       {invitation.board.name}
+                      <ArrowRight size={18} weight="bold" aria-hidden="true" />
                     </Link>
-                    <p className="mt-1 text-xs text-text-muted">{invitation.board.city}</p>
+                    <p className="mt-1 text-xs text-text-muted">
+                      {invitation.board.city} · Klik kartu untuk melihat Board sebelum menjawab
+                    </p>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="relative z-10 flex flex-wrap gap-2">
                     <Button
                       size="sm"
                       loading={

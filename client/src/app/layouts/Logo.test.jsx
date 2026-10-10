@@ -4,18 +4,19 @@ import { MemoryRouter } from 'react-router';
 import { Logo } from './Logo.jsx';
 
 describe('Logo', () => {
-  it('menampilkan wordmark T!NDAK dengan tanda seru SVG yang dapat mewarisi warna', () => {
+  it('menampilkan logo T!ndak dari desain tim yang mewarisi warna teks', () => {
     render(
       <MemoryRouter>
         <Logo />
       </MemoryRouter>,
     );
 
-    const link = screen.getByRole('link', { name: 'T!indak, ke Beranda' });
-    const mark = screen.getByTestId('brand-mark');
+    const link = screen.getByRole('link', { name: 'T!ndak, ke Beranda' });
+    const logo = screen.getByTestId('brand-logo');
 
     expect(link).toHaveAttribute('href', '/');
-    expect(mark).toHaveAttribute('viewBox', '0 0 24 32');
-    expect(mark).toHaveAttribute('aria-hidden', 'true');
+    expect(logo).toHaveAttribute('viewBox', '0 0 79 31');
+    expect(logo).toHaveAttribute('aria-hidden', 'true');
+    expect(logo.querySelector('path')).toHaveAttribute('fill', 'currentColor');
   });
 });
