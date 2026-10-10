@@ -84,7 +84,7 @@ Akun dan data: lihat `docs/DEMO.md`. Password semua akun demo `demo1234`.
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | R1  | 13 halaman (beranda, cari, Board, detail laporan, lapor, Lacak, masuk, antrean, dashboard, pengaturan, notifikasi, verifikasi, Panel Admin) di lebar 390px | ✅ tanpa scroll horizontal dan tanpa error console, setelah 4 perbaikan (lihat laporan 11B)        |
 | R2  | 13 halaman yang sama di lebar 768px                                                                                                                        | ✅                                                                                                 |
-| R3  | Font Poppins dan Montserrat termuat di mode production                                                                                                     | ✅ setelah perbaikan CSP (branch `fix/f11-csp-fonts`); tanpa perbaikan tidak ada font yang termuat |
+| R3  | Font Instrument Sans (dulu Poppins dan Montserrat) termuat di mode production                                                                              | ✅ setelah perbaikan CSP (branch `fix/f11-csp-fonts`); tanpa perbaikan tidak ada font yang termuat |
 
 ## Keamanan dan performa
 

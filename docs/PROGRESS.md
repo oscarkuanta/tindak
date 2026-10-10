@@ -32,7 +32,7 @@ Bagian A = backend (server, prisma, tes). Bagian B = frontend (client). Fase tan
 | 15   | Perbaikan dari hasil testing UI/UX           | A+B    | Selesai | Oscar        | [#44](https://github.com/oscarkuanta/tindak/pull/44)                                                                                                             | 2026-10-08 |
 | 16   | Perbaikan bug dan UI/UX lanjutan             | B      | Selesai | Oscar        | [#45](https://github.com/oscarkuanta/tindak/pull/45)                                                                                                             | 2026-10-08 |
 | 17   | Revisi dari hasil testing                    | A+B    | Selesai | Oscar        | [#46](https://github.com/oscarkuanta/tindak/pull/46)                                                                                                             | 2026-10-09 |
-| 18   | Warna tema, logo, notifikasi, undangan       | B      | Review  | Oscar        | -                                                                                                                                                                | 2026-10-10 |
+| 18   | Warna tema, logo, font, notifikasi, undangan | B      | Selesai | Oscar        | [#47](https://github.com/oscarkuanta/tindak/pull/47)                                                                                                             | 2026-10-10 |
 
 ## Cara Mengisi
 

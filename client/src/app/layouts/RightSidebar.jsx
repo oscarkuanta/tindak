@@ -78,6 +78,12 @@ export function RightSidebar() {
           Laporkan masalah fisik di sekitarmu: jalan rusak, sampah, fasilitas rusak. Komunitas
           mendukung, Penindak menindaklanjuti.
         </p>
+        <Link
+          to="/privasi"
+          className="mt-3 inline-block text-xs font-semibold text-brand hover:underline"
+        >
+          Kebijakan Privasi
+        </Link>
       </Card>
     </div>
   );

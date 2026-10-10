@@ -21,24 +21,24 @@ Data dibuat dengan angka acak yang selalu sama, jadi hasilnya identik setiap kal
 
 Semua akun memakai password **`demo1234`**.
 
-| Role                     | Email                                                 | Nama              | Dipakai untuk                                     |
-| ------------------------ | ----------------------------------------------------- | ----------------- | ------------------------------------------------- |
-| Admin (moderator)        | `admin@demo.test`                                     | Rina Moderator    | Panel Admin, antrean moderasi, ban, bekukan Board |
-| Admin Board (verifikasi) | `adminboard@demo.test`                                | Dimas Verifikator | Dashboard Verifikasi, Jadikan Official            |
-| Penindak Utama           | `ratna@demo.test`                                     | Bu Ratna Dewi     | Jalan Ahmad Yani Surabaya (Official)              |
-| Penindak                 | `maya@demo.test`                                      | Maya Anggraini    | Penindak di Jalan Ahmad Yani Surabaya             |
-| Penindak Utama           | `hadi@demo.test`                                      | Pak Hadi Santoso  | SMAN 5 Surabaya (Official)                        |
-| Penindak Utama           | `andi@demo.test`                                      | Andi Wijaya       | Kampus ITS Sukolilo (kandidat Official)           |
-| Penindak Utama           | `dewi@demo.test`                                      | Dewi Lestari      | Perumahan Pondok Jati RW 03 (kandidat Official)   |
-| Penindak Utama           | `sari@demo.test`                                      | Sari Rahmawati    | Kantor Kelurahan Gubeng                           |
-| Penindak Utama           | `bayu@demo.test`                                      | Bayu Saputra      | Alun-Alun Sidoarjo (Official pernah dicabut)      |
-| Penindak Utama           | `yoga@demo.test`                                      | Yoga Pratama      | Jl. A. Yani Surabaya (Perlu Waspada)              |
-| Penindak Utama           | `nanda@demo.test`                                     | Nanda Putri       | Taman Bungkul Surabaya (Baru)                     |
-| Penindak                 | `joko@demo.test`, `bayu@demo.test`, `nanda@demo.test` | -                 | Penindak di SMAN 5, Kampus ITS, Pondok Jati       |
-| User                     | `siti@demo.test`                                      | Siti Aminah       | Warga yang mengikuti Board dan punya notifikasi   |
-| User                     | `rudi@demo.test`                                      | Rudi Hartono      | Warga biasa                                       |
-| User (30 akun)           | `warga01@demo.test` s.d. `warga30@demo.test`          | Warga 01 dst      | Pemberi rating, dukungan, dan reaksi              |
-| User ter-ban             | `spam@demo.test`                                      | Akun Spam         | Contoh akun yang ditolak saat login               |
+| Role                     | Email                                                 | Nama              | Dipakai untuk                                    |
+| ------------------------ | ----------------------------------------------------- | ----------------- | ------------------------------------------------ |
+| Admin (moderator)        | `admin@demo.test`                                     | Rina Moderator    | Panel Admin, antrean moderasi, ban, Freeze Board |
+| Admin Board (verifikasi) | `adminboard@demo.test`                                | Dimas Verifikator | Dashboard Verifikasi, Jadikan Official           |
+| Penindak Utama           | `ratna@demo.test`                                     | Bu Ratna Dewi     | Jalan Ahmad Yani Surabaya (Official)             |
+| Penindak                 | `maya@demo.test`                                      | Maya Anggraini    | Penindak di Jalan Ahmad Yani Surabaya            |
+| Penindak Utama           | `hadi@demo.test`                                      | Pak Hadi Santoso  | SMAN 5 Surabaya (Official)                       |
+| Penindak Utama           | `andi@demo.test`                                      | Andi Wijaya       | Kampus ITS Sukolilo (kandidat Official)          |
+| Penindak Utama           | `dewi@demo.test`                                      | Dewi Lestari      | Perumahan Pondok Jati RW 03 (kandidat Official)  |
+| Penindak Utama           | `sari@demo.test`                                      | Sari Rahmawati    | Kantor Kelurahan Gubeng                          |
+| Penindak Utama           | `bayu@demo.test`                                      | Bayu Saputra      | Alun-Alun Sidoarjo (Official pernah dicabut)     |
+| Penindak Utama           | `yoga@demo.test`                                      | Yoga Pratama      | Jl. A. Yani Surabaya (Perlu Waspada)             |
+| Penindak Utama           | `nanda@demo.test`                                     | Nanda Putri       | Taman Bungkul Surabaya (Baru)                    |
+| Penindak                 | `joko@demo.test`, `bayu@demo.test`, `nanda@demo.test` | -                 | Penindak di SMAN 5, Kampus ITS, Pondok Jati      |
+| User                     | `siti@demo.test`                                      | Siti Aminah       | Warga yang mengikuti Board dan punya notifikasi  |
+| User                     | `rudi@demo.test`                                      | Rudi Hartono      | Warga biasa                                      |
+| User (30 akun)           | `warga01@demo.test` s.d. `warga30@demo.test`          | Warga 01 dst      | Pemberi rating, dukungan, dan reaksi             |
+| User ter-ban             | `spam@demo.test`                                      | Akun Spam         | Contoh akun yang ditolak saat login              |
 
 Tamu tidak butuh akun. Kode Lacak demo: **`TRACK234`** dengan secret **`demo-lacak-tindak`**, buka `/lacak/TRACK234?secret=demo-lacak-tindak`.
 
