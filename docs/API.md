@@ -1,6 +1,6 @@
 # Kontrak API T!indak
 
-Dokumen ini adalah kontrak antara backend (bagian A) dan frontend (bagian B). Jika kode dan dokumen berbeda, dokumen ini yang benar sampai diubah lewat PR. Setiap perubahan kontrak wajib ditulis di laporan fase.
+Dokumen ini adalah kontrak antara backend (bagian A) dan frontend (bagian B). Jika kode dan dokumen berbeda, dokumen ini yang benar sampai diubah lewat PR. Setiap perubahan kontrak wajib ditulis di deskripsi PR.
 
 ## Konvensi Umum
 

@@ -3,8 +3,8 @@
 Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan melaporkan jalan berlubang, sampah menumpuk, toilet rusak, atau lampu mati ke sebuah **Board** milik tempat itu. Komunitas memberi dukungan dan reaksi agar masalah paling mendesak naik ke atas, lalu **Penindak** Board menindaklanjuti sampai pelapor mengonfirmasi selesai.
 
 - **Website:** https://tindakserver-production.up.railway.app
-- **Video demo:** link YouTube menyusul
-- **Akun demo:** semua memakai password `demo1234`, misalnya `siti@demo.test` (warga), `ratna@demo.test` (Penindak Utama), `admin@demo.test` (Admin), `adminboard@demo.test` (Admin Board). Daftar lengkap di [docs/DEMO.md](docs/DEMO.md).
+- **Video demo:** https://youtu.be/NS986vahzGE
+- **Akun demo:** lihat [Akun Demo di Website](#akun-demo-di-website). Semua memakai password `demo1234`.
 
 ## Tim
 
@@ -42,6 +42,33 @@ T!ndak memberi setiap tempat sebuah Board seperti forum, misalnya Board sekolah,
 3. **Penindakan transparan:** Penindak bekerja lewat antrean atau kanban dengan status Baru, Perlu Info, Diproses, Menunggu Konfirmasi, Selesai, Dibuka Ulang, Ditolak, atau Duplikat. Setiap perubahan tercatat dan pelapor yang mengonfirmasi selesai.
 4. **Kepercayaan terukur:** rating warga dan tingkat tanggap membentuk Skor Kepercayaan Board. Board resmi bisa diverifikasi menjadi Official oleh Admin Board.
 5. **Aman dari penyalahgunaan:** Tandai Pelanggaran, sembunyi otomatis, filter foto tidak pantas, ban, dan Freeze Board.
+
+## Peran Pengguna
+
+| Peran          | Tugas                                                                      |
+| -------------- | -------------------------------------------------------------------------- |
+| Warga          | Melapor (bisa tanpa akun), mendukung, memberi reaksi, dan rating Board     |
+| Penindak Utama | Pemilik Board: mengatur Board, kategori, dan mengundang Penindak           |
+| Penindak       | Memproses laporan sampai selesai dengan catatan dan foto bukti             |
+| Admin Board    | Memverifikasi Board yang memenuhi syarat menjadi Official                  |
+| Admin          | Moderasi: menangani laporan spam, foto tidak pantas, ban, dan Freeze Board |
+
+## Akun Demo di Website
+
+Semua akun memakai password **`demo1234`**. Data ini hanya untuk demo.
+
+| Peran          | Email                  | Board atau kegunaan                              |
+| -------------- | ---------------------- | ------------------------------------------------ |
+| Warga          | `siti@demo.test`       | Mengikuti Board, punya notifikasi                |
+| Penindak Utama | `ratna@demo.test`      | Jalan Ahmad Yani Surabaya (Official)             |
+| Penindak       | `maya@demo.test`       | Penindak di Jalan Ahmad Yani Surabaya            |
+| Penindak Utama | `hadi@demo.test`       | SMAN 5 Surabaya (Official)                       |
+| Penindak Utama | `andi@demo.test`       | Kampus ITS Sukolilo (kandidat Official)          |
+| Admin Board    | `adminboard@demo.test` | Dashboard Verifikasi, Jadikan Official           |
+| Admin          | `admin@demo.test`      | Panel Admin, antrean moderasi, ban, Freeze Board |
+| Akun ter-ban   | `spam@demo.test`       | Contoh akun yang ditolak saat login              |
+
+Ada juga 30 akun warga `warga01@demo.test` sampai `warga30@demo.test`. Tamu tidak butuh akun: buat laporan tanpa login, lalu pantau lewat menu **Lacak Laporan** dengan Kode Lacak.
 
 ## Dampak yang Bisa Diukur
 
@@ -104,7 +131,7 @@ Express 5 (satu proses Node.js)
         └─ folder upload (volume permanen di production)
 ```
 
-Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Struktur database ada di [docs/DATABASE.md](docs/DATABASE.md). Status pengerjaan ada di [docs/PROGRESS.md](docs/PROGRESS.md). Dokumen rilis: [docs/DEPLOY.md](docs/DEPLOY.md), [docs/DEMO.md](docs/DEMO.md), [docs/DEMO-SCRIPT.md](docs/DEMO-SCRIPT.md), [docs/QA-CHECKLIST.md](docs/QA-CHECKLIST.md).
+Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada di [docs/API.md](docs/API.md). Struktur database ada di [docs/DATABASE.md](docs/DATABASE.md). Panduan deploy ada di [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Stack
 
@@ -113,7 +140,7 @@ Alur produk lengkap ada di [docs/PRODUCT.md](docs/PRODUCT.md). Kontrak API ada d
 | Server  | Node.js 22.18+ (ESM), Express 5, Prisma 7 + MySQL 8, Zod, Socket.IO, helmet, express-rate-limit, pino |
 | Client  | React 19, Vite, React Router, TanStack Query, Tailwind CSS 4                                          |
 | Shared  | Skema Zod, enum, dan konstanta yang dipakai server dan client                                         |
-| Testing | Vitest + Supertest                                                                                    |
+| Testing | Vitest, Supertest (server), React Testing Library (client)                                            |
 | Tooling | npm workspaces, ESLint (flat config), Prettier, GitHub Actions                                        |
 
 ## Struktur Folder
@@ -132,7 +159,7 @@ tindak/
     src/jobs/             job terjadwal
     tests/                tes integrasi Supertest dan unit test
   shared/                 skema Zod, enum, konstanta, rumus skor
-  docs/                   produk, kontrak API, database, deploy, demo, laporan fase
+  docs/                   alur produk, kontrak API, database, deploy, screenshot, logo
 ```
 
 Alur di server selalu routes → controller → service. Prisma hanya dipanggil di service, dan semua input divalidasi skema Zod dari folder `shared` yang juga dipakai form di client.
@@ -254,7 +281,7 @@ Di production server juga menolak menyala jika `SESSION_SECRET` atau `IP_HASH_SE
 - Captcha memakai Cloudflare Turnstile. Kunci test di `.env.example` membuat widget selalu menampilkan "Success!" dan server selalu menerima. Untuk kunci asli, daftar di dashboard Cloudflare → Turnstile, lalu isi `VITE_TURNSTILE_SITE_KEY` dan `TURNSTILE_SECRET_KEY`.
 - Scan foto tidak pantas memakai nsfwjs dengan `@tensorflow/tfjs` (versi JavaScript murni, tanpa kompilasi). Model dimuat saat foto pertama diperiksa, sekitar 1 detik, lalu sekitar 1 detik per foto.
 
-## Akun Demo
+## Akun Development Lokal
 
 Jalankan `npm run db:seed` untuk membuat akun, Board, pengikut, dan 5 laporan contoh dengan foto. Board SMKN 1 Surabaya berisi satu laporan di setiap status untuk mencoba antrean dan kanban. Laporan tamu contoh bisa dilacak di `http://localhost:5173/lacak/DEMAK234?secret=rahasia-demo-tindak`. Aman dijalankan berulang kali. Semua akun memakai password `tindak123`.
 
@@ -265,7 +292,7 @@ Jalankan `npm run db:seed` untuk membuat akun, Board, pengikut, dan 5 laporan co
 | `budi@tindak.test`       | USER        | Penindak Utama 3 Board (termasuk SMKN 1 Surabaya, Official), punya 1 undangan Penindak |
 | `siti@tindak.test`       | USER        | Penindak Utama 2 Board, Penindak di SMKN 1 Surabaya                                    |
 
-Akun di atas hanya untuk development. Untuk lingkungan demo atau lomba, pakai **data demo** yang lebih lengkap: `npm run db:seed:demo` membuat 45 akun (semua role, password `demo1234`), 8 Board di Surabaya dan Sidoarjo, dan 81 laporan. Rinciannya di [docs/DEMO.md](docs/DEMO.md).
+Akun di atas hanya untuk development. Untuk lingkungan demo atau lomba, pakai **data demo** yang lebih lengkap: `npm run db:seed:demo` membuat 45 akun (semua role, password `demo1234`), 8 Board di Surabaya dan Sidoarjo, dan 81 laporan di semua status. Data ini sama dengan yang dipakai di website. Seed demo menolak berjalan jika database sudah berisi data.
 
 ## Mengaktifkan Login Google
 
