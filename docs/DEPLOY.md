@@ -118,4 +118,4 @@ Ubuntu 22.04 atau lebih baru dengan Node.js 22+, MySQL 8 atau MariaDB 10.6+, dan
 
 - Socket.IO berjalan di satu instance. Jika suatu saat aplikasi dijalankan lebih dari satu instance, perlu adapter Redis.
 - Backup database dan volume foto perlu diatur sendiri (Railway menyediakan backup volume di paket berbayar).
-- `npm audit` melaporkan kerentanan di dependensi turunan Prisma (`mariadb`, `mysql2`, `deepmerge-ts`) dan TensorFlow (`sprintf-js`). Rinciannya ada di laporan Fase 11A. Koneksi database lewat jaringan privat Railway mengurangi risiko yang terkait sambungan database.
+- `npm audit` melaporkan kerentanan di dependensi turunan Prisma (`mariadb`, `mysql2`, `deepmerge-ts`) dan TensorFlow (`sprintf-js`). Koneksi database lewat jaringan privat Railway mengurangi risiko yang terkait sambungan database.
