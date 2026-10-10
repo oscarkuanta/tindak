@@ -2,9 +2,9 @@
 
 Board pengaduan masalah fisik berbasis komunitas. Warga, siswa, atau karyawan melaporkan jalan berlubang, sampah menumpuk, toilet rusak, atau lampu mati ke sebuah **Board** milik tempat itu. Komunitas memberi dukungan dan reaksi agar masalah paling mendesak naik ke atas, lalu **Penindak** Board menindaklanjuti sampai pelapor mengonfirmasi selesai.
 
-- **Website:** link diisi setelah deploy (lihat [docs/DEPLOY.md](docs/DEPLOY.md))
-- **Video demo:** link YouTube diisi setelah unggah
-- **Akun demo:** [docs/DEMO.md](docs/DEMO.md)
+- **Website:** https://tindakserver-production.up.railway.app
+- **Video demo:** link YouTube menyusul
+- **Akun demo:** semua memakai password `demo1234`, misalnya `siti@demo.test` (warga), `ratna@demo.test` (Penindak Utama), `admin@demo.test` (Admin), `adminboard@demo.test` (Admin Board). Daftar lengkap di [docs/DEMO.md](docs/DEMO.md).
 
 ## Tim
 

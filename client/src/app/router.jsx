@@ -13,6 +13,7 @@ import { RegisterPage } from '../pages/register/RegisterPage.jsx';
 import { ProfilePage } from '../pages/profile/ProfilePage.jsx';
 import { MyBoardsPage } from '../pages/my-boards/MyBoardsPage.jsx';
 import { NotFoundPage } from '../pages/not-found/NotFoundPage.jsx';
+import { PrivacyPage } from '../pages/privacy/PrivacyPage.jsx';
 import { CreateBoardPage } from '../pages/create-board/CreateBoardPage.jsx';
 import { SearchBoardsPage } from '../pages/search-boards/SearchBoardsPage.jsx';
 import { BoardDetailPage } from '../pages/board-detail/BoardDetailPage.jsx';
@@ -72,6 +73,7 @@ export const routes = [
                   { path: '/laporan-terkirim', element: <ReportSuccessPage /> },
                   { path: '/laporan-perangkat-ini', element: <DeviceReportsPage /> },
                   { path: '/lacak', element: <TrackReportPage /> },
+                  { path: '/privasi', element: <PrivacyPage /> },
                   { path: '/lacak/:code', element: <TrackReportPage /> },
                   { path: '/laporan/:id', element: <ReportDetailPage /> },
                   {
