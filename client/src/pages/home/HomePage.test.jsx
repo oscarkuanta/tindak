@@ -96,6 +96,10 @@ describe('Beranda', () => {
     ).toBeInTheDocument();
     expect(screen.queryByText('SMKN 1 Surabaya')).not.toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: 'Diikuti' })).not.toBeInTheDocument();
+    const trackLinks = screen.getAllByRole('link', { name: 'Lacak Laporan' });
+    expect(trackLinks.length).toBeGreaterThanOrEqual(2);
+    trackLinks.forEach((link) => expect(link).toHaveAttribute('href', '/lacak'));
+    expect(screen.getByRole('heading', { name: 'Sudah pernah melapor tanpa akun?' })).toBeVisible();
   });
 
   it('kota bisa diganti dengan mengetik ulang dan panel kanan hanya berisi Board kota itu', async () => {

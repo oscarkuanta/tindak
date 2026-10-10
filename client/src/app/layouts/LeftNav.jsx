@@ -6,6 +6,7 @@ import {
   Compass,
   EnvelopeSimple,
   House,
+  MagnifyingGlassPlus,
   SealCheck,
   ShieldStar,
   SquaresFour,
@@ -73,6 +74,7 @@ export function LeftNav() {
     ...(user ? [{ to: '/board-saya', label: 'Board Saya', icon: SquaresFour }] : []),
     { to: '/board-diikuti', label: 'Board Diikuti', icon: BookmarkSimple },
     { to: '/cari', label: 'Jelajahi Board', icon: Compass },
+    { to: '/lacak', label: 'Lacak Laporan', icon: MagnifyingGlassPlus },
   ];
   const accountItems = user
     ? [

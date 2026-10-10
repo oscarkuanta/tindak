@@ -71,7 +71,8 @@ export function TrackReportPage() {
           <p className="text-sm font-semibold text-brand">Pantau perkembangan masalah</p>
           <h1 className="mt-1 text-2xl font-bold">Lacak Laporan</h1>
           <p className="mt-2 text-sm text-text-muted">
-            Gunakan Kode Lacak dan tautan rahasia yang diberikan saat laporan dibuat.
+            Di HP atau browser yang dipakai saat melapor, cukup ketik Kode Lacak. Di perangkat lain,
+            tempel tautan lengkap yang kamu salin dari halaman Laporan berhasil dikirim.
           </p>
         </div>
         <Card>
