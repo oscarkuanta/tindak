@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { ArrowFatUp, ClipboardText, MapPin, WarningOctagon } from '@phosphor-icons/react';
+import { Link } from 'react-router';
+import {
+  ArrowFatUp,
+  ClipboardText,
+  MagnifyingGlassPlus,
+  MapPin,
+  WarningOctagon,
+} from '@phosphor-icons/react';
+import { readTrackedReports } from '../../features/reports/trackingStorage.js';
 import { Alert, Button, Card, Spinner, StatCard, Tabs } from '../../components/ui/index.js';
 import { CitySelect } from '../../components/boards/CitySelect.jsx';
 import { EmptyState } from '../../components/boards/EmptyState.jsx';
@@ -63,6 +71,38 @@ function CityPicker({ city, isGuess, onChange }) {
         </button>
       )}
     </Card>
+  );
+}
+
+function TrackPrompt() {
+  const saved = readTrackedReports().length;
+  return (
+    <div className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h2 className="text-base">Sudah pernah melapor tanpa akun?</h2>
+        <p className="mt-1 text-sm text-text-muted">
+          Pantau statusnya dengan Kode Lacak
+          {saved > 0 ? ` (${saved} laporan tersimpan di perangkat ini)` : ''}.
+        </p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          to="/lacak"
+          className="inline-flex h-10 items-center gap-2 rounded-base bg-brand px-4 text-sm font-semibold text-brand-contrast hover:bg-brand-hover"
+        >
+          <MagnifyingGlassPlus size={18} weight="bold" aria-hidden="true" />
+          Lacak Laporan
+        </Link>
+        {saved > 0 && (
+          <Link
+            to="/laporan-perangkat-ini"
+            className="inline-flex h-10 items-center rounded-base border border-border px-4 text-sm font-semibold hover:bg-surface-muted"
+          >
+            Laporan di perangkat ini
+          </Link>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -176,6 +216,8 @@ export function HomePage() {
         <h1 className="text-2xl font-bold">Beranda</h1>
         <p className="mt-1 text-sm text-text-muted">{DESCRIPTIONS[tab]}</p>
       </header>
+
+      {!user && <TrackPrompt />}
 
       <Tabs
         items={tabs.map((value) => ({ value, label: TAB_LABELS[value] }))}

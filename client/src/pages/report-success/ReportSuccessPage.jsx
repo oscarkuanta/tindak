@@ -122,8 +122,10 @@ export function ReportSuccessPage() {
               pertanyaan Penindak, dan mengonfirmasi laporan selesai.
             </p>
             <p className="mt-1">
-              Kode ini juga disimpan di browser perangkat ini, tetapi bisa hilang jika riwayat
-              browser dihapus. Salin dan simpan di tempat aman.
+              Kalau halaman ini tertutup, buka menu <strong>Lacak Laporan</strong> di panel kiri
+              atau di Beranda, lalu ketik Kode Lacak. Di HP atau browser ini, kode saja sudah cukup.
+              Di perangkat lain, tempel <strong>tautan</strong> dari tombol Salin Link. Simpan
+              keduanya di tempat aman, misalnya catatan HP.
             </p>
           </div>
         </div>
