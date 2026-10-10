@@ -3,7 +3,7 @@
 - Branch: `fix/f18-warna-logo`
 - Pemilik: Oscar
 - Tanggal: 2026-10-10
-- PR: (diisi setelah PR dibuat)
+- PR: [#47](https://github.com/oscarkuanta/tindak/pull/47)
 
 ## Ringkasan
 
