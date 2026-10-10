@@ -185,7 +185,7 @@
     top: env(safe-area-inset-top, 0px);
     z-index: 40;
     color: var(--surface);
-    background: linear-gradient(90deg, var(--header-start) 0%, var(--header-end) 75%);
+    background: linear-gradient(180deg, var(--header-start) 0%, var(--header-end) 75%);
     box-shadow: 0 4px 18px rgba(20, 60, 45, 0.12);
   }
 
@@ -537,7 +537,7 @@
     align-items: end;
     gap: 0.25rem;
     padding: 0.55rem 0.5rem calc(0.55rem + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(90deg, var(--header-start) 0%, var(--header-end) 75%);
+    background: linear-gradient(180deg, var(--header-start) 0%, var(--header-end) 75%);
     color: var(--surface);
     box-shadow: 0 -4px 18px rgba(20, 60, 45, 0.14);
   }

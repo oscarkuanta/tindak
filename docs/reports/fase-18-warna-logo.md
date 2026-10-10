@@ -12,7 +12,7 @@ Revisi dari testing tim: warna tema baru, logo dari desain tim, teks panel notif
 ## Yang Dikerjakan
 
 - **Warna tema.**
-  - Header dan navigasi bawah HP memakai gradasi `linear-gradient(90deg, #1FE8A9 0%, #2E9C7A 75%)`.
+  - Header dan navigasi bawah HP memakai gradasi `linear-gradient(180deg, #1FE8A9 0%, #2E9C7A 75%) (atas ke bawah)`.
   - Hijau utama (`--brand`) menjadi `#28BC8D`, hover `#1F9C75`.
   - Warna putih kartu dan permukaan (`--surface`) menjadi `#F8FFF8`.
 - **Logo dari desain tim.**
