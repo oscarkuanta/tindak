@@ -341,7 +341,3 @@ Semua dijalankan dari folder root.
 | `npm run db:test:deploy -w server`             | Menjalankan migrasi ke database `tindak_test`                                                      |
 | `npm run make-admin -- email@contoh.com`       | Menjadikan user dengan email itu sebagai Admin                                                     |
 | `npm run make-board-admin -- email@contoh.com` | Menjadikan user dengan email itu sebagai Admin Board                                               |
-
-## Kontribusi
-
-Baca [CONTRIBUTING.md](CONTRIBUTING.md) untuk alur Git, cara review PR, dan aturan kerja tim.
