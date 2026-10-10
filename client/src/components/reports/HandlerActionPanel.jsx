@@ -11,7 +11,10 @@ import {
   resolveReportSchema,
 } from '@tindak/shared';
 import { searchBoardReports } from '../../features/handling/api.js';
-import { Alert, Button, Input, Modal } from '../ui/index.js';
+import { Alert, Button, Input, Modal, Textarea } from '../ui/index.js';
+import { PhotoUploader } from './PhotoUploader.jsx';
+
+const FIELD_CLASS = 'w-full';
 
 const HANDLER_ACTIONS = [
   REPORT_HANDLING_ACTIONS.PROCESS,
@@ -29,16 +32,8 @@ const ACTION_LABELS = {
 };
 
 function validatePhotos(files) {
-  if (files.length < 1 || files.length > 4) return 'Unggah 1 sampai 4 foto sesudah.';
-  if (
-    files.some(
-      (file) =>
-        !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) ||
-        file.size > 5 * 1024 * 1024,
-    )
-  ) {
-    return 'Foto harus JPEG, PNG, atau WebP dan berukuran maksimal 5 MB.';
-  }
+  if (files.length < 1) return 'Unggah minimal 1 foto sesudah';
+  if (files.length > 4) return 'Maksimal 4 foto sesudah';
   return null;
 }
 
@@ -61,7 +56,7 @@ export function HandlerActionPanel({
       ? String(report.assignee?.id ?? report.assigneeId)
       : '',
   );
-  const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [actionError, setActionError] = useState('');
   const allowedActions = useMemo(
     () => new Set(report.allowedActions ?? []),
@@ -104,14 +99,14 @@ export function HandlerActionPanel({
   });
 
   function openAction(action) {
-    setFormError('');
+    setFieldErrors({});
     setActionError('');
     setModal(action);
   }
 
   function closeModal() {
     setModal(null);
-    setFormError('');
+    setFieldErrors({});
     setFiles([]);
   }
 
@@ -128,53 +123,61 @@ export function HandlerActionPanel({
   function submitRequestInfo(event) {
     event.preventDefault();
     const result = requestReportInfoSchema.safeParse({ question });
-    if (!result.success)
-      return setFormError(result.error.issues[0]?.message ?? 'Periksa pertanyaan.');
+    if (!result.success) {
+      return setFieldErrors({ question: result.error.issues[0]?.message ?? 'Periksa pertanyaan.' });
+    }
+    setFieldErrors({});
     submit(REPORT_HANDLING_ACTIONS.REQUEST_INFO, result.data);
   }
 
   function submitReject(event) {
     event.preventDefault();
+    if (reason === REPORT_REJECTION_REASONS.OTHER && !note.trim()) {
+      return setFieldErrors({ note: 'Catatan wajib diisi untuk alasan Lainnya' });
+    }
     const result = rejectReportSchema.safeParse({ reason, note });
-    if (!result.success) return setFormError(result.error.issues[0]?.message ?? 'Periksa catatan.');
+    if (!result.success) {
+      return setFieldErrors({ note: result.error.issues[0]?.message ?? 'Periksa catatan.' });
+    }
+    setFieldErrors({});
     submit(REPORT_HANDLING_ACTIONS.REJECT, result.data);
   }
 
   function submitDuplicate(event) {
     event.preventDefault();
     const result = duplicateReportSchema.safeParse({ parentId });
-    if (!result.success)
-      return setFormError(result.error.issues[0]?.message ?? 'Pilih laporan induk.');
+    if (!result.success) {
+      return setFieldErrors({
+        parentId: result.error.issues[0]?.message ?? 'Pilih laporan induk.',
+      });
+    }
+    setFieldErrors({});
     submit(REPORT_HANDLING_ACTIONS.DUPLICATE, result.data);
   }
 
   function submitResolve(event) {
     event.preventDefault();
+    const errors = {};
     const result = resolveReportSchema.safeParse({ note });
-    if (!result.success)
-      return setFormError(result.error.issues[0]?.message ?? 'Catatan wajib diisi.');
+    if (!result.success) {
+      errors.note = result.error.issues[0]?.message ?? 'Catatan penyelesaian wajib diisi';
+    }
     const photoError = validatePhotos(files);
-    if (photoError) return setFormError(photoError);
+    if (photoError) errors.photos = photoError;
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
     const body = new FormData();
     body.set('note', result.data.note);
     files.forEach((file) => body.append('photos', file));
     submit(REPORT_HANDLING_ACTIONS.RESOLVE, body);
   }
 
-  function handleFileChange(event) {
-    const selectedFiles = Array.from(event.target.files ?? []);
-    if (selectedFiles.length > 4) {
-      setFiles([]);
-      setFormError('Maksimal 4 foto sesudah.');
+  async function processReport() {
+    if (!assigneeId) {
+      setActionError('Pilih penanggung jawab dulu sebelum memproses laporan.');
       return;
     }
-    setFiles(selectedFiles);
-    setFormError('');
-  }
-
-  async function processReport() {
-    const payload = assigneeId ? { assigneeId: Number(assigneeId) } : {};
-    const result = processReportSchema.safeParse(payload);
+    const result = processReportSchema.safeParse({ assigneeId: Number(assigneeId) });
     if (!result.success) {
       setActionError(result.error.issues[0]?.message ?? 'Penanggung jawab tidak valid.');
       return;
@@ -184,6 +187,14 @@ export function HandlerActionPanel({
 
   const hasHandlerAction = HANDLER_ACTIONS.some((action) => allowedActions.has(action));
   if (!hasHandlerAction) return null;
+  const canProcess = allowedActions.has(REPORT_HANDLING_ACTIONS.PROCESS);
+  const needsAssignee = canProcess && !assigneeId;
+
+  const serverError = actionError && (
+    <p role="alert" className="text-sm text-danger">
+      {actionError}
+    </p>
+  );
 
   return (
     <section
@@ -201,21 +212,30 @@ export function HandlerActionPanel({
           <select
             id="report-assignee"
             value={assigneeId}
-            onChange={(event) => setAssigneeId(event.target.value)}
-            className="h-10 w-full rounded-base border border-border bg-surface px-3 text-sm"
+            onChange={(event) => {
+              setAssigneeId(event.target.value);
+              setActionError('');
+            }}
+            aria-describedby={needsAssignee ? 'report-assignee-hint' : undefined}
+            className={`h-10 w-full rounded-base border bg-surface px-3 text-sm ${needsAssignee && actionError ? 'border-danger' : 'border-border'}`}
           >
-            <option value="">Belum ditentukan</option>
+            <option value="">Pilih penanggung jawab</option>
             {assigneeOptions.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.label}
               </option>
             ))}
           </select>
+          {needsAssignee && (
+            <p id="report-assignee-hint" className="mt-1 text-xs text-text-muted">
+              Wajib dipilih sebelum laporan bisa diproses.
+            </p>
+          )}
         </div>
       )}
       <div className="mt-4 flex flex-wrap gap-2">
-        {allowedActions.has(REPORT_HANDLING_ACTIONS.PROCESS) && (
-          <Button onClick={processReport} loading={isPending}>
+        {canProcess && (
+          <Button onClick={processReport} loading={isPending} disabled={needsAssignee}>
             Proses laporan
           </Button>
         )}
@@ -238,11 +258,7 @@ export function HandlerActionPanel({
           <Button onClick={() => openAction('resolve')}>Tandai Selesai</Button>
         )}
       </div>
-      {actionError && (
-        <p role="alert" className="mt-3 text-sm text-danger">
-          {actionError}
-        </p>
-      )}
+      {modal === null && serverError && <div className="mt-3">{serverError}</div>}
 
       <Modal
         open={modal !== null}
@@ -250,43 +266,34 @@ export function HandlerActionPanel({
         title={ACTION_LABELS[modal] ?? 'Tindakan laporan'}
       >
         {modal === 'requestInfo' && (
-          <form className="space-y-4" onSubmit={submitRequestInfo}>
-            <label className="block text-sm font-medium" htmlFor="request-info-question">
-              Pertanyaan untuk pelapor
-            </label>
-            <textarea
-              id="request-info-question"
+          <form className="space-y-4" onSubmit={submitRequestInfo} noValidate>
+            <Textarea
+              label="Pertanyaan untuk pelapor"
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               rows={4}
               maxLength={1000}
-              className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm"
-              required
+              error={fieldErrors.question}
+              className={FIELD_CLASS}
             />
-            {formError && (
-              <p role="alert" className="text-sm text-danger">
-                {formError}
-              </p>
-            )}
-            {actionError && (
-              <p role="alert" className="text-sm text-danger">
-                {actionError}
-              </p>
-            )}
+            {serverError}
             <Button type="submit" loading={isPending}>
               Kirim pertanyaan
             </Button>
           </form>
         )}
         {modal === 'reject' && (
-          <form className="space-y-4" onSubmit={submitReject}>
+          <form className="space-y-4" onSubmit={submitReject} noValidate>
             <label className="block text-sm font-medium" htmlFor="reject-reason">
               Alasan penolakan
             </label>
             <select
               id="reject-reason"
               value={reason}
-              onChange={(event) => setReason(event.target.value)}
+              onChange={(event) => {
+                setReason(event.target.value);
+                setFieldErrors({});
+              }}
               className="h-10 w-full rounded-base border border-border bg-surface px-3 text-sm"
             >
               {Object.entries(REPORT_REJECTION_REASON_LABELS).map(([value, label]) => (
@@ -295,44 +302,23 @@ export function HandlerActionPanel({
                 </option>
               ))}
             </select>
-            <label className="block text-sm font-medium" htmlFor="reject-note">
-              Catatan{' '}
-              {reason === REPORT_REJECTION_REASONS.OTHER
-                ? '(wajib untuk alasan Lainnya)'
-                : '(opsional)'}
-            </label>
-            <textarea
-              id="reject-note"
+            <Textarea
+              label={`Catatan ${reason === REPORT_REJECTION_REASONS.OTHER ? '(wajib untuk alasan Lainnya)' : '(opsional)'}`}
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={3}
               maxLength={2000}
-              required={reason === REPORT_REJECTION_REASONS.OTHER}
-              onInvalid={(event) => {
-                if (reason === REPORT_REJECTION_REASONS.OTHER && !note.trim()) {
-                  event.preventDefault();
-                  setFormError('Catatan wajib diisi untuk alasan Lainnya');
-                }
-              }}
-              className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm"
+              error={fieldErrors.note}
+              className={FIELD_CLASS}
             />
-            {formError && (
-              <p role="alert" className="text-sm text-danger">
-                {formError}
-              </p>
-            )}
-            {actionError && (
-              <p role="alert" className="text-sm text-danger">
-                {actionError}
-              </p>
-            )}
+            {serverError}
             <Button type="submit" variant="danger" loading={isPending}>
               Tolak laporan
             </Button>
           </form>
         )}
         {modal === 'duplicate' && (
-          <form className="space-y-4" onSubmit={submitDuplicate}>
+          <form className="space-y-4" onSubmit={submitDuplicate} noValidate>
             <Input
               label="Cari laporan induk di Board ini"
               value={search}
@@ -341,6 +327,7 @@ export function HandlerActionPanel({
                 setParentId('');
               }}
               placeholder="Ketik judul laporan"
+              error={fieldErrors.parentId}
             />
             {search.trim().length < 2 && (
               <p className="text-sm text-text-muted">Ketik minimal 2 karakter untuk mencari.</p>
@@ -370,57 +357,36 @@ export function HandlerActionPanel({
                 )}
               </ul>
             )}
-            {formError && (
-              <p role="alert" className="text-sm text-danger">
-                {formError}
-              </p>
-            )}
-            {actionError && (
-              <p role="alert" className="text-sm text-danger">
-                {actionError}
-              </p>
-            )}
+            {serverError}
             <Button type="submit" disabled={!parentId} loading={isPending}>
               Tandai Duplikat
             </Button>
           </form>
         )}
         {modal === 'resolve' && (
-          <form className="space-y-4" onSubmit={submitResolve}>
-            <label className="block text-sm font-medium" htmlFor="resolve-note">
-              Catatan penyelesaian
-            </label>
-            <textarea
-              id="resolve-note"
+          <form className="space-y-4" onSubmit={submitResolve} noValidate>
+            <Textarea
+              label="Catatan penyelesaian"
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={3}
               maxLength={2000}
-              required
-              className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm"
+              placeholder="Contoh: Lubang sudah ditambal aspal pada 9 Oktober."
+              error={fieldErrors.note}
+              className={FIELD_CLASS}
             />
-            <Input
-              type="file"
-              label="Foto sesudah (wajib, maksimal 4 foto)"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              onChange={handleFileChange}
+            <PhotoUploader
+              files={files}
+              onChange={(next) => {
+                setFiles(next);
+                setFieldErrors((current) => ({ ...current, photos: undefined }));
+              }}
+              error={fieldErrors.photos}
+              label="Foto sesudah"
+              hint="Wajib 1 foto, maksimal 4 foto. Foto baru ditambahkan ke daftar, tidak mengganti foto sebelumnya."
+              inputLabel="Unggah foto sesudah"
             />
-            {files.length > 0 && (
-              <p className="text-xs text-text-muted">
-                {files.length} foto dipilih: {files.map((file) => file.name).join(', ')}
-              </p>
-            )}
-            {formError && (
-              <p role="alert" className="text-sm text-danger">
-                {formError}
-              </p>
-            )}
-            {actionError && (
-              <p role="alert" className="text-sm text-danger">
-                {actionError}
-              </p>
-            )}
+            {serverError}
             <Button type="submit" loading={isPending}>
               Kirim bukti dan tandai selesai
             </Button>

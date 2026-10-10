@@ -40,7 +40,7 @@ describe('Form laporan', () => {
     expect(screen.getByText('Unggah minimal 1 foto masalah.')).toBeInTheDocument();
   });
 
-  it('menolak foto kelima dan hanya menampilkan maksimal empat pratinjau', () => {
+  it('menolak foto kelima dan hanya menampilkan maksimal empat pratinjau', async () => {
     const files = [];
     function TestUploader() {
       const [selected, setSelected] = useState(files);
@@ -55,7 +55,22 @@ describe('Form laporan', () => {
 
     fireEvent.change(upload, { target: { files: photos } });
 
-    expect(screen.getAllByRole('button', { name: /^Hapus foto/ })).toHaveLength(4);
+    expect(await screen.findAllByRole('button', { name: /^Hapus foto/ })).toHaveLength(4);
     expect(screen.getByRole('alert')).toHaveTextContent('Maksimal 4 foto.');
+  });
+
+  it('menolak file yang bukan foto dengan pesan jelas', async () => {
+    function TestUploader() {
+      const [selected, setSelected] = useState([]);
+      return <PhotoUploader files={selected} onChange={setSelected} />;
+    }
+    render(<TestUploader />);
+
+    fireEvent.change(screen.getByLabelText('Unggah foto laporan'), {
+      target: { files: [new File(['isi'], 'catatan.pdf', { type: 'application/pdf' })] },
+    });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('catatan.pdf: file ini bukan foto.');
+    expect(screen.queryByRole('button', { name: /^Hapus foto/ })).not.toBeInTheDocument();
   });
 });

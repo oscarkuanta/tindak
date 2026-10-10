@@ -3,6 +3,7 @@ import { MagnifyingGlass } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router';
 import { TrustBadge, VerificationBadge } from '../../components/boards/BoardBadges.jsx';
 import { useBoardSearch } from '../../features/boards/hooks.js';
+import { useMyCity } from '../../features/location/myCity.js';
 
 export function BoardSearch() {
   const [query, setQuery] = useState('');
@@ -11,9 +12,15 @@ export function BoardSearch() {
   const [activeIndex, setActiveIndex] = useState(-1);
   const rootRef = useRef(null);
   const navigate = useNavigate();
+  const { city } = useMyCity();
   const searching = debouncedQuery.length >= 2;
   const searchQuery = useBoardSearch(
-    { q: searching ? debouncedQuery : '', page: 1, pageSize: 5 },
+    {
+      q: searching ? debouncedQuery : '',
+      ...(!searching && city && { city }),
+      page: 1,
+      pageSize: 5,
+    },
     { enabled: open },
   );
   const suggestions = (searchQuery.data?.data ?? []).slice(0, 5);
@@ -102,11 +109,11 @@ export function BoardSearch() {
         <div
           id="header-board-suggestions"
           role="listbox"
-          className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-card border border-border bg-surface p-1 shadow-card"
+          className="absolute top-full z-50 mt-2 w-full overflow-hidden rounded-card border border-border bg-surface p-1 text-text shadow-card"
         >
           {!searching && suggestions.length > 0 && (
             <p className="px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
-              Board terpopuler
+              {city ? `Board di ${city}` : 'Board terpopuler'}
             </p>
           )}
           {searchQuery.isPending ? (

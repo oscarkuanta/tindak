@@ -602,11 +602,19 @@ Urutan: yang terbaru diikuti lebih dahulu.
 
 Auth: OWNER. Mengundang akun yang sudah terdaftar menjadi Penindak.
 
-Body: `{ "email": "dewi@example.com" }`. Hanya field `email` yang diterima. Rate limit 30 undangan per jam. Mengundang diri sendiri atau anggota yang sudah ada (aktif maupun diundang) membalas `409 HANDLER_ALREADY_MEMBER`.
+Body: `{ "email": "dewi@example.com" }` atau `{ "userId": 18 }` (pilih salah satu, dari hasil `GET /api/boards/:slug/handlers/candidates`). Mengirim keduanya atau tidak sama sekali membalas `400` "Pilih akun dari daftar atau isi email". Rate limit 30 undangan per jam. Mengundang diri sendiri atau anggota yang sudah ada (aktif maupun diundang) membalas `409 HANDLER_ALREADY_MEMBER`.
 
 Sukses `201`: `{ "data": <BoardMember> }` dengan status `INVITED`. Maksimal 10 Penindak per Board, termasuk undangan yang belum dijawab.
 
 Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`, `404 USER_NOT_FOUND`, `409 HANDLER_ALREADY_MEMBER`, `409 HANDLER_LIMIT_REACHED`.
+
+### GET /api/boards/:slug/handlers/candidates
+
+Auth: OWNER. Rate limit 60 per menit. Query `q` (2–80 karakter). Mencari akun berdasarkan nama atau email untuk diundang menjadi Penindak. Anggota Board (Penindak Utama, Penindak, dan undangan) tidak ikut. Maksimal 6 hasil, urut nama.
+
+Sukses `200`: `{ "data": [{ "id": 18, "name": "Dewi Lestari", "email": "de•••••@example.com", "avatarUrl": null }] }`. Email selalu disamarkan (2 huruf pertama dan domain).
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `403 FORBIDDEN`, `404 BOARD_NOT_FOUND`.
 
 ### GET /api/boards/:slug/handlers
 
@@ -847,7 +855,19 @@ Error: `400 VALIDATION_ERROR` jika `secret` tidak dikirim atau format kode salah
 
 ### GET /api/me/reports
 
-Auth: Login. Laporan yang dibuat user ini, termasuk yang anonim dan yang tersembunyi, terbaru dulu. Query `page` dan `pageSize`.
+Auth: Login. Laporan yang dibuat user ini, termasuk yang anonim dan yang tersembunyi, terbaru dulu. Query `page`, `pageSize`, dan `q` opsional (2–80 karakter) yang mencari di judul, deskripsi, detail lokasi, atau Kode Lacak (boleh dengan awalan `TND-`).
+
+Setiap laporan milik user yang sedang login (di daftar mana pun dan di detail) menambah field `trackingCode`. Orang lain tidak pernah menerima field ini.
+
+### POST /api/me/reports/claim
+
+Auth: Login. Rate limit 20 per 15 menit. Memindahkan laporan yang dikirim sebagai tamu di browser yang sama ke akun ini.
+
+Body: `{ "items": [{ "trackingCode": "K7M2P9QX", "secret": "..." }] }` (1–50 item, `trackingCode` boleh dengan awalan `TND-`). Hanya laporan tanpa pemilik dan dengan secret yang cocok yang dipindahkan. Laporan yang dipindahkan menjadi milik user dengan `isAnonymous: true`, sehingga nama pelapor tetap tersembunyi untuk publik. Item yang tidak cocok diabaikan tanpa error.
+
+Sukses `200`: `{ "data": { "claimed": 1, "reportIds": [12] } }`.
+
+Error: `400 VALIDATION_ERROR`, `401 UNAUTHENTICATED`, `429 RATE_LIMITED`.
 
 Sukses `200`: `{ "data": [<Report>], "meta": { "page": 1, "pageSize": 10, "total": 0, "totalPages": 0 } }`.
 
@@ -930,7 +950,7 @@ Error: 400 VALIDATION_ERROR, 401 UNAUTHENTICATED, 403 FORBIDDEN, 404 BOARD_NOT_F
 
 ### POST /api/reports/:id/process
 
-Auth: Penindak Utama atau Penindak aktif Board laporan. Memindahkan NEW atau REOPENED ke IN_PROGRESS. Body opsional: { "assigneeId": 18 }; assigneeId harus anggota aktif Board yang sama (OWNER atau HANDLER). Tanpa assigneeId, penanggung jawab lama dipertahankan (laporan baru tetap tanpa penanggung jawab). assigneeId null mengosongkan penanggung jawab.
+Auth: Penindak Utama atau Penindak aktif Board laporan. Memindahkan NEW atau REOPENED ke IN_PROGRESS. Body: { "assigneeId": 18 }; assigneeId harus anggota aktif Board yang sama (OWNER atau HANDLER). Laporan wajib punya penanggung jawab setelah diproses: tanpa assigneeId, penanggung jawab lama dipakai; jika laporan belum punya penanggung jawab, server membalas `400 VALIDATION_ERROR` "Pilih penanggung jawab dulu sebelum memproses laporan". assigneeId null ditolak.
 
 Sukses 200: { "data": <Report detail> }.
 
@@ -1089,8 +1109,9 @@ Auth: Login. Menghapus reaksi. Idempoten. Sukses `200` dengan bentuk yang sama.
 
 ### GET /api/feed/home
 
-Auth: opsional. Query: `tab` (`hot` default, atau `following`), `page`, `pageSize` (default 10, maks 50).
+Auth: opsional. Query: `tab` (`hot` default, `nearby`, atau `following`), `city` (wajib untuk `nearby`, nama resmi dari `GET /api/meta/cities`), `page`, `pageSize` (default 10, maks 50).
 
+- `nearby`: laporan dari Board di kota `city` yang tidak di-freeze, urut `hotScore` lalu terbaru. Tanpa `city` membalas `400` dengan pesan "Pilih kotamu dulu untuk melihat laporan di sekitarmu". Kota pilihan user disimpan di browser, bukan di server.
 - `hot`: laporan dari semua Board yang tidak di-freeze, urut `hotScore` lalu terbaru.
 - `following`: wajib login (`401` untuk tamu). Laporan dari Board yang diikuti, terbaru dulu.
 

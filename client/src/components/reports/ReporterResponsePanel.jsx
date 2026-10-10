@@ -5,7 +5,8 @@ import {
   confirmReportSchema,
 } from '@tindak/shared';
 import { BeforeAfterSlider } from './BeforeAfterSlider.jsx';
-import { Alert, Button, Input, Modal } from '../ui/index.js';
+import { Alert, Button, Modal, Textarea } from '../ui/index.js';
+import { PhotoUploader } from './PhotoUploader.jsx';
 
 function guestFields(credentials) {
   return credentials?.trackingCode && credentials?.secret
@@ -22,7 +23,7 @@ function validateExtraPhotos(files) {
         file.size > 5 * 1024 * 1024,
     )
   ) {
-    return 'Foto harus JPEG, PNG, atau WebP dan berukuran maksimal 5 MB.';
+    return 'Foto tidak bisa diproses. Coba foto lain dalam format JPG, PNG, atau WebP.';
   }
   return null;
 }
@@ -106,30 +107,23 @@ export function ReporterResponsePanel({ report, credentials, onAction, isPending
         Tanggapan Pelapor
       </h2>
       {allowedActions.has(REPORT_HANDLING_ACTIONS.ANSWER_INFO) && report.infoRequest && (
-        <form className="mt-4 space-y-3" onSubmit={submitAnswer}>
+        <form className="mt-4 space-y-3" onSubmit={submitAnswer} noValidate>
           <div className="rounded-base bg-surface-muted p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
               Pertanyaan Penindak
             </p>
             <p className="mt-1 text-sm">{report.infoRequest.question}</p>
           </div>
-          <label htmlFor="answer-info" className="block text-sm font-medium">
-            Jawaban kamu
-          </label>
-          <textarea
+          <Textarea
             id="answer-info"
+            label="Jawaban kamu"
             value={answer}
             onChange={(event) => setAnswer(event.target.value)}
             rows={4}
             maxLength={2000}
-            required
-            className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm"
+            error={formError || undefined}
+            className="w-full"
           />
-          {formError && (
-            <p role="alert" className="text-sm text-danger">
-              {formError}
-            </p>
-          )}
           {actionError && (
             <p role="alert" className="text-sm text-danger">
               {actionError}
@@ -160,45 +154,24 @@ export function ReporterResponsePanel({ report, credentials, onAction, isPending
       )}
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} title="Apa yang belum beres?">
-        <form className="space-y-4" onSubmit={submitNotResolved}>
-          <label htmlFor="reopen-note" className="block text-sm font-medium">
-            Jelaskan masalah yang masih ada
-          </label>
-          <textarea
+        <form className="space-y-4" onSubmit={submitNotResolved} noValidate>
+          <Textarea
             id="reopen-note"
+            label="Jelaskan masalah yang masih ada"
             value={note}
             onChange={(event) => setNote(event.target.value)}
             rows={4}
             maxLength={2000}
-            required
-            className="w-full rounded-base border border-border bg-surface px-3 py-2 text-sm"
+            error={formError || undefined}
+            className="w-full"
           />
-          <Input
-            type="file"
-            label="Foto tambahan (opsional, maksimal 4)"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={(event) => {
-              const selectedFiles = Array.from(event.target.files ?? []);
-              if (selectedFiles.length > 4) {
-                setFiles([]);
-                setFormError('Maksimal 4 foto tambahan.');
-                return;
-              }
-              setFiles(selectedFiles);
-              setFormError('');
-            }}
+          <PhotoUploader
+            files={files}
+            onChange={setFiles}
+            label="Foto tambahan (opsional)"
+            hint="Maksimal 4 foto. Foto baru ditambahkan ke daftar, tidak mengganti foto sebelumnya."
+            inputLabel="Unggah foto tambahan"
           />
-          {files.length > 0 && (
-            <p className="text-xs text-text-muted">
-              {files.length} foto dipilih: {files.map((file) => file.name).join(', ')}
-            </p>
-          )}
-          {formError && (
-            <p role="alert" className="text-sm text-danger">
-              {formError}
-            </p>
-          )}
           {actionError && (
             <p role="alert" className="text-sm text-danger">
               {actionError}

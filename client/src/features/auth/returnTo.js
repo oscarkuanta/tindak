@@ -1,4 +1,4 @@
-import { AUTH_PATHS } from '@tindak/shared';
+import { AUTH_PATHS, USER_ROLES } from '@tindak/shared';
 
 const BASE = 'http://tindak.local';
 const AUTH_ROUTES = new Set(Object.values(AUTH_PATHS));
@@ -14,6 +14,24 @@ export function safeReturnTo(value, fallback = '/') {
   } catch {
     return fallback;
   }
+}
+
+const STAFF_PATHS = [
+  ['/admin', USER_ROLES.ADMIN],
+  ['/panel-admin', USER_ROLES.ADMIN],
+  ['/verifikasi', USER_ROLES.BOARD_ADMIN],
+];
+
+export function canVisit(user, path) {
+  const rule = STAFF_PATHS.find(
+    ([prefix]) => path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}?`),
+  );
+  return !rule || user?.role === rule[1];
+}
+
+export function returnToFor(user, value) {
+  const target = safeReturnTo(value);
+  return canVisit(user, target) ? target : '/';
 }
 
 export function loginPath(returnTo) {

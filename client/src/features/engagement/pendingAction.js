@@ -25,3 +25,11 @@ export function takePendingAction(reportId) {
     return null;
   }
 }
+
+export function clearPendingAction() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    return;
+  }
+}

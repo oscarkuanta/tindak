@@ -4,6 +4,7 @@ import { AUTH_PATHS } from '@tindak/shared';
 import { Button, Modal } from '../../components/ui/index.js';
 import { GoogleButton } from './GoogleButton.jsx';
 import { LoginPromptContext } from './loginPromptContext.js';
+import { AccountSync } from './AccountSync.jsx';
 import { loginPath } from './returnTo.js';
 
 const DEFAULT_TITLE = 'Masuk untuk melanjutkan';
@@ -32,6 +33,7 @@ export function LoginPromptProvider({ children }) {
 
   return (
     <LoginPromptContext.Provider value={value}>
+      <AccountSync />
       {children ?? <Outlet />}
       <Modal open={Boolean(prompt)} onClose={close} title={prompt?.title}>
         <p className="text-sm text-text-muted">

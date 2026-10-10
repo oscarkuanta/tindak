@@ -1,18 +1,17 @@
 import { Link } from 'react-router';
 import { cn } from '../../lib/cn.js';
+import { TindakLogo } from '../../components/icons/BrandAssets.jsx';
 
-const TONES = { light: 'text-surface', brand: 'text-mint-600' };
+const TONES = { light: 'text-surface', brand: 'text-brand' };
 
 export function Logo({ className, tone = 'light' }) {
   return (
     <Link
       to="/"
-      aria-label="T!indak, ke Beranda"
+      aria-label="T!ndak, ke Beranda"
       className={cn('brand-link shrink-0', TONES[tone], className)}
     >
-      <span className="brand-wordmark">
-        T<span className="brand-mark">!</span>NDAK
-      </span>
+      <TindakLogo className="brand-logo" />
     </Link>
   );
 }

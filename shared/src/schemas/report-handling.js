@@ -23,7 +23,11 @@ export const reportQueueFiltersSchema = z.object({
 });
 
 export const processReportSchema = z.object({
-  assigneeId: z.coerce.number().int().positive().nullable().optional(),
+  assigneeId: z.coerce
+    .number({ error: 'Pilih penanggung jawab dulu' })
+    .int()
+    .positive({ error: 'Pilih penanggung jawab dulu' })
+    .optional(),
 });
 
 export const requestReportInfoSchema = z.object({

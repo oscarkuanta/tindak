@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  REPORT_ALLOWED_PHOTO_TYPES,
-  REPORT_MAX_PHOTOS,
-  REPORT_MAX_PHOTO_BYTES,
-} from '@tindak/shared';
-
-function formatMegabytes(bytes) {
-  return `${Math.round(bytes / (1024 * 1024))} MB`;
-}
+import { REPORT_MAX_PHOTOS } from '@tindak/shared';
+import { compressImages } from '../../lib/compressImage.js';
 
 function PhotoPreview({ file }) {
   const imageRef = useRef(null);
@@ -22,50 +15,58 @@ function PhotoPreview({ file }) {
   return <img ref={imageRef} alt={`Pratinjau ${file.name}`} className="h-24 w-full object-cover" />;
 }
 
-export function PhotoUploader({ files, onChange, error }) {
+export function PhotoUploader({
+  files,
+  onChange,
+  error,
+  label = 'Foto masalah',
+  hint = 'Wajib 1 foto, maksimal 4 foto. Langsung pakai foto dari kamera HP, ukurannya otomatis diperkecil.',
+  inputLabel = 'Unggah foto laporan',
+}) {
   const [notice, setNotice] = useState('');
+  const [processing, setProcessing] = useState(false);
 
-  function addFiles(fileList) {
-    const next = [...files];
+  async function addFiles(fileList) {
+    const selected = Array.from(fileList ?? []);
+    const room = REPORT_MAX_PHOTOS - files.length;
     const messages = [];
-    for (const file of Array.from(fileList ?? [])) {
-      if (!REPORT_ALLOWED_PHOTO_TYPES.includes(file.type)) {
-        messages.push(`${file.name}: gunakan JPG, PNG, atau WebP.`);
-      } else if (file.size > REPORT_MAX_PHOTO_BYTES) {
-        messages.push(`${file.name}: ukuran maksimal ${formatMegabytes(REPORT_MAX_PHOTO_BYTES)}.`);
-      } else if (next.length >= REPORT_MAX_PHOTOS) {
-        messages.push(`Maksimal ${REPORT_MAX_PHOTOS} foto.`);
-      } else {
-        next.push(file);
-      }
+    if (selected.length > room) messages.push(`Maksimal ${REPORT_MAX_PHOTOS} foto.`);
+    if (room <= 0) {
+      setNotice(messages.join(' '));
+      return;
     }
-    onChange(next);
-    setNotice(messages.join(' '));
+    setProcessing(true);
+    setNotice('');
+    const { files: ready, errors } = await compressImages(selected.slice(0, room));
+    setProcessing(false);
+    onChange([...files, ...ready]);
+    setNotice([...errors, ...messages].join(' '));
   }
 
   return (
     <div>
-      <span className="text-sm font-medium">Foto masalah</span>
-      <p className="mt-1 text-xs text-text-muted">
-        Wajib 1 foto, maksimal {REPORT_MAX_PHOTOS} foto. JPG, PNG, atau WebP hingga 5 MB per foto.
-      </p>
+      <span className="text-sm font-medium">{label}</span>
+      <p className="mt-1 text-xs text-text-muted">{hint}</p>
       <label
         onDragOver={(event) => event.preventDefault()}
         onDrop={(event) => {
           event.preventDefault();
           addFiles(event.dataTransfer.files);
         }}
-        className="mt-3 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-card border border-dashed border-border bg-surface-muted px-4 py-5 text-center hover:border-brand"
+        className={`mt-3 flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-card border border-dashed bg-surface-muted px-4 py-5 text-center hover:border-brand ${error ? 'border-danger' : 'border-border'}`}
       >
-        <span className="text-sm font-semibold">Pilih foto atau jatuhkan di sini</span>
-        <span className="mt-1 text-xs text-text-muted">
+        <span className="text-sm font-semibold">
+          {processing ? 'Memperkecil foto...' : 'Pilih foto atau jatuhkan di sini'}
+        </span>
+        <span className="mt-1 text-xs text-text-muted" aria-live="polite">
           {files.length} dari {REPORT_MAX_PHOTOS} foto
         </span>
         <input
-          aria-label="Unggah foto laporan"
+          aria-label={inputLabel}
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           multiple
+          disabled={processing}
           className="sr-only"
           onChange={(event) => {
             addFiles(event.target.files);

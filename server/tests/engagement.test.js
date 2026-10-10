@@ -374,6 +374,35 @@ describe('Beranda dan Board populer', () => {
     expect((await request(app).get('/api/feed/home?tab=lain')).status).toBe(400);
   });
 
+  it('tab nearby hanya berisi laporan dari Board di kota yang dipilih', async () => {
+    const { owner, board } = await setup();
+    const jakarta = await owner.agent
+      .post('/api/boards')
+      .send({
+        name: 'Gedung Besar Jakarta',
+        city: 'Kota Administrasi Jakarta Selatan',
+        type: 'OFFICE',
+        description: 'Melayani laporan kerusakan di gedung ini.',
+      })
+      .expect(201);
+    await insertReport(board, { title: 'Di Surabaya' });
+    await insertReport(jakarta.body.data, { title: 'Di Jakarta' });
+
+    const nearby = await request(app).get(
+      `/api/feed/home?tab=nearby&city=${encodeURIComponent('Kota Surabaya')}`,
+    );
+    const noCity = await request(app).get('/api/feed/home?tab=nearby');
+    const unknownCity = await request(app).get('/api/feed/home?tab=nearby&city=Gotham');
+
+    expect(nearby.status).toBe(200);
+    expect(nearby.body.data.map((item) => item.title)).toEqual(['Di Surabaya']);
+    expect(noCity.status).toBe(400);
+    expect(noCity.body.error.details[0].message).toBe(
+      'Pilih kotamu dulu untuk melihat laporan di sekitarmu',
+    );
+    expect(unknownCity.status).toBe(400);
+  });
+
   it('Board populer dan pencarian kosong diurutkan dari pengikut dan aktivitas', async () => {
     const { owner, fan, other, board } = await setup();
     const quiet = await createBoardAs(owner.agent, 'Board Sepi');

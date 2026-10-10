@@ -19,6 +19,7 @@ import {
 import { savePendingAction, takePendingAction } from '../../features/engagement/pendingAction.js';
 import { applyMyEngagement } from '../../features/realtime/cacheUpdates.js';
 import { ReactionIcon } from '../icons/AppIcons.jsx';
+import { LockNotice } from './LockNotice.jsx';
 
 const LOGIN_TITLE = 'Masuk untuk mendukung laporan ini';
 const LOCKED_REASON = 'Laporan sudah ditutup, dukungan dan reaksi dikunci';
@@ -123,6 +124,11 @@ export function EngagementBar({ report, className }) {
 
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
+      {locked && (
+        <div className="w-full">
+          <LockNotice status={report.status} />
+        </div>
+      )}
       <button
         type="button"
         onClick={handleSupportClick}

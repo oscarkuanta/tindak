@@ -88,3 +88,9 @@ export function removeBoardHandler(slug, userId) {
 export function transferBoardOwnership(slug, payload) {
   return api.post(`/boards/${encodeURIComponent(slug)}/transfer`, payload);
 }
+
+export function searchHandlerCandidates(slug, q) {
+  return api.get(
+    `/boards/${encodeURIComponent(slug)}/handlers/candidates?q=${encodeURIComponent(q)}`,
+  );
+}

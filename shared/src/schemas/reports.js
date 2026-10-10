@@ -14,6 +14,9 @@ import {
   TRACKING_CODE_ALPHABET,
   TRACKING_CODE_LENGTH,
 } from '../constants/reports.js';
+import { CITY_NAMES } from '../constants/cities.js';
+
+const CITY_NAME_SET = new Set(CITY_NAMES);
 
 export const createReportSchema = z.object({
   title: z
@@ -88,7 +91,17 @@ export const boardReportsQuerySchema = z.object({
   ...reportPageSchema,
 });
 
-export const myReportsQuerySchema = z.object(reportPageSchema);
+export const myReportsQuerySchema = z.object({
+  q: emptyToUndefined(
+    z
+      .string()
+      .trim()
+      .min(2, 'Kata kunci minimal 2 karakter')
+      .max(80, 'Kata kunci maksimal 80 karakter')
+      .optional(),
+  ),
+  ...reportPageSchema,
+});
 
 export const reportIdParamSchema = z.object({
   id: z.coerce.number().int().positive({ error: 'ID laporan tidak valid' }),
@@ -111,6 +124,18 @@ export const trackReportParamSchema = z.object({
     ),
 });
 
+export const claimReportsRequestSchema = z.strictObject({
+  items: z
+    .array(
+      z.strictObject({
+        trackingCode: trackReportParamSchema.shape.code,
+        secret: z.string().trim().min(1).max(200),
+      }),
+    )
+    .min(1, 'Tidak ada laporan untuk dipindahkan')
+    .max(50, 'Maksimal 50 laporan sekali pindah'),
+});
+
 export const trackReportQuerySchema = z.object({
   secret: z.string().trim().min(1, 'Tautan rahasia wajib disertakan').max(200),
 });
@@ -119,7 +144,21 @@ export const reactionRequestSchema = z.strictObject({
   type: z.enum(REACTION_TYPES, { error: 'Pilih reaksi yang valid' }),
 });
 
-export const homeFeedQuerySchema = z.object({
-  tab: emptyToUndefined(z.enum(HOME_FEED_TABS, { error: 'Tab tidak dikenal' }).default('hot')),
-  ...reportPageSchema,
-});
+export const homeFeedQuerySchema = z
+  .object({
+    tab: emptyToUndefined(z.enum(HOME_FEED_TABS, { error: 'Tab tidak dikenal' }).default('hot')),
+    city: emptyToUndefined(
+      z
+        .string()
+        .trim()
+        .refine((value) => CITY_NAME_SET.has(value), {
+          message: 'Kota tidak dikenal, pilih dari daftar kota',
+        })
+        .optional(),
+    ),
+    ...reportPageSchema,
+  })
+  .refine((value) => value.tab !== 'nearby' || value.city, {
+    message: 'Pilih kotamu dulu untuk melihat laporan di sekitarmu',
+    path: ['city'],
+  });
